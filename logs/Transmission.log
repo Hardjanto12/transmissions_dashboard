@@ -1,0 +1,566 @@
+2025-09-15 11:09:15,719 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0009/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>409e8d01-a674-4e0d-afdb-3614a809f7a3</ID>\n    <PICNO>62001FS04202508260009</PICNO>\n    <PATH>/62001FS04/2025/0826/0009/</PATH>\n    <SCANTIME>2025-08-26 09:49:36</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3876&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5291" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826094916&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;0&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756176556&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756176564&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0009/62001FS04202508260009.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0009/62001FS04202508260009_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0009/62001FS04202508260009high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0009/62001FS04202508260009low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0009/62001FS04202508260009material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>498d7af2-c8c6-412f-9aa2-f8528d31e91f</ID>\n      <IMAGEID>409e8d01-a674-4e0d-afdb-3614a809f7a3</IMAGEID>\n      <UNITID>62001FS04202508260009</UNITID>\n      <CHECKINTIME>2025-08-26 09:49:34</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>74edcb6c-d625-492e-857b-fffbbaccf716</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:49:34</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>ea88a022-43cf-4dcf-aa1b-2902cecebce1</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:49:34</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>57629360-c819-4352-90f4-6e1dd0f38170</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:49:34</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>ffa9511a-2aaa-4133-9d0a-6e0922037eaa</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:49:34</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826094916</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:09:15,828 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260009,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:09:15,969 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:09:15,969 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:16,422 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/62001FS04202508260008.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\62001FS04202508260008.jpg
+2025-09-15 11:09:16,468 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:16,468 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:18,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:20,782 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/62001FS04202508260008high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\62001FS04202508260008high.img
+2025-09-15 11:09:20,813 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:20,813 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:24,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:25,151 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/62001FS04202508260008low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\62001FS04202508260008low.img
+2025-09-15 11:09:25,182 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:25,182 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:27,741 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/62001FS04202508260008material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\62001FS04202508260008material.img
+2025-09-15 11:09:27,788 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:27,788 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:28,054 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/62001FS04202508260008_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\62001FS04202508260008_icon.jpg
+2025-09-15 11:09:28,101 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:28,101 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0008/
+2025-09-15 11:09:28,319 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0008/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0008\CREATEDIR.NUL
+2025-09-15 11:09:28,366 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:28,366 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0008/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>34dab2fa-8496-4da3-8437-5814fc47c994</ID>\n    <PICNO>62001FS04202508260008</PICNO>\n    <PATH>/62001FS04/2025/0826/0008/</PATH>\n    <SCANTIME>2025-08-26 09:48:47</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3724&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5302" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826094827&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;0&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756176507&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756176515&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0008/62001FS04202508260008.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0008/62001FS04202508260008_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0008/62001FS04202508260008high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0008/62001FS04202508260008low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0008/62001FS04202508260008material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>09b31767-067d-4735-a6bf-94f7deeb3870</ID>\n      <IMAGEID>34dab2fa-8496-4da3-8437-5814fc47c994</IMAGEID>\n      <UNITID>62001FS04202508260008</UNITID>\n      <CHECKINTIME>2025-08-26 09:48:44</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>4c9ae3a7-06f1-48b6-8d25-8d63afb609f3</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:48:44</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>1aad4d44-369a-4625-928e-d262956b6735</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:48:44</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>c34f24ed-b509-4e17-9e94-010cb7f2664f</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:48:44</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>84946fbc-fa69-4161-ac36-cd7f722a747e</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:48:44</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826094827</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:09:28,413 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260008,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:09:28,554 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:09:28,554 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:29,009 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/62001FS04202508260007.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\62001FS04202508260007.jpg
+2025-09-15 11:09:29,056 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:29,056 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:30,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:33,356 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/62001FS04202508260007high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\62001FS04202508260007high.img
+2025-09-15 11:09:33,402 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:33,402 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:36,246 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:37,706 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/62001FS04202508260007low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\62001FS04202508260007low.img
+2025-09-15 11:09:37,752 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:37,752 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:40,303 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/62001FS04202508260007material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\62001FS04202508260007material.img
+2025-09-15 11:09:40,350 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:40,350 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:40,616 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/62001FS04202508260007_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\62001FS04202508260007_icon.jpg
+2025-09-15 11:09:40,663 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:40,663 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0007/
+2025-09-15 11:09:40,882 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0007/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0007\CREATEDIR.NUL
+2025-09-15 11:09:40,928 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:40,928 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0007/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>bd86124b-848a-4bb8-ae11-eb8faf45dc92</ID>\n    <PICNO>62001FS04202508260007</PICNO>\n    <PATH>/62001FS04/2025/0826/0007/</PATH>\n    <SCANTIME>2025-08-26 09:42:16</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3768&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5291" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826094156&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;0&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756176116&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756176124&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0007/62001FS04202508260007.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0007/62001FS04202508260007_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0007/62001FS04202508260007high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0007/62001FS04202508260007low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0007/62001FS04202508260007material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>644355f0-66c0-4539-b6fa-a940f7516161</ID>\n      <IMAGEID>bd86124b-848a-4bb8-ae11-eb8faf45dc92</IMAGEID>\n      <UNITID>62001FS04202508260007</UNITID>\n      <CHECKINTIME>2025-08-26 09:42:13</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>25e34432-2f04-4c8e-b194-a58f59b370d5</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:42:13</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>e7274031-34fc-433f-a000-002e2be94aef</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:42:13</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>828c2b8d-c039-4494-b575-aade81850d92</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:42:13</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>d47fbe22-e9ad-45f5-a9f1-0ff77d47ad8e</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:42:13</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826094156</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:09:40,975 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260007,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:09:41,100 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:09:41,100 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:41,619 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/62001FS04202508260006.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\62001FS04202508260006.jpg
+2025-09-15 11:09:41,650 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:41,650 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:45,949 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/62001FS04202508260006high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\62001FS04202508260006high.img
+2025-09-15 11:09:45,980 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:45,980 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:48,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:50,285 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/62001FS04202508260006low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\62001FS04202508260006low.img
+2025-09-15 11:09:50,331 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:50,331 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:52,873 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/62001FS04202508260006material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\62001FS04202508260006material.img
+2025-09-15 11:09:52,920 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:52,920 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:53,186 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/62001FS04202508260006_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\62001FS04202508260006_icon.jpg
+2025-09-15 11:09:53,217 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:53,217 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0006/
+2025-09-15 11:09:53,451 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0006/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0006\CREATEDIR.NUL
+2025-09-15 11:09:53,482 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:53,482 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0006/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>9dc4bfa3-f2cc-4438-9598-4030b9e4e3fc</ID>\n    <PICNO>62001FS04202508260006</PICNO>\n    <PATH>/62001FS04/2025/0826/0006/</PATH>\n    <SCANTIME>2025-08-26 09:25:59</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3720&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5285" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826092540&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;0&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756175140&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756175148&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0006/62001FS04202508260006.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0006/62001FS04202508260006_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0006/62001FS04202508260006high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0006/62001FS04202508260006low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0006/62001FS04202508260006material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>78b86620-3ca3-4414-ac13-53d4b0d547bd</ID>\n      <IMAGEID>9dc4bfa3-f2cc-4438-9598-4030b9e4e3fc</IMAGEID>\n      <UNITID>62001FS04202508260006</UNITID>\n      <CHECKINTIME>2025-08-26 09:25:57</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>ece14758-d4db-4272-bdd0-03f6aaa3df34</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:25:57</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>9a872ffc-3506-4a6f-9a0f-3cc495b0110f</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:25:57</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>5c073c4f-f198-4205-a829-347deb0cd365</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:25:57</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>8e10bf5d-4c2d-4630-a545-fa4280c38b4e</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:25:57</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826092540</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:09:53,545 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260006,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:09:53,670 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:09:53,685 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:09:54,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:09:54,482 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/62001FS04202508260005.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\62001FS04202508260005.jpg
+2025-09-15 11:09:54,529 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:54,529 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:09:58,865 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/62001FS04202508260005high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\62001FS04202508260005high.img
+2025-09-15 11:09:58,911 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:09:58,911 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:10:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:03,209 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/62001FS04202508260005low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\62001FS04202508260005low.img
+2025-09-15 11:10:03,240 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:03,240 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:10:05,815 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/62001FS04202508260005material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\62001FS04202508260005material.img
+2025-09-15 11:10:05,846 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:05,846 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:10:06,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:06,362 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/62001FS04202508260005_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\62001FS04202508260005_icon.jpg
+2025-09-15 11:10:06,393 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:06,393 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0005/
+2025-09-15 11:10:06,627 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0005/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0005\CREATEDIR.NUL
+2025-09-15 11:10:06,659 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:06,659 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0005/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>f1b5ea28-47f2-4492-8244-d7d7b8bac79c</ID>\n    <PICNO>62001FS04202508260005</PICNO>\n    <PATH>/62001FS04/2025/0826/0005/</PATH>\n    <SCANTIME>2025-08-26 09:23:03</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3708&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5302" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826092243&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;1756097616&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756174963&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756174971&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0005/62001FS04202508260005.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0005/62001FS04202508260005_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0005/62001FS04202508260005high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0005/62001FS04202508260005low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0005/62001FS04202508260005material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>9199e02e-a747-402e-b773-903e739fa749</ID>\n      <IMAGEID>f1b5ea28-47f2-4492-8244-d7d7b8bac79c</IMAGEID>\n      <UNITID>62001FS04202508260005</UNITID>\n      <CHECKINTIME>2025-08-26 09:23:00</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>109c28aa-d781-4e1c-bfe7-71f7637b04f0</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:23:00</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>72096f5c-9a6a-43b8-b18f-18da7f060d9f</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:23:00</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>ad083b26-9d10-4747-bad8-74d441f8b892</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:23:00</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>30b614e4-0b30-4a11-95f9-b896aebf94fb</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:23:00</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826092243</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:10:06,721 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260005,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:10:06,846 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:10:06,846 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:07,378 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/62001FS04202508260004.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\62001FS04202508260004.jpg
+2025-09-15 11:10:07,425 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:07,425 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:12,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:14,782 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/62001FS04202508260004high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\62001FS04202508260004high.img
+2025-09-15 11:10:14,814 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:14,814 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:19,074 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/62001FS04202508260004low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\62001FS04202508260004low.img
+2025-09-15 11:10:19,120 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:19,120 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:21,681 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/62001FS04202508260004material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\62001FS04202508260004material.img
+2025-09-15 11:10:21,712 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:21,712 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:22,009 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/62001FS04202508260004_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\62001FS04202508260004_icon.jpg
+2025-09-15 11:10:22,056 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:22,056 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0004/
+2025-09-15 11:10:22,275 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0004/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0004\CREATEDIR.NUL
+2025-09-15 11:10:22,321 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:22,321 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0004/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>0342d2bd-e6c4-44d4-8d71-802b7a5c09f0</ID>\n    <PICNO>62001FS04202508260004</PICNO>\n    <PATH>/62001FS04/2025/0826/0004/</PATH>\n    <SCANTIME>2025-08-26 09:21:21</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3704&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5308" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826092101&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;1756097616&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756174861&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756174869&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0004/62001FS04202508260004.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0004/62001FS04202508260004_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0004/62001FS04202508260004high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0004/62001FS04202508260004low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0004/62001FS04202508260004material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>c0d2d827-cfe7-43e4-b120-2379f18f310e</ID>\n      <IMAGEID>0342d2bd-e6c4-44d4-8d71-802b7a5c09f0</IMAGEID>\n      <UNITID>62001FS04202508260004</UNITID>\n      <CHECKINTIME>2025-08-26 09:21:18</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>d8a42c67-3186-41fb-9ffb-b0ae6a97efa5</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:21:18</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>2557491b-cb59-4adc-87f9-0ad66f778754</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:21:18</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>d5b5549b-51d3-4fff-83c1-24f68793d974</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:21:18</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>64971a4b-74b6-4984-90e9-1e1ba9874c20</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:21:18</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826092101</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:10:22,368 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260004,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:10:22,493 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:10:22,493 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:22,960 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/62001FS04202508260003.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\62001FS04202508260003.jpg
+2025-09-15 11:10:23,007 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:23,007 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:24,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:27,279 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/62001FS04202508260003high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\62001FS04202508260003high.img
+2025-09-15 11:10:27,326 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:27,326 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:30,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:31,710 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/62001FS04202508260003low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\62001FS04202508260003low.img
+2025-09-15 11:10:31,756 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:31,756 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:34,319 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/62001FS04202508260003material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\62001FS04202508260003material.img
+2025-09-15 11:10:34,366 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:34,366 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:34,631 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/62001FS04202508260003_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\62001FS04202508260003_icon.jpg
+2025-09-15 11:10:34,663 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:34,663 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0003/
+2025-09-15 11:10:34,897 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0003/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0003\CREATEDIR.NUL
+2025-09-15 11:10:34,928 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:34,928 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0003/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>e4f82e7d-3591-431d-8dd6-98329fdc7dc5</ID>\n    <PICNO>62001FS04202508260003</PICNO>\n    <PATH>/62001FS04/2025/0826/0003/</PATH>\n    <SCANTIME>2025-08-26 09:20:02</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3720&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5279" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826091943&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;1756097616&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756174783&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756174791&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0003/62001FS04202508260003.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0003/62001FS04202508260003_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0003/62001FS04202508260003high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0003/62001FS04202508260003low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0003/62001FS04202508260003material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>69b502b3-5d07-4505-96f8-c4a8ae29a86f</ID>\n      <IMAGEID>e4f82e7d-3591-431d-8dd6-98329fdc7dc5</IMAGEID>\n      <UNITID>62001FS04202508260003</UNITID>\n      <CHECKINTIME>2025-08-26 09:20:00</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>d4a4c177-31d0-4ecd-97c0-1272ef5ecb0a</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:20:00</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>38d1f078-8ad8-4564-adae-39734ee390e2</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:20:00</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>95d9a3c1-aec7-4006-a957-4ef17884f0d1</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:20:00</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>812e4d33-9b54-4284-8949-b739d2731eef</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:20:00</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826091943</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:10:34,991 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260003,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:10:35,116 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:10:35,131 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:35,959 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/62001FS04202508260002.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\62001FS04202508260002.jpg
+2025-09-15 11:10:36,006 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:36,006 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:36,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:40,285 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/62001FS04202508260002high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\62001FS04202508260002high.img
+2025-09-15 11:10:40,332 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:40,332 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:42,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:44,651 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/62001FS04202508260002low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\62001FS04202508260002low.img
+2025-09-15 11:10:44,682 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:44,682 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:47,275 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/62001FS04202508260002material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\62001FS04202508260002material.img
+2025-09-15 11:10:47,322 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:47,322 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:47,588 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/62001FS04202508260002_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\62001FS04202508260002_icon.jpg
+2025-09-15 11:10:47,619 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:47,619 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0002/
+2025-09-15 11:10:47,853 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0002/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0002\CREATEDIR.NUL
+2025-09-15 11:10:47,884 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:47,900 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0002/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>008dcda4-42ea-4db2-9743-2d9d5e6c4cf6</ID>\n    <PICNO>62001FS04202508260002</PICNO>\n    <PATH>/62001FS04/2025/0826/0002/</PATH>\n    <SCANTIME>2025-08-26 09:19:34</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3712&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5314" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826091914&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;1756097616&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756174754&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756174762&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0002/62001FS04202508260002.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0002/62001FS04202508260002_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0002/62001FS04202508260002high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0002/62001FS04202508260002low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0002/62001FS04202508260002material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>c902368d-2c5d-465a-8a85-8e667009e74c</ID>\n      <IMAGEID>008dcda4-42ea-4db2-9743-2d9d5e6c4cf6</IMAGEID>\n      <UNITID>62001FS04202508260002</UNITID>\n      <CHECKINTIME>2025-08-26 09:19:31</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>649672be-1fcc-4482-9e4a-5404decec715</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:19:31</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>132ba59e-2e7c-4132-8737-5e62cb7f553b</ID>\n        <TYPE>inputinfo</TYPE>\n        <OPERATIONTIME>2025-08-26 09:19:31</OPERATIONTIME>\n        <inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli/></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official> </inputinfo>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>0a79ab0c-a356-4329-9f47-89da34ac8795</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:19:31</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>b1eab4d9-9799-4bcf-977e-732b80b2cef9</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:19:31</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826091914</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:10:47,947 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260002,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:10:48,087 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:10:48,119 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:10:48,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:48,572 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/62001FS04202508260001.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\62001FS04202508260001.jpg
+2025-09-15 11:10:48,619 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:48,619 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:10:52,943 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/62001FS04202508260001high.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\62001FS04202508260001high.img
+2025-09-15 11:10:52,990 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:52,990 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:10:54,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:10:57,294 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/62001FS04202508260001low.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\62001FS04202508260001low.img
+2025-09-15 11:10:57,341 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:57,341 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:10:59,889 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/62001FS04202508260001material.img  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\62001FS04202508260001material.img
+2025-09-15 11:10:59,920 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:10:59,936 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:11:00,201 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/62001FS04202508260001_icon.jpg  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\62001FS04202508260001_icon.jpg
+2025-09-15 11:11:00,232 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:11:00,232 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0826/0001/
+2025-09-15 11:11:00,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:00,467 INFO [FtpTools.py-upload_file: 54] **FTP**  UPLOAD  ---FROM:D:/Image/62001FS04/2025/0826/0001/CREATEDIR.NUL  ---TO:10.226.52.31\home\nutech\files\export\62001FS04\2025\0826\0001\CREATEDIR.NUL
+2025-09-15 11:11:00,498 INFO [Task.py-ftp_upload_handler: 108] 当前在 /home/nutech/files
+2025-09-15 11:11:00,498 INFO [Task.py-send_message_handler: 136] ## url is http://10.226.52.32:8040/services/xRaySby/in ,json_data is {'ftp_path': '/export/62001FS04/2025/0826/0001/', 'image_msg': '<IDR>\n  <IDR_IMAGE>\n    <ID>6c18f7fe-cbb4-4ae0-b134-c00eeac933fd</ID>\n    <PICNO>62001FS04202508260001</PICNO>\n    <PATH>/62001FS04/2025/0826/0001/</PATH>\n    <SCANTIME>2025-08-26 09:18:59</SCANTIME>\n    <IMGTYPE>&lt;image_info&gt;&lt;DIAS2RIP_XML&gt;\n\t&lt;Version&gt;5.5.117.8033&lt;/Version&gt;\n\t&lt;DeviceType&gt;1&lt;/DeviceType&gt;\n\t&lt;IsCT&gt;0&lt;/IsCT&gt;\n\t&lt;IsBXSYS&gt;0&lt;/IsBXSYS&gt;\n\t&lt;IsNeutronSys&gt;0&lt;/IsNeutronSys&gt;\n\t&lt;WithNINeutron&gt;0&lt;/WithNINeutron&gt;\n\t&lt;NeutronSysWorking&gt;0&lt;/NeutronSysWorking&gt;\n\t&lt;MarkMode&gt;1&lt;/MarkMode&gt;\n\t&lt;EnergyMode&gt;1&lt;/EnergyMode&gt;\n\t&lt;VehicleSpeed&gt;107&lt;/VehicleSpeed&gt;\n\t&lt;Frequency&gt;150&lt;/Frequency&gt;\n\t&lt;Frequency1&gt;50&lt;/Frequency1&gt;\n\t&lt;H_ACC_Energy&gt;1&lt;/H_ACC_Energy&gt;\n\t&lt;V_ACC_Energy&gt;0&lt;/V_ACC_Energy&gt;\n\t&lt;!-- PLCScanMode:0=Normal,1=AvoidCab,2=LowDoseForCab,3=LowDoseForAll,4=ContinuousCab,5=ContainerCT --&gt;\n\t&lt;PLCScanMode&gt;1&lt;/PLCScanMode&gt;\n\t&lt;GouDang&gt;0,1&lt;/GouDang&gt;\n\t&lt;Superpose&gt;1&lt;/Superpose&gt;\n\t&lt;Interpolation&gt;1&lt;/Interpolation&gt;\n\t&lt;TestMode&gt;0&lt;/TestMode&gt;\n\t&lt;CCMGroup&gt;1&lt;/CCMGroup&gt;\n\t&lt;IsPseudoDualDetector&gt;0&lt;/IsPseudoDualDetector&gt;\n\t&lt;IsPseudoDualDetectorFileNameRule&gt;0&lt;/IsPseudoDualDetectorFileNameRule&gt;\n\t&lt;DetectorModuleType&gt;SPD03256BP-50(BA7000000-50)&lt;/DetectorModuleType&gt;\n\t&lt;CCMADMColumn&gt;4&lt;/CCMADMColumn&gt;\n\t&lt;CCMADMRow&gt;64&lt;/CCMADMRow&gt;\n\t&lt;CollectBkAndAir&gt;0&lt;/CollectBkAndAir&gt;\n\t&lt;CollectGroundLine&gt;0&lt;/CollectGroundLine&gt;\n\t&lt;CollectAirLine&gt;0&lt;/CollectAirLine&gt;\n\t&lt;CollectImageLine_Group0&gt;3824&lt;/CollectImageLine_Group0&gt;\n\t&lt;GroundAirToSameFile&gt;0&lt;/GroundAirToSameFile&gt;\n\t&lt;ClassifyResult&gt;&lt;/ClassifyResult&gt;\n\t&lt;CuttingPositionList ImageLength="5285" CuttingMode="1"&gt;\n\t&lt;/CuttingPositionList&gt;\n\t&lt;!-- Scan Direction: 1=Forward, 0=Backward --&gt;\n\t&lt;ScanDirection&gt;1&lt;/ScanDirection&gt;\n\t&lt;RTACCover&gt;0&lt;/RTACCover&gt;\n\t&lt;PLCWorkMode&gt;0&lt;/PLCWorkMode&gt;\n\t&lt;EnhancedScan&gt;0&lt;/EnhancedScan&gt;\n\t&lt;AngleScan&gt;0&lt;/AngleScan&gt;\n\t&lt;ImageFolder&gt;20250826091838&lt;/ImageFolder&gt;\n\t&lt;Time_Veh_Enter&gt;1756097616&lt;/Time_Veh_Enter&gt;\n\t&lt;Time_ScanStart&gt;1756174718&lt;/Time_ScanStart&gt;\n\t&lt;Time_Scan_Stop&gt;1756174727&lt;/Time_Scan_Stop&gt;\n\t&lt;ImageType&gt;1&lt;/ImageType&gt;\n\t&lt;ScanDirectionPixelSize&gt;818&lt;/ScanDirectionPixelSize&gt;&lt;ScanningPitch&gt;740&lt;/ScanningPitch&gt;&lt;/DIAS2RIP_XML&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0001/62001FS04202508260001.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0001/62001FS04202508260001_icon.jpg&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0001/62001FS04202508260001high.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0001/62001FS04202508260001low.img&lt;/img&gt;&lt;img&gt;http://192.111.111.80:6688/62001FS04/2025/0826/0001/62001FS04202508260001material.img&lt;/img&gt;&lt;/image_info&gt;</IMGTYPE>\n    <IDR_CHECK_UNIT>\n      <ID>d06c94e1-7279-4152-a46c-cf34f7d79293</ID>\n      <IMAGEID>6c18f7fe-cbb4-4ae0-b134-c00eeac933fd</IMAGEID>\n      <UNITID>62001FS04202508260001</UNITID>\n      <CHECKINTIME>2025-08-26 09:18:57</CHECKINTIME>\n      <IDR_SIIG>\n        <ID>4cde3818-801a-4823-aad3-3eceb12e4ea2</ID>\n        <TYPE>EDI</TYPE>\n        <OPERATIONTIME>2025-08-26 09:18:57</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG><ID>bc70d548-cfce-4fa8-acbb-f5a852cd8373</ID><TYPE>inputinfo</TYPE><OPERATIONTIME>2025-08-26 09:18:57</OPERATIONTIME><inputinfo><general><container><container_no/><name_vessel/><consignee/><g_v_no/><article_no/></container></general><document><control><tax_number/><declaration_number/><number_of_colli>42850</number_of_colli></control></document><official><office>0</office><name_official>0</name_official><phone_number>no</phone_number><fax_number>no</fax_number></official>\n</inputinfo>\n</IDR_SIIG>\n      <IDR_SIIG>\n        <ID>bc626cf9-fda8-4fe0-a827-abe7c541c21f</ID>\n        <TYPE>SCANIMG</TYPE>\n        <OPERATIONTIME>2025-08-26 09:18:57</OPERATIONTIME>\n      </IDR_SIIG>\n      <IDR_SIIG>\n        <ID>ade07acc-5374-4723-b73d-ffc072411b0a</ID>\n        <TYPE>position</TYPE>\n        <OPERATIONTIME>2025-08-26 09:18:57</OPERATIONTIME>\n      </IDR_SIIG>\n    </IDR_CHECK_UNIT>\n  </IDR_IMAGE>\n<DEVICE_NO>62001FS04</DEVICE_NO><IMAGE_TYPE>img</IMAGE_TYPE><CONCLUSION>false</CONCLUSION><GROUP_ID>20250826091838</GROUP_ID><gps_info><longitude></longitude><latitude></latitude></gps_info><GROUP_INDEX>1-1</GROUP_INDEX><ISWISCAN>0</ISWISCAN></IDR>'}
+2025-09-15 11:11:00,561 INFO [Task.py-send_message_handler: 138] center response:62001FS04202508260001,response code: 200,response text: {"resultCode":false,"resultDesc":"No. Container Tidak Terbaca... Format Input Parameter invalid...","resultData":"-"}
+2025-09-15 11:11:00,748 INFO [Task.py-ftp_upload_handler: 88] start login
+2025-09-15 11:11:00,764 INFO [FtpTools.py-enter_path: 42] /export/62001FS04/2025/0821/0006/
+2025-09-15 11:11:06,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:12,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:18,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:24,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:36,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:42,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:48,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:11:54,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:00,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:06,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:12,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:18,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:24,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:30,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:36,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:48,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:12:54,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:00,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:18,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:24,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:30,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:36,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:42,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:48,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:13:54,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:00,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:06,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:12,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:18,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:24,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:30,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:36,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:42,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:48,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:14:54,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:12,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:18,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:24,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:30,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:36,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:42,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:48,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:15:54,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:00,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:06,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:12,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:30,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:36,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:42,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:48,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:16:54,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:00,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:06,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:12,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:18,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:24,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:30,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:36,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:42,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:48,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:17:54,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:00,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:18,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:24,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:30,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:36,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:42,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:48,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:18:54,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:00,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:06,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:12,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:18,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:24,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:30,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:36,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:42,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:48,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:19:54,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:00,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:06,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:12,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:18,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:24,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:30,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:36,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:42,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:48,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:20:54,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:00,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:18,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:24,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:30,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:36,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:48,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:21:54,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:00,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:06,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:12,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:18,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:24,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:30,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:36,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:42,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:48,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:22:54,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:00,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:06,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:12,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:18,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:24,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:30,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:36,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:48,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:23:54,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:00,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:06,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:12,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:18,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:24,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:30,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:36,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:42,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:48,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:24:54,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:00,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:06,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:12,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:36,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:42,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:48,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:25:54,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:00,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:12,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:18,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:24,246 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:30,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:36,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:42,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:48,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:26:54,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:00,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:06,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:12,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:18,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:24,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:30,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:36,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:42,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:48,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:27:54,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:00,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:12,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:18,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:24,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:30,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:36,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:42,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:48,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:28:54,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:12,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:24,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:30,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:36,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:42,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:48,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:29:54,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:00,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:06,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:12,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:18,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:24,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:30,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:36,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:42,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:48,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:30:54,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:00,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:06,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:12,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:18,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:24,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:30,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:36,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:42,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:48,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:31:54,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:00,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:06,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:12,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:30,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:36,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:48,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:32:54,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:00,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:12,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:18,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:24,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:30,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:36,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:42,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:48,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:33:54,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:12,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:18,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:24,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:30,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:36,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:42,242 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:48,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:34:54,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:00,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:06,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:18,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:24,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:36,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:42,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:48,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:35:54,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:00,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:06,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:12,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:18,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:30,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:36,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:42,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:48,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:36:54,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:12,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:18,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:30,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:36,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:42,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:48,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:37:54,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:12,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:18,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:24,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:36,242 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:42,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:48,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:38:54,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:00,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:06,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:12,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:18,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:24,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:30,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:36,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:42,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:48,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:39:54,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:00,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:06,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:12,246 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:18,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:24,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:36,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:42,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:48,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:40:54,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:00,259 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:06,242 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:12,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:18,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:30,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:36,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:42,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:48,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:41:54,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:00,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:06,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:18,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:24,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:30,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:36,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:42,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:48,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:42:54,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:00,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:12,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:18,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:24,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:30,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:36,261 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:42,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:48,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:43:54,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:00,246 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:06,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:12,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:18,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:24,243 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:36,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:42,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:48,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:44:54,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:00,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:06,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:12,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:18,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:24,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:30,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:36,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:42,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:48,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:45:54,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:00,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:06,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:12,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:18,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:24,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:30,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:36,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:42,260 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:48,249 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:46:54,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:00,248 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:06,247 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:12,262 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:18,245 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:24,244 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:30,258 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:36,257 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:42,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:48,254 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:47:54,253 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:00,252 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:06,251 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:12,250 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:18,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:24,256 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:30,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
+2025-09-15 11:48:36,255 DEBUG [Task.py-subscription_task: 331] 正在订阅任务。。。
