@@ -97,7 +97,7 @@ class ServerGUI(QMainWindow):
         button_layout.addWidget(self.open_browser_button)
 
         self.quit_button = QPushButton("Quit App")
-        self.quit_button.clicked.connect(self.close)
+        self.quit_button.clicked.connect(self._quit_application)
         button_layout.addWidget(self.quit_button)
 
         main_layout.addLayout(button_layout)
@@ -136,7 +136,7 @@ class ServerGUI(QMainWindow):
         tray_menu.addSeparator()
 
         self.quit_action = QAction("Quit", self)
-        self.quit_action.triggered.connect(self.close)
+        self.quit_action.triggered.connect(self._quit_application)
         tray_menu.addAction(self.quit_action)
 
         self.tray_icon.setContextMenu(tray_menu)
@@ -192,13 +192,25 @@ class ServerGUI(QMainWindow):
         self.start_action.setEnabled(not self.server_running)
         self.stop_action.setEnabled(self.server_running)
 
+    def _quit_application(self):
+        if hasattr(self, "tray_icon"):
+            self.tray_icon.hide()
+
+        if self.server_thread.isRunning():
+            self.stop_server()
+            self.server_thread.wait()
+
+        app = QApplication.instance()
+        if app:
+            app.quit()
+
     def closeEvent(self, event):
         if self.server_running:
             reply = QMessageBox.question(self, 'Quit Application',
                                          "Server is still running. Do you want to stop the server and quit?",
                                          QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Yes:
-                self.stop_server()
+                self._quit_application()
                 event.accept()
             elif reply == QMessageBox.No:
                 self.hide() # Minimize to tray
@@ -206,12 +218,11 @@ class ServerGUI(QMainWindow):
             else:
                 event.ignore()
         else:
+            self._quit_application()
             event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # Ensure the application does not quit when the last window is closed
-    app.setQuitOnLastWindowClosed(False)
 
     gui = ServerGUI()
     gui.show()
