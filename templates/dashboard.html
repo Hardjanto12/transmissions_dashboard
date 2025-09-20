@@ -91,9 +91,97 @@
         .spinner-border {
             color: #667eea;
         }
+        .activity-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .activity-indicator .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4facfe;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .status-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            z-index: 1000;
+        }
+        .status-indicator.online {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        .status-indicator.offline {
+            background: rgba(244, 67, 54, 0.9);
+        }
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-left: 4px solid #4facfe;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 300px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success {
+            border-left-color: #4caf50;
+        }
+        .notification.error {
+            border-left-color: #f44336;
+        }
+        .notification.warning {
+            border-left-color: #ff9800;
+        }
     </style>
 </head>
 <body>
+    <!-- Activity Indicators -->
+    <div class="activity-indicator" id="activity-indicator" style="display: none;">
+        <span class="pulse"></span>
+        <span id="activity-text">Processing...</span>
+    </div>
+    
+    <div class="status-indicator online" id="status-indicator">
+        <i class="fas fa-circle me-1"></i>
+        <span>Dashboard Online</span>
+    </div>
+    
+    <div class="notification" id="notification">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <span id="notification-text">Welcome to Transmission Dashboard!</span>
+        </div>
+    </div>
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
@@ -114,6 +202,9 @@
                         </a>
                         <a class="nav-link" href="#" onclick="showSection('statistics')">
                             <i class="fas fa-chart-bar me-2"></i> Statistics
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('settings')">
+                            <i class="fas fa-cog me-2"></i> Settings
                         </a>
                     </nav>
                 </div>
@@ -339,6 +430,105 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Settings Section -->
+                <div id="settings-section" class="content-section" style="display: none;">
+                    <h2 class="mb-4">Settings</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Logs Directory Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="settings-form">
+                                        <div class="mb-3">
+                                            <label for="logs-directory" class="form-label">Logs Directory Path</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="logs-directory" 
+                                                       placeholder="Enter logs directory path">
+                                                <button class="btn btn-outline-secondary" type="button" 
+                                                        onclick="browseDirectory()">
+                                                    <i class="fas fa-folder-open me-1"></i> Browse
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Enter the full path to the directory containing Transmission.log files
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="auto-refresh" class="form-label">Auto Refresh Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="auto-refresh" 
+                                                   min="10" max="300" value="30">
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    How often to automatically refresh the dashboard data
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                                                <i class="fas fa-save me-1"></i> Save Settings
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" onclick="loadCurrentSettings()">
+                                                <i class="fas fa-undo me-1"></i> Reset
+                                            </button>
+                                            <button type="button" class="btn btn-info" onclick="validateDirectory()">
+                                                <i class="fas fa-check-circle me-1"></i> Validate Directory
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Current Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="settings-status">
+                                        <div class="loading">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <span class="ms-2">Loading settings...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Help</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>How to configure logs directory:</h6>
+                                    <ol class="small">
+                                        <li>Navigate to the folder containing your Transmission.log files</li>
+                                        <li>Copy the full path (e.g., C:\logs\ or /var/log/transmission/)</li>
+                                        <li>Paste the path in the "Logs Directory Path" field</li>
+                                        <li>Click "Validate Directory" to verify the path</li>
+                                        <li>Click "Save Settings" to apply changes</li>
+                                    </ol>
+                                    <div class="alert alert-info mt-3">
+                                        <small>
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            <strong>Tip:</strong> The directory should contain files named "Transmission.log" or "Transmission.log.1", etc.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -358,6 +548,7 @@
             loadLogFiles();
             loadStats();
             loadRecentActivity();
+            showNotification('Dashboard loaded successfully!', 'success');
         });
 
         // Navigation functions
@@ -384,6 +575,10 @@
                 $('#statistics-section').show();
                 $('.nav-link').eq(3).addClass('active');
                 loadCharts();
+            } else if (section === 'settings') {
+                $('#settings-section').show();
+                $('.nav-link').eq(4).addClass('active');
+                loadCurrentSettings();
             }
         }
 
@@ -672,6 +867,163 @@
                 loadRecentActivity();
             }
         }, 30000);
+
+        // Settings functions
+        function loadCurrentSettings() {
+            $.get('/api/settings', function(settings) {
+                $('#logs-directory').val(settings.logs_directory);
+                $('#auto-refresh').val(settings.auto_refresh_interval);
+                
+                // Update status display
+                updateSettingsStatus(settings);
+            }).fail(function() {
+                $('#settings-status').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Failed to load settings
+                    </div>
+                `);
+            });
+        }
+
+        function updateSettingsStatus(settings) {
+            const statusHtml = `
+                <div class="mb-2">
+                    <strong>Current Logs Directory:</strong><br>
+                    <code class="small">${settings.logs_directory}</code>
+                </div>
+                <div class="mb-2">
+                    <strong>Auto Refresh:</strong><br>
+                    <span class="badge bg-info">${settings.auto_refresh_interval}s</span>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Settings loaded successfully
+                </div>
+            `;
+            $('#settings-status').html(statusHtml);
+        }
+
+        function saveSettings() {
+            const logsDirectory = $('#logs-directory').val().trim();
+            const autoRefresh = parseInt($('#auto-refresh').val());
+            
+            if (!logsDirectory) {
+                alert('Please enter a logs directory path');
+                return;
+            }
+            
+            const settings = {
+                logs_directory: logsDirectory,
+                auto_refresh_interval: autoRefresh
+            };
+            
+            $.ajax({
+                url: '/api/settings',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(settings),
+                success: function(response) {
+                    alert('Settings saved successfully! The application will now use the new logs directory.');
+                    loadCurrentSettings();
+                    // Refresh data to use new directory
+                    loadLogFiles();
+                    loadStats();
+                    loadRecentActivity();
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings';
+                    alert('Error: ' + error);
+                }
+            });
+        }
+
+        function validateDirectory() {
+            const directory = $('#logs-directory').val().trim();
+            
+            if (!directory) {
+                alert('Please enter a directory path first');
+                return;
+            }
+            
+            $.get('/api/validate-directory', { directory: directory })
+                .done(function(response) {
+                    if (response.valid) {
+                        alert(`✅ Directory is valid!\n\nFound ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`);
+                    } else {
+                        alert(`❌ Directory validation failed:\n${response.message}`);
+                    }
+                })
+                .fail(function() {
+                    alert('❌ Failed to validate directory. Please check the path and try again.');
+                });
+        }
+
+        function browseDirectory() {
+            // Note: This is a simplified implementation
+            // In a real application, you might want to use a file dialog library
+            const directory = prompt('Enter the full path to your logs directory:');
+            if (directory) {
+                $('#logs-directory').val(directory);
+            }
+        }
+
+        // Activity and notification functions
+        function showActivityIndicator(text = 'Processing...') {
+            $('#activity-text').text(text);
+            $('#activity-indicator').show();
+        }
+
+        function hideActivityIndicator() {
+            $('#activity-indicator').hide();
+        }
+
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = $('#notification');
+            const text = $('#notification-text');
+            
+            // Update notification content
+            text.text(message);
+            notification.removeClass('success error warning').addClass(type);
+            
+            // Show notification
+            notification.addClass('show');
+            
+            // Auto-hide after duration
+            setTimeout(() => {
+                notification.removeClass('show');
+            }, duration);
+        }
+
+        function updateStatusIndicator(online = true) {
+            const indicator = $('#status-indicator');
+            if (online) {
+                indicator.removeClass('offline').addClass('online');
+                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Online</span>');
+            } else {
+                indicator.removeClass('online').addClass('offline');
+                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Offline</span>');
+            }
+        }
+
+        // Enhanced AJAX wrapper with activity indicators
+        function ajaxWithIndicator(url, options = {}) {
+            showActivityIndicator(options.loadingText || 'Loading...');
+            
+            const defaultOptions = {
+                success: function(data) {
+                    hideActivityIndicator();
+                    if (options.success) options.success(data);
+                },
+                error: function(xhr, status, error) {
+                    hideActivityIndicator();
+                    showNotification('Request failed: ' + error, 'error');
+                    if (options.error) options.error(xhr, status, error);
+                }
+            };
+            
+            $.ajax(url, $.extend(defaultOptions, options));
+        }
     </script>
 </body>
 </html>

@@ -11,6 +11,45 @@ import tempfile
 
 app = Flask(__name__)
 
+# Settings configuration
+SETTINGS_FILE = 'settings.json'
+
+def load_settings():
+    """Load settings from JSON file"""
+    default_settings = {
+        'logs_directory': 'logs',
+        'auto_refresh_interval': 30
+    }
+
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                # Merge with defaults to ensure all keys exist
+                for key, value in default_settings.items():
+                    if key not in settings:
+                        settings[key] = value
+                return settings
+        except (json.JSONDecodeError, IOError):
+            pass
+
+    # Create default settings file
+    save_settings(default_settings)
+    return default_settings
+
+def save_settings(settings):
+    """Save settings to JSON file"""
+    try:
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        return True
+    except (IOError, TypeError):
+        return False
+
+
+# Load initial settings
+app_settings = load_settings()
+
 
 class LogParser:
     def __init__(self, logs_dir="logs"):
@@ -86,7 +125,7 @@ class LogParser:
                                 data.append(entry)
                             
                             # Handle failed responses (resultCode: false)
-                            elif (response_data.get('resultCode') == False and 
+                            elif (response_data.get('resultCode') is False and 
                                   response_data.get('resultData') == '-'):
                                 
                                 # Extract container number from response description if available
@@ -94,7 +133,8 @@ class LogParser:
                                 desc = response_data.get('resultDesc', '')
                                 if 'Container' in desc:
                                     # Try to extract container number from description
-                                    container_match = re.search(r'Container[^:]*:?\s*([A-Z0-9]+)', desc)
+                                    container_match = re.search(
+                                        r'Container[^:]*:?\s*([A-Z0-9]+)', desc)
                                     if container_match:
                                         container_no = container_match.group(1)
                                 
@@ -209,8 +249,8 @@ class LogParser:
         
         return unique_data
 
-# Initialize log parser
-log_parser = LogParser()
+# Initialize log parser with settings
+log_parser = LogParser(app_settings['logs_directory'])
 
 
 @app.route('/')
@@ -350,6 +390,89 @@ def export_excel():
         download_name=filename,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+
+@app.route('/api/settings')
+def get_settings():
+    """API endpoint to get current settings"""
+    return jsonify(app_settings)
+
+
+@app.route('/api/settings', methods=['POST'])
+def update_settings():
+    """API endpoint to update settings"""
+    global app_settings, log_parser
+    
+    try:
+        new_settings = request.get_json()
+        
+        # Validate logs directory
+        if 'logs_directory' in new_settings:
+            logs_dir = new_settings['logs_directory']
+            if not os.path.exists(logs_dir):
+                return jsonify({'error': 'Logs directory does not exist'}), 400
+            
+            # Update log parser with new directory
+            log_parser = LogParser(logs_dir)
+        
+        # Update settings
+        app_settings.update(new_settings)
+        
+        # Save to file
+        if save_settings(app_settings):
+            return jsonify({'message': 'Settings updated successfully'})
+        else:
+            return jsonify({'error': 'Failed to save settings'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/validate-directory')
+def validate_directory():
+    """API endpoint to validate if a directory exists and contains log files"""
+    directory = request.args.get('directory', '')
+    
+    if not directory:
+        return jsonify({'valid': False, 'message': 'Directory path is required'})
+    
+    if not os.path.exists(directory):
+        return jsonify({'valid': False, 'message': 'Directory does not exist'})
+    
+    if not os.path.isdir(directory):
+        return jsonify({'valid': False, 'message': 'Path is not a directory'})
+    
+    # Check for log files
+    pattern = os.path.join(directory, "Transmission.log*")
+    log_files = glob.glob(pattern)
+    
+    if not log_files:
+        return jsonify({
+            'valid': False, 
+            'message': 'No Transmission log files found in this directory'
+        })
+    
+    return jsonify({
+        'valid': True, 
+        'message': f'Found {len(log_files)} log file(s)',
+        'log_files': [os.path.basename(f) for f in log_files]
+    })
+
+
+@app.route('/shutdown')
+def shutdown():
+    """Shutdown endpoint for graceful server shutdown"""
+    import threading
+    import time
+    
+    def shutdown_server():
+        time.sleep(1)
+        import os
+        import signal
+        os.kill(os.getpid(), signal.SIGTERM)
+    
+    threading.Thread(target=shutdown_server).start()
+    return 'Server shutting down...', 200
 
 
 if __name__ == '__main__':

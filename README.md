@@ -9,6 +9,7 @@ A Flask-based web dashboard for monitoring transmission log data from X-ray scan
 - **Statistics**: View success rates, scan counts, and performance metrics
 - **Responsive Design**: Modern, mobile-friendly interface
 - **Auto-refresh**: Automatic data updates every 30 seconds
+- **Configurable Settings**: Customize logs directory and refresh intervals
 
 ## Installation
 
@@ -54,6 +55,7 @@ http://localhost:5000
 2. **Detail Log OK**: View successful transmission logs
 3. **Detail Log NOK**: View failed transmission logs
 4. **Statistics**: Charts and analytics
+5. **Settings**: Configure logs directory and application settings
 
 ### Data Fields
 
@@ -85,10 +87,29 @@ The application reads log files from the `logs/` directory. It looks for lines c
 - `GET /api/data` - Get log data with optional filtering
 - `GET /api/log-files` - Get available log files
 - `GET /api/stats` - Get statistics
+- `GET /api/settings` - Get current application settings
+- `POST /api/settings` - Update application settings
+- `GET /api/validate-directory` - Validate logs directory path
 
 ## Configuration
 
-The application automatically detects log files in the `logs/` directory. Log files should follow the naming pattern `Transmission.log*`.
+### Settings Page
+
+The application includes a settings page where you can:
+
+1. **Configure Logs Directory**: Set the path to your Transmission log files
+2. **Auto-refresh Interval**: Adjust how often the dashboard updates (10-300 seconds)
+3. **Directory Validation**: Verify that your logs directory contains valid log files
+
+### Default Configuration
+
+- **Logs Directory**: `logs/` (relative to application directory)
+- **Auto-refresh**: 30 seconds
+- **Log File Pattern**: `Transmission.log*`
+
+### Settings File
+
+Settings are automatically saved to `settings.json` in the application directory. You can also manually edit this file if needed.
 
 ## Requirements
 
