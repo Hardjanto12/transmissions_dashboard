@@ -1,7 +1,10 @@
 Flask==2.3.3
 Werkzeug==2.3.7
 openpyxl==3.1.2
-pystray==0.19.5
-Pillow==10.0.1
-pyinstaller==6.0.0
+Pillow==10.4.0
+pywin32==311
 requests==2.31.0
+pyinstaller==6.16.0
+pywebview==5.0.5
+waitress==3.0.0
+PyQt5==5.15.10
