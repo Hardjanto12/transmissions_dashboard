@@ -56,10 +56,17 @@ class ServerThread(QThread):
         if self.server_process and self.server_process.poll() is None:
             self.output_signal.emit("Stopping server...\n")
             self.server_process.terminate()
-            self.server_process.wait(timeout=5)
-            if self.server_process.poll() is None:
+            try:
+                self.server_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.output_signal.emit(
+                    "Server did not stop within 5 seconds. Killing process...\n"
+                )
                 self.server_process.kill()
-            self.output_signal.emit("Server stopped.\n")
+                self.server_process.wait()
+                self.output_signal.emit("Server process killed.\n")
+            else:
+                self.output_signal.emit("Server stopped.\n")
 
 class ServerGUI(QMainWindow):
     def __init__(self):
@@ -196,13 +203,16 @@ class ServerGUI(QMainWindow):
         if hasattr(self, "tray_icon"):
             self.tray_icon.hide()
 
-        if self.server_thread.isRunning():
-            self.stop_server()
+        try:
+            if self.server_thread.isRunning():
+                self.stop_server()
+        except Exception as exc:
+            self.append_log(f"Error while stopping server: {exc}\n")
+        finally:
             self.server_thread.wait()
-
-        app = QApplication.instance()
-        if app:
-            app.quit()
+            app = QApplication.instance()
+            if app:
+                app.quit()
 
     def closeEvent(self, event):
         if self.server_running:
