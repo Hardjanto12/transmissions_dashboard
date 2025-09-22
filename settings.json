@@ -1,4 +1,15 @@
 {
   "logs_directory": "X:\\Python\\transmissions_dashboard\\logs",
-  "auto_refresh_interval": 30
+  "auto_refresh_interval": 30,
+  "ftp_targets": [
+    {
+      "host": "ftp.primary.example.com",
+      "port": 21
+    },
+    {
+      "host": "ftp.backup.example.com",
+      "port": 21
+    }
+  ],
+  "ftp_ping_interval": 60
 }

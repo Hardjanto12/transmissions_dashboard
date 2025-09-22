@@ -189,7 +189,68 @@
         .server-status-indicator.offline {
             background-color: #f44336;
         }
-        
+
+        .ftp-status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .ftp-status-item:last-child {
+            border-bottom: none;
+        }
+
+        .ftp-status-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ftp-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .ftp-status-indicator.online {
+            background-color: #4caf50;
+        }
+
+        .ftp-status-indicator.offline {
+            background-color: #f44336;
+        }
+
+        .ftp-status-indicator.unconfigured,
+        .ftp-status-indicator.unknown {
+            background-color: #9e9e9e;
+        }
+
+        .ftp-status-state {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .ftp-status-state.online {
+            color: #4caf50;
+        }
+
+        .ftp-status-state.offline {
+            color: #f44336;
+        }
+
+        .ftp-status-state.unconfigured,
+        .ftp-status-state.unknown {
+            color: #6c757d;
+        }
+
+        .ftp-status-updated {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
         .real-time-badge {
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
@@ -511,7 +572,23 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- FTP Connectivity Card -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>FTP Connectivity</h5>
+                                <small class="text-muted">Monitoring configured FTP endpoints</small>
+                            </div>
+                            <span class="ftp-status-updated" id="ftp-status-updated">Awaiting check...</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="ftp-status-container">
+                                <div class="text-muted">Loading FTP status...</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <div class="col-md-3">
@@ -798,7 +875,7 @@
                                         
                                         <div class="mb-3">
                                             <label for="auto-refresh" class="form-label">Auto Refresh Interval (seconds)</label>
-                                            <input type="number" class="form-control" id="auto-refresh" 
+                                            <input type="number" class="form-control" id="auto-refresh"
                                                    min="10" max="300" value="30">
                                             <div class="form-text">
                                                 <small class="text-muted">
@@ -806,7 +883,44 @@
                                                 </small>
                                             </div>
                                         </div>
-                                        
+
+                                        <div class="mb-4">
+                                            <h6 class="text-uppercase text-muted small">FTP Monitoring</h6>
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-md-8">
+                                                    <label for="ftp-host-1" class="form-label">FTP Server 1 Host</label>
+                                                    <input type="text" class="form-control" id="ftp-host-1"
+                                                           placeholder="e.g. ftp1.example.com">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="ftp-port-1" class="form-label">Port</label>
+                                                    <input type="number" class="form-control" id="ftp-port-1"
+                                                           min="1" max="65535" value="21">
+                                                </div>
+                                            </div>
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-md-8">
+                                                    <label for="ftp-host-2" class="form-label">FTP Server 2 Host</label>
+                                                    <input type="text" class="form-control" id="ftp-host-2"
+                                                           placeholder="Optional secondary host">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="ftp-port-2" class="form-label">Port</label>
+                                                    <input type="number" class="form-control" id="ftp-port-2"
+                                                           min="1" max="65535" value="21">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="ftp-interval" class="form-label">FTP Ping Interval (seconds)</label>
+                                                <input type="number" class="form-control" id="ftp-interval" min="5" value="60">
+                                                <div class="form-text">
+                                                    <small class="text-muted">
+                                                        How often the dashboard checks connectivity for each FTP target
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="d-flex gap-2">
                                             <button type="button" class="btn btn-primary" onclick="saveSettings()">
                                                 <i class="fas fa-save me-1"></i> Save Settings
@@ -953,6 +1067,9 @@
         let nokDetailModalInstance = null;
         let startTime = new Date();
         let lastUpdateTime = new Date();
+        let ftpStatusTimer = null;
+        let ftpStatusPollInterval = 15000;
+        const MIN_FTP_STATUS_INTERVAL = 5000;
 
         // Initialize the dashboard
         $(document).ready(function() {
@@ -961,13 +1078,30 @@
             loadRecentActivity();
             updateQuickStats();
             showNotification('Dashboard loaded successfully!', 'success');
-            
+
             // Initialize scroll to top button
             initScrollToTop();
-            
+
             // Start real-time updates
             startRealTimeUpdates();
+
+            // Start FTP status polling
+            initFtpStatusPolling();
         });
+
+        function escapeHtml(value) {
+            if (value === undefined || value === null) {
+                return '';
+            }
+            return $('<div>').text(value).html();
+        }
+
+        function isInvalidNumber(value) {
+            if (typeof Number.isNaN === 'function') {
+                return Number.isNaN(value);
+            }
+            return isNaN(value);
+        }
 
         // Enhanced functions
         function initScrollToTop() {
@@ -1466,12 +1600,163 @@
             }
         }, 30000);
 
+        // FTP status helpers
+        function scheduleFtpStatusPolling(intervalMs) {
+            const safeInterval = Math.max(MIN_FTP_STATUS_INTERVAL, intervalMs);
+            ftpStatusPollInterval = safeInterval;
+
+            if (ftpStatusTimer) {
+                clearInterval(ftpStatusTimer);
+            }
+
+            ftpStatusTimer = setInterval(loadFtpStatus, safeInterval);
+        }
+
+        function initFtpStatusPolling() {
+            loadFtpStatus();
+            scheduleFtpStatusPolling(ftpStatusPollInterval);
+        }
+
+        function loadFtpStatus() {
+            $.get('/api/ftp-status', function(response) {
+                const container = $('#ftp-status-container');
+                container.empty();
+
+                const statuses = Array.isArray(response.statuses) ? response.statuses : [];
+
+                if (statuses.length === 0) {
+                    container.append(
+                        $('<div/>', { class: 'text-muted' }).text('No FTP servers configured.')
+                    );
+                } else {
+                    statuses.forEach(status => {
+                        container.append(renderFtpStatus(status));
+                    });
+                }
+
+                const firstTimestamp = statuses.find(status => status && status.last_checked);
+                const pingInterval = parseInt(response.ping_interval, 10);
+                const intervalSuffix = (!isNaN(pingInterval) && pingInterval > 0)
+                    ? ` • Every ${pingInterval}s`
+                    : '';
+
+                if (firstTimestamp) {
+                    $('#ftp-status-updated').text(
+                        `Updated ${formatTimestamp(firstTimestamp.last_checked)}${intervalSuffix}`
+                    );
+                } else {
+                    $('#ftp-status-updated').text(
+                        intervalSuffix ? `Awaiting check${intervalSuffix}` : 'Awaiting check...'
+                    );
+                }
+
+                if (!isNaN(pingInterval) && pingInterval > 0) {
+                    const desiredInterval = Math.max(
+                        MIN_FTP_STATUS_INTERVAL,
+                        pingInterval * 1000
+                    );
+
+                    if (desiredInterval !== ftpStatusPollInterval) {
+                        scheduleFtpStatusPolling(desiredInterval);
+                    }
+                }
+            }).fail(function() {
+                $('#ftp-status-container').html(
+                    '<div class="text-danger">Unable to load FTP status.</div>'
+                );
+                $('#ftp-status-updated').text('Status unavailable');
+            });
+        }
+
+        function renderFtpStatus(status) {
+            const normalizedStatus = (status && status.status)
+                ? String(status.status).toLowerCase()
+                : 'unknown';
+            const allowedStatuses = ['online', 'offline', 'unconfigured', 'unknown'];
+            const statusClass = allowedStatuses.includes(normalizedStatus)
+                ? normalizedStatus
+                : 'unknown';
+
+            const hostText = (status && status.host)
+                ? `${status.host}:${status.port}`
+                : 'Not configured';
+
+            const item = $('<div/>', { class: 'ftp-status-item' });
+            const info = $('<div/>', { class: 'ftp-status-info' }).appendTo(item);
+            $('<span/>', { class: `ftp-status-indicator ${statusClass}` }).appendTo(info);
+
+            const infoText = $('<div/>').appendTo(info);
+            $('<div/>', { class: 'fw-semibold' })
+                .text(status && status.name ? status.name : 'FTP Server')
+                .appendTo(infoText);
+            $('<div/>', { class: 'text-muted small' })
+                .text(hostText)
+                .appendTo(infoText);
+            $('<div/>', { class: 'text-muted small' })
+                .text(`Last checked: ${formatTimestamp(status ? status.last_checked : null)}`)
+                .appendTo(infoText);
+
+            const statusColumn = $('<div/>', { class: 'text-end' }).appendTo(item);
+            $('<div/>', { class: `ftp-status-state ${statusClass}` })
+                .text((status && status.status ? status.status : 'UNKNOWN').toUpperCase())
+                .appendTo(statusColumn);
+
+            if (status && status.error) {
+                $('<div/>', { class: 'text-muted small' })
+                    .text(status.error)
+                    .appendTo(statusColumn);
+            }
+
+            return item;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) {
+                return 'N/A';
+            }
+
+            const date = new Date(timestamp);
+            if (isInvalidNumber(date.getTime())) {
+                return 'N/A';
+            }
+
+            return date.toLocaleString();
+        }
+
         // Settings functions
         function loadCurrentSettings() {
             $.get('/api/settings', function(settings) {
-                $('#logs-directory').val(settings.logs_directory);
+                $('#logs-directory').val(settings.logs_directory || '');
                 $('#auto-refresh').val(settings.auto_refresh_interval);
-                
+
+                const ftpTargets = Array.isArray(settings.ftp_targets)
+                    ? settings.ftp_targets
+                    : [];
+
+                const ftp1 = ftpTargets[0] || {};
+                const ftp2 = ftpTargets[1] || {};
+
+                $('#ftp-host-1').val(ftp1.host || '');
+                $('#ftp-port-1').val(
+                    ftp1.port !== undefined && ftp1.port !== null ? ftp1.port : 21
+                );
+                $('#ftp-host-2').val(ftp2.host || '');
+                $('#ftp-port-2').val(
+                    ftp2.port !== undefined && ftp2.port !== null ? ftp2.port : 21
+                );
+
+                const ftpInterval = settings.ftp_ping_interval;
+                $('#ftp-interval').val(ftpInterval || 60);
+
+                const intervalSeconds = parseInt(ftpInterval, 10);
+                if (!isInvalidNumber(intervalSeconds) && intervalSeconds > 0) {
+                    const desiredInterval = Math.max(
+                        MIN_FTP_STATUS_INTERVAL,
+                        intervalSeconds * 1000
+                    );
+                    scheduleFtpStatusPolling(desiredInterval);
+                }
+
                 // Update status display
                 updateSettingsStatus(settings);
             }).fail(function() {
@@ -1485,14 +1770,59 @@
         }
 
         function updateSettingsStatus(settings) {
+            const logsDirectory = settings.logs_directory
+                ? escapeHtml(settings.logs_directory)
+                : 'Not configured';
+            const autoRefresh = parseInt(settings.auto_refresh_interval, 10);
+            const ftpInterval = parseInt(settings.ftp_ping_interval, 10);
+
+            const ftpTargets = Array.isArray(settings.ftp_targets)
+                ? settings.ftp_targets
+                : [];
+
+            const ftpListItems = [];
+            for (let i = 0; i < 2; i += 1) {
+                const target = ftpTargets[i] || {};
+                if (target.host) {
+                    const hostValue = escapeHtml(target.host);
+                    const portValue = target.port !== undefined && target.port !== null
+                        ? escapeHtml(String(target.port))
+                        : '21';
+                    const hostLabel = `${hostValue}:${portValue}`;
+                    ftpListItems.push(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>FTP Server ${i + 1}</span>
+                            <span class="text-monospace">${hostLabel}</span>
+                        </li>
+                    `);
+                } else {
+                    ftpListItems.push(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>FTP Server ${i + 1}</span>
+                            <span class="text-muted">Not configured</span>
+                        </li>
+                    `);
+                }
+            }
+
             const statusHtml = `
                 <div class="mb-2">
                     <strong>Current Logs Directory:</strong><br>
-                    <code class="small">${settings.logs_directory}</code>
+                    <code class="small">${logsDirectory}</code>
                 </div>
                 <div class="mb-2">
                     <strong>Auto Refresh:</strong><br>
-                    <span class="badge bg-info">${settings.auto_refresh_interval}s</span>
+                    <span class="badge bg-info">${!isInvalidNumber(autoRefresh) && autoRefresh > 0 ? autoRefresh : 'N/A'}s</span>
+                </div>
+                <div class="mb-2">
+                    <strong>FTP Ping Interval:</strong><br>
+                    <span class="badge bg-secondary">${!isInvalidNumber(ftpInterval) && ftpInterval > 0 ? ftpInterval : 60}s</span>
+                </div>
+                <div class="mb-3">
+                    <strong>FTP Targets:</strong>
+                    <ul class="list-group list-group-flush small mt-2">
+                        ${ftpListItems.join('')}
+                    </ul>
                 </div>
                 <div class="text-success">
                     <i class="fas fa-check-circle me-1"></i>
@@ -1504,30 +1834,82 @@
 
         function saveSettings() {
             const logsDirectory = $('#logs-directory').val().trim();
-            const autoRefresh = parseInt($('#auto-refresh').val());
-            
+            const autoRefresh = parseInt($('#auto-refresh').val(), 10);
+            const ftpTargets = [
+                {
+                    host: $('#ftp-host-1').val().trim(),
+                    port: $('#ftp-port-1').val()
+                },
+                {
+                    host: $('#ftp-host-2').val().trim(),
+                    port: $('#ftp-port-2').val()
+                }
+            ];
+            const ftpInterval = parseInt($('#ftp-interval').val(), 10);
+
             if (!logsDirectory) {
                 alert('Please enter a logs directory path');
                 return;
             }
-            
+
+            if (isInvalidNumber(autoRefresh) || autoRefresh <= 0) {
+                alert('Please enter a valid auto refresh interval.');
+                return;
+            }
+
+            if (isInvalidNumber(ftpInterval) || ftpInterval <= 0) {
+                alert('Please enter a valid FTP ping interval.');
+                return;
+            }
+
+            let ftpValidationError = null;
+            ftpTargets.forEach((target, index) => {
+                let port = parseInt(target.port, 10);
+                if (isInvalidNumber(port)) {
+                    port = 21;
+                }
+
+                if (port < 1 || port > 65535) {
+                    ftpValidationError = `FTP Server ${index + 1} port must be between 1 and 65535.`;
+                    return;
+                }
+
+                target.port = port;
+                target.host = target.host || '';
+            });
+
+            if (ftpValidationError) {
+                alert(ftpValidationError);
+                return;
+            }
+
             const settings = {
                 logs_directory: logsDirectory,
-                auto_refresh_interval: autoRefresh
+                auto_refresh_interval: autoRefresh,
+                ftp_targets: ftpTargets,
+                ftp_ping_interval: ftpInterval
             };
-            
+
             $.ajax({
                 url: '/api/settings',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(settings),
-                success: function(response) {
-                    alert('Settings saved successfully! The application will now use the new logs directory.');
+                success: function() {
+                    alert('Settings saved successfully! The application will now use the updated configuration.');
                     loadCurrentSettings();
                     // Refresh data to use new directory
                     loadLogFiles();
                     loadStats();
                     loadRecentActivity();
+
+                    const intervalMs = Math.max(
+                        MIN_FTP_STATUS_INTERVAL,
+                        ftpInterval * 1000
+                    );
+                    scheduleFtpStatusPolling(intervalMs);
+                    $('#ftp-status-updated').text('Awaiting check...');
+                    loadFtpStatus();
                 },
                 error: function(xhr) {
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings';
