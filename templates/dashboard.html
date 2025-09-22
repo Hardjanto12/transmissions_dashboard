@@ -580,7 +580,12 @@
                                 <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>FTP Connectivity</h5>
                                 <small class="text-muted">Monitoring configured FTP endpoints</small>
                             </div>
-                            <span class="ftp-status-updated" id="ftp-status-updated">Awaiting check...</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="ftp-status-updated" id="ftp-status-updated">Awaiting check...</span>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="ftp-ping-now-btn" onclick="pingFtpNow(this)" title="Check FTP status now">
+                                    <i class="fas fa-bolt me-1"></i> Ping Now
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div id="ftp-status-container">
@@ -1617,54 +1622,94 @@
             scheduleFtpStatusPolling(ftpStatusPollInterval);
         }
 
+        function processFtpStatusResponse(response) {
+            const container = $('#ftp-status-container');
+            container.empty();
+
+            const statuses = (response && Array.isArray(response.statuses))
+                ? response.statuses
+                : [];
+
+            if (statuses.length === 0) {
+                container.append(
+                    $('<div/>', { class: 'text-muted' }).text('No FTP servers configured.')
+                );
+            } else {
+                statuses.forEach(status => {
+                    container.append(renderFtpStatus(status));
+                });
+            }
+
+            const firstTimestamp = statuses.find(status => status && status.last_checked);
+            const pingInterval = parseInt(response ? response.ping_interval : NaN, 10);
+            const intervalSuffix = (!isNaN(pingInterval) && pingInterval > 0)
+                ? ` • Every ${pingInterval}s`
+                : '';
+
+            if (firstTimestamp) {
+                $('#ftp-status-updated').text(
+                    `Updated ${formatTimestamp(firstTimestamp.last_checked)}${intervalSuffix}`
+                );
+            } else {
+                $('#ftp-status-updated').text(
+                    intervalSuffix ? `Awaiting check${intervalSuffix}` : 'Awaiting check...'
+                );
+            }
+
+            if (!isNaN(pingInterval) && pingInterval > 0) {
+                const desiredInterval = Math.max(
+                    MIN_FTP_STATUS_INTERVAL,
+                    pingInterval * 1000
+                );
+
+                if (desiredInterval !== ftpStatusPollInterval) {
+                    scheduleFtpStatusPolling(desiredInterval);
+                }
+            }
+        }
+
         function loadFtpStatus() {
             $.get('/api/ftp-status', function(response) {
-                const container = $('#ftp-status-container');
-                container.empty();
-
-                const statuses = Array.isArray(response.statuses) ? response.statuses : [];
-
-                if (statuses.length === 0) {
-                    container.append(
-                        $('<div/>', { class: 'text-muted' }).text('No FTP servers configured.')
-                    );
-                } else {
-                    statuses.forEach(status => {
-                        container.append(renderFtpStatus(status));
-                    });
-                }
-
-                const firstTimestamp = statuses.find(status => status && status.last_checked);
-                const pingInterval = parseInt(response.ping_interval, 10);
-                const intervalSuffix = (!isNaN(pingInterval) && pingInterval > 0)
-                    ? ` • Every ${pingInterval}s`
-                    : '';
-
-                if (firstTimestamp) {
-                    $('#ftp-status-updated').text(
-                        `Updated ${formatTimestamp(firstTimestamp.last_checked)}${intervalSuffix}`
-                    );
-                } else {
-                    $('#ftp-status-updated').text(
-                        intervalSuffix ? `Awaiting check${intervalSuffix}` : 'Awaiting check...'
-                    );
-                }
-
-                if (!isNaN(pingInterval) && pingInterval > 0) {
-                    const desiredInterval = Math.max(
-                        MIN_FTP_STATUS_INTERVAL,
-                        pingInterval * 1000
-                    );
-
-                    if (desiredInterval !== ftpStatusPollInterval) {
-                        scheduleFtpStatusPolling(desiredInterval);
-                    }
-                }
+                processFtpStatusResponse(response);
             }).fail(function() {
                 $('#ftp-status-container').html(
                     '<div class="text-danger">Unable to load FTP status.</div>'
                 );
                 $('#ftp-status-updated').text('Status unavailable');
+            });
+        }
+
+        function pingFtpNow(buttonElement) {
+            const $button = buttonElement ? $(buttonElement) : $('#ftp-ping-now-btn');
+            if ($button.length) {
+                $button.data('original-html', $button.html());
+                $button.prop('disabled', true);
+                $button.html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Checking...');
+            }
+
+            const $statusLabel = $('#ftp-status-updated');
+            const previousStatusText = $statusLabel.text();
+            $statusLabel.text('Checking now...');
+
+            $.ajax({
+                url: '/api/ftp-status/ping',
+                method: 'POST',
+                success: function(response) {
+                    processFtpStatusResponse(response);
+                    showNotification('FTP status refreshed successfully.', 'success');
+                },
+                error: function() {
+                    showNotification('Failed to ping FTP servers. Please try again.', 'error');
+                    $statusLabel.text(previousStatusText || 'Status unavailable');
+                },
+                complete: function() {
+                    if ($button.length) {
+                        const originalHtml = $button.data('original-html');
+                        $button.html(originalHtml || '<i class="fas fa-bolt me-1"></i> Ping Now');
+                        $button.prop('disabled', false);
+                        $button.removeData('original-html');
+                    }
+                }
             });
         }
 
