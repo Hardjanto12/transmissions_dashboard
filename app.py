@@ -64,9 +64,125 @@ class LogParser:
     def parse_log_file(self, file_path):
         """Parse a single log file and extract JSON data"""
         data = []
+        provisional_entries = {}
+        completed_task_ids = set()
+
+        def parse_task_time(raw_value):
+            """Convert datetime.datetime(...) text to a formatted string."""
+            if not raw_value:
+                return None
+            parts = [part.strip() for part in raw_value.split(',')]
+            try:
+                if len(parts) < 3:
+                    return None
+                year = int(parts[0])
+                month = int(parts[1])
+                day = int(parts[2])
+                hour = int(parts[3]) if len(parts) > 3 else 0
+                minute = int(parts[4]) if len(parts) > 4 else 0
+                second = int(parts[5]) if len(parts) > 5 else 0
+                dt_obj = datetime(year, month, day, hour, minute, second)
+                return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+            except (ValueError, TypeError, IndexError):
+                return None
+
+        def extract_upload_info(line):
+            """Extract task details from upload related log lines."""
+            if ('Task.py-build_upload_data' not in line and
+                    'XmlParse.py-parse_xml' not in line):
+                return None
+
+            timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
+                                        line)
+            log_timestamp = timestamp_match.group(1) if timestamp_match else None
+
+            task_no_match = (re.search(r"'task_no':\s*'([^']+)'", line) or
+                             re.search(r"'pic_no':\s*'([^']+)'", line))
+            image_path_match = (re.search(r"'image_path':\s*'([^']*)'", line) or
+                                re.search(r"'img_dir_path':\s*'([^']*)'", line))
+            retry_match = re.search(r"'retry_(?:count|time)':\s*(\d+)", line)
+            task_time_match = re.search(
+                r"'task_time':\s*datetime\.datetime\(([^)]+)\)", line)
+
+            task_time = parse_task_time(task_time_match.group(1)
+                                        if task_time_match else None)
+
+            if not task_no_match:
+                return None
+
+            return {
+                'task_no': task_no_match.group(1),
+                'image_path': image_path_match.group(1)
+                if image_path_match else '',
+                'retry_count': int(retry_match.group(1))
+                if retry_match else 0,
+                'task_time': task_time,
+                'log_timestamp': log_timestamp
+            }
+
+        def update_provisional_entry(info):
+            """Create or update provisional entries for upload events."""
+            task_no = info.get('task_no')
+            if not task_no or task_no in completed_task_ids:
+                return
+
+            log_timestamp = info.get('log_timestamp')
+            scan_time = info.get('task_time') or log_timestamp or 'N/A'
+            image_path = info.get('image_path', '')
+            retry_count = info.get('retry_count', 0)
+
+            entry = provisional_entries.get(task_no)
+            if entry:
+                if scan_time and scan_time != 'N/A':
+                    entry['scan_time'] = scan_time
+                if log_timestamp:
+                    entry['update_time'] = log_timestamp
+                    entry['log_timestamp'] = log_timestamp
+                raw_data = entry.setdefault('raw_data', {})
+                raw_data['task_no'] = task_no
+                if image_path:
+                    raw_data['image_path'] = image_path
+                if retry_count or 'retry_count' not in raw_data:
+                    raw_data['retry_count'] = retry_count
+                if scan_time and scan_time != 'N/A':
+                    raw_data['task_time'] = scan_time
+                if log_timestamp:
+                    raw_data['log_timestamp'] = log_timestamp
+                return
+
+            raw_data = {
+                'task_no': task_no,
+                'image_path': image_path,
+                'retry_count': retry_count,
+                'task_time': scan_time,
+                'source': 'upload'
+            }
+            if log_timestamp:
+                raw_data['log_timestamp'] = log_timestamp
+
+            provisional_entries[task_no] = {
+                'id_scan': task_no,
+                'container_no': '',
+                'scan_time': scan_time,
+                'scan_duration': 'N/A',
+                'overall_time': 'N/A',
+                'update_time': log_timestamp or 'N/A',
+                'time_difference': 'N/A',
+                'image_count': 0,
+                'status': 'NOK',
+                'log_timestamp': log_timestamp,
+                'file_name': os.path.basename(file_path),
+                'raw_data': raw_data
+            }
+
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line in f:
+                    upload_info = extract_upload_info(line)
+                    if upload_info:
+                        update_provisional_entry(upload_info)
+                        continue
+
                     # Look for lines with response text (both success and failure)
                     if 'response text:' in line and 'center response:' in line:
                         try:
@@ -123,11 +239,17 @@ class LogParser:
                                     'raw_data': result_data
                                 }
                                 data.append(entry)
-                            
+                                if entry['id_scan']:
+                                    completed_task_ids.add(entry['id_scan'])
+                                    provisional_entries.pop(entry['id_scan'], None)
+                                elif response_id:
+                                    completed_task_ids.add(response_id)
+                                    provisional_entries.pop(response_id, None)
+
                             # Handle failed responses (resultCode: false)
-                            elif (response_data.get('resultCode') is False and 
+                            elif (response_data.get('resultCode') is False and
                                   response_data.get('resultData') == '-'):
-                                
+
                                 # Extract container number from response description if available
                                 container_no = "Failed!"
                                 desc = response_data.get('resultDesc', '')
@@ -154,12 +276,17 @@ class LogParser:
                                     'error_description': desc
                                 }
                                 data.append(entry)
-                                
+                                if response_id:
+                                    completed_task_ids.add(response_id)
+                                    provisional_entries.pop(response_id, None)
+
                         except (json.JSONDecodeError, KeyError):
                             continue
         except IOError as e:
             print(f"Error reading file {file_path}: {e}")
-        
+
+        data.extend(provisional_entries.values())
+
         return data
     
     def calculate_scan_duration(self, data):
