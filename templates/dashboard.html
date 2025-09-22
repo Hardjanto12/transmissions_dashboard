@@ -729,6 +729,7 @@
                                         <th>ID Scan</th>
                                         <th>Jam Scan</th>
                                         <th>Status</th>
+                                        <th>Detail</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -872,6 +873,72 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <!-- NOK Detail Modal -->
+    <div class="modal fade" id="nokDetailModal" tabindex="-1" aria-labelledby="nokDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nokDetailModalLabel">NOK Scan Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small">Core Information</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">ID Scan</dt>
+                                <dd class="col-sm-7" id="modal-id-scan">N/A</dd>
+                                <dt class="col-sm-5">Container No</dt>
+                                <dd class="col-sm-7" id="modal-container-no">N/A</dd>
+                                <dt class="col-sm-5">Scan Time</dt>
+                                <dd class="col-sm-7" id="modal-scan-time">N/A</dd>
+                                <dt class="col-sm-5">Scan Duration</dt>
+                                <dd class="col-sm-7" id="modal-scan-duration">N/A</dd>
+                                <dt class="col-sm-5">Overall Time</dt>
+                                <dd class="col-sm-7" id="modal-overall-time">N/A</dd>
+                                <dt class="col-sm-5">Status</dt>
+                                <dd class="col-sm-7" id="modal-status">N/A</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small">Timing Details</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Update Time</dt>
+                                <dd class="col-sm-7" id="modal-update-time">N/A</dd>
+                                <dt class="col-sm-5">Time Difference</dt>
+                                <dd class="col-sm-7" id="modal-time-difference">N/A</dd>
+                                <dt class="col-sm-5">Image Count</dt>
+                                <dd class="col-sm-7" id="modal-image-count">N/A</dd>
+                                <dt class="col-sm-5">Task Time</dt>
+                                <dd class="col-sm-7" id="modal-task-time">N/A</dd>
+                                <dt class="col-sm-5">Retry Count</dt>
+                                <dd class="col-sm-7" id="modal-retry-count">N/A</dd>
+                            </dl>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-muted small">Image Information</h6>
+                            <div class="p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Image Path</span>
+                                    <span class="fw-semibold" id="modal-image-path">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-muted small">Additional Raw Data</h6>
+                            <ul class="list-group" id="modal-additional-raw">
+                                <li class="list-group-item text-muted">No additional data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -883,6 +950,7 @@
         let currentData = [];
         let dataTable = null;
         let dataTableNOK = null;
+        let nokDetailModalInstance = null;
         let startTime = new Date();
         let lastUpdateTime = new Date();
 
@@ -1125,11 +1193,22 @@
                         columns: [
                             { data: 'id_scan' },
                             { data: 'scan_time' },
-                            { 
+                            {
                                 data: 'status',
                                 render: function(data, type, row) {
                                     const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
                                     return `<span class="status-badge ${statusClass}">${data}</span>`;
+                                }
+                            },
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row) {
+                                    return '<button type="button" class="btn btn-sm btn-outline-primary btn-detail">' +
+                                           '<i class="fas fa-info-circle me-1"></i> Detail' +
+                                           '</button>';
                                 }
                             }
                         ],
@@ -1147,10 +1226,98 @@
                             }
                         }
                     });
+
+                    $('#data-table-nok tbody').on('click', '.btn-detail', function() {
+                        const rowData = dataTableNOK.row($(this).closest('tr')).data();
+
+                        if (!rowData) {
+                            return;
+                        }
+
+                        populateDetailModal(rowData);
+
+                        if (!nokDetailModalInstance) {
+                            nokDetailModalInstance = new bootstrap.Modal(document.getElementById('nokDetailModal'));
+                        }
+
+                        nokDetailModalInstance.show();
+                    });
                 } else {
                     dataTableNOK.clear().rows.add(response.data).draw();
                 }
             });
+        }
+
+        function populateDetailModal(data) {
+            const rawData = (data.raw_data && typeof data.raw_data === 'object' && !Array.isArray(data.raw_data)) ? data.raw_data : {};
+
+            const formatValue = (value) => {
+                if (value === undefined || value === null) {
+                    return 'N/A';
+                }
+
+                if (typeof value === 'string' && value.trim() === '') {
+                    return 'N/A';
+                }
+
+                return value;
+            };
+
+            const setText = (selector, value) => {
+                $(selector).text(formatValue(value));
+            };
+
+            setText('#modal-id-scan', data.id_scan);
+            setText('#modal-container-no', data.container_no);
+            setText('#modal-scan-time', data.scan_time);
+            setText('#modal-scan-duration', data.scan_duration);
+            setText('#modal-overall-time', data.overall_time);
+            setText('#modal-status', data.status);
+            setText('#modal-update-time', data.update_time);
+            setText('#modal-time-difference', data.time_difference);
+            setText('#modal-image-count', data.image_count);
+            setText('#modal-task-time', rawData.task_time);
+            setText('#modal-retry-count', rawData.retry_count);
+
+            const imagePathElement = $('#modal-image-path');
+            const imagePathValue = formatValue(rawData.image_path);
+            imagePathElement.empty();
+            if (imagePathValue !== 'N/A' && typeof rawData.image_path === 'string') {
+                $('<a/>', {
+                    href: rawData.image_path,
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                }).text(rawData.image_path).appendTo(imagePathElement);
+            } else {
+                imagePathElement.text('N/A');
+            }
+
+            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count']);
+            const additionalRawContainer = $('#modal-additional-raw');
+            additionalRawContainer.empty();
+
+            let hasAdditional = false;
+            Object.entries(rawData).forEach(([key, value]) => {
+                if (knownRawKeys.has(key)) {
+                    return;
+                }
+
+                const listItem = $('<li/>', {
+                    class: 'list-group-item d-flex justify-content-between align-items-center'
+                });
+
+                $('<span/>', { class: 'text-muted small' }).text(key).appendTo(listItem);
+                $('<span/>', { class: 'fw-semibold' }).text(formatValue(value)).appendTo(listItem);
+
+                additionalRawContainer.append(listItem);
+                hasAdditional = true;
+            });
+
+            if (!hasAdditional) {
+                additionalRawContainer.append(
+                    $('<li/>', { class: 'list-group-item text-muted' }).text('No additional raw data available.')
+                );
+            }
         }
 
 
