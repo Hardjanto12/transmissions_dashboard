@@ -269,6 +269,13 @@ class FTPStatusMonitor:
         with ftp_status_lock:
             ftp_status_cache = statuses
 
+        return statuses
+
+    def poll_now(self):
+        """Perform a synchronous FTP status check and return the latest result."""
+        statuses = self._poll_once()
+        return copy.deepcopy(statuses)
+
 
 class LogParser:
     def __init__(self, logs_dir="logs"):
@@ -756,6 +763,22 @@ def get_ftp_status():
 
     return jsonify({
         'statuses': status_snapshot,
+        'ping_interval': app_settings.get('ftp_ping_interval',
+                                          DEFAULT_FTP_PING_INTERVAL)
+    })
+
+
+@app.route('/api/ftp-status/ping', methods=['POST'])
+def ping_ftp_status():
+    """API endpoint to force an immediate FTP status check."""
+    try:
+        statuses = ftp_monitor.poll_now()
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.exception("Failed to poll FTP status on demand: %s", exc)
+        return jsonify({'error': 'Failed to poll FTP status'}), 500
+
+    return jsonify({
+        'statuses': statuses,
         'ping_interval': app_settings.get('ftp_ping_interval',
                                           DEFAULT_FTP_PING_INTERVAL)
     })
