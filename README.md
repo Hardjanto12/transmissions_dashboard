@@ -10,6 +10,7 @@ A Flask-based web dashboard for monitoring transmission log data from X-ray scan
 - **Responsive Design**: Modern, mobile-friendly interface
 - **Auto-refresh**: Automatic data updates every 30 seconds
 - **Configurable Settings**: Customize logs directory and refresh intervals
+- **FTP Connectivity Monitoring**: Track availability of up to two FTP endpoints with scheduled health checks
 
 ## Installation
 
@@ -90,6 +91,7 @@ The application reads log files from the `logs/` directory. It looks for lines c
 - `GET /api/settings` - Get current application settings
 - `POST /api/settings` - Update application settings
 - `GET /api/validate-directory` - Validate logs directory path
+- `GET /api/ftp-status` - Get cached FTP connectivity status
 
 ## Configuration
 
@@ -99,17 +101,30 @@ The application includes a settings page where you can:
 
 1. **Configure Logs Directory**: Set the path to your Transmission log files
 2. **Auto-refresh Interval**: Adjust how often the dashboard updates (10-300 seconds)
-3. **Directory Validation**: Verify that your logs directory contains valid log files
+3. **FTP Targets**: Define up to two FTP host/port pairs for connectivity checks
+4. **FTP Ping Interval**: Configure how often the background worker pings the FTP endpoints
+5. **Directory Validation**: Verify that your logs directory contains valid log files
 
 ### Default Configuration
 
 - **Logs Directory**: `logs/` (relative to application directory)
 - **Auto-refresh**: 30 seconds
+- **FTP Targets**: `ftp.primary.example.com:21` and `ftp.backup.example.com:21`
+- **FTP Ping Interval**: 60 seconds
 - **Log File Pattern**: `Transmission.log*`
 
 ### Settings File
 
-Settings are automatically saved to `settings.json` in the application directory. You can also manually edit this file if needed.
+Settings are automatically saved to `settings.json` in the application directory. You can also manually edit this file if needed. The key values include:
+
+- `logs_directory`: Absolute or relative path to the Transmission logs
+- `auto_refresh_interval`: Dashboard auto-refresh cadence in seconds
+- `ftp_targets`: An array of two objects (`host` and `port`) representing the primary and backup FTP endpoints. Leave a host blank to disable monitoring for that slot.
+- `ftp_ping_interval`: Ping cadence (seconds) used by the background FTP status worker
+
+### FTP Monitoring
+
+The overview dashboard displays a dedicated FTP connectivity widget that refreshes on the same cadence as the background worker. Each configured FTP endpoint is probed on the configured interval and reported as **Online**, **Offline**, or **Not configured**. Connection issues are logged server-side for troubleshooting while keeping the dashboard responsive.
 
 ## Requirements
 
