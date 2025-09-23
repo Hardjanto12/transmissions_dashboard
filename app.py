@@ -1,24 +1,124 @@
 from flask import Flask, render_template, request, jsonify, send_file
+import copy
+import logging
 import os
 import re
 import json
 from datetime import datetime
 import glob
+import socket
+import threading
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 import tempfile
 
 app = Flask(__name__)
+logger = logging.getLogger(__name__)
 
 # Settings configuration
 SETTINGS_FILE = 'settings.json'
+
+FTP_TARGET_SLOTS = 2
+DEFAULT_FTP_PORT = 21
+DEFAULT_FTP_PING_INTERVAL = 60
+
+
+def sanitize_ftp_targets(targets, strict=False):
+    """Normalize FTP targets to the expected structure."""
+    normalized = []
+
+    if not isinstance(targets, list):
+        targets = []
+
+    for index in range(FTP_TARGET_SLOTS):
+        target = targets[index] if index < len(targets) else {}
+        if not isinstance(target, dict):
+            target = {}
+
+        host = str(target.get('host', '') or '').strip()
+        port_value = target.get('port', DEFAULT_FTP_PORT)
+
+        if port_value in (None, ''):
+            port_value = DEFAULT_FTP_PORT
+
+        try:
+            port = int(port_value)
+        except (TypeError, ValueError):
+            if strict:
+                raise ValueError(f'FTP target {index + 1} port must be a number')
+            port = DEFAULT_FTP_PORT
+
+        if strict and not (1 <= port <= 65535):
+            raise ValueError(f'FTP target {index + 1} port must be between 1 and 65535')
+
+        if not strict and not (1 <= port <= 65535):
+            port = DEFAULT_FTP_PORT
+
+        normalized.append({
+            'host': host,
+            'port': port
+        })
+
+    return normalized
+
+
+def sanitize_ping_interval(value, default_value):
+    """Convert ping interval to an integer, falling back to default on error."""
+    try:
+        interval = int(value)
+        if interval <= 0:
+            raise ValueError
+        return interval
+    except (TypeError, ValueError):
+        return default_value
+
+
+def validate_ping_interval(value):
+    """Validate and return a positive ping interval."""
+    try:
+        interval = int(value)
+    except (TypeError, ValueError):
+        raise ValueError('FTP ping interval must be a positive integer')
+
+    if interval <= 0:
+        raise ValueError('FTP ping interval must be a positive integer')
+
+    return interval
+
+
+def build_initial_ftp_status_cache(targets):
+    """Create an initial FTP status cache from configured targets."""
+    statuses = []
+    normalized = sanitize_ftp_targets(targets)
+
+    for index, target in enumerate(normalized, start=1):
+        status = 'unconfigured'
+        if target['host']:
+            status = 'unknown'
+
+        statuses.append({
+            'name': f'FTP Server {index}',
+            'host': target['host'],
+            'port': target['port'],
+            'status': status,
+            'error': None,
+            'last_checked': None
+        })
+
+    return statuses
+
 
 def load_settings():
     """Load settings from JSON file"""
     default_settings = {
         'logs_directory': 'logs',
-        'auto_refresh_interval': 30
+        'auto_refresh_interval': 30,
+        'ftp_targets': [
+            {'host': '', 'port': DEFAULT_FTP_PORT},
+            {'host': '', 'port': DEFAULT_FTP_PORT}
+        ],
+        'ftp_ping_interval': DEFAULT_FTP_PING_INTERVAL
     }
 
     if os.path.exists(SETTINGS_FILE):
@@ -28,14 +128,22 @@ def load_settings():
                 # Merge with defaults to ensure all keys exist
                 for key, value in default_settings.items():
                     if key not in settings:
-                        settings[key] = value
+                        settings[key] = copy.deepcopy(value)
+
+                settings['ftp_targets'] = sanitize_ftp_targets(
+                    settings.get('ftp_targets', default_settings['ftp_targets'])
+                )
+                settings['ftp_ping_interval'] = sanitize_ping_interval(
+                    settings.get('ftp_ping_interval'),
+                    default_settings['ftp_ping_interval']
+                )
                 return settings
         except (json.JSONDecodeError, IOError):
             pass
 
     # Create default settings file
     save_settings(default_settings)
-    return default_settings
+    return copy.deepcopy(default_settings)
 
 def save_settings(settings):
     """Save settings to JSON file"""
@@ -47,8 +155,119 @@ def save_settings(settings):
         return False
 
 
+ftp_status_lock = threading.Lock()
+ftp_status_cache = []
+
+
 # Load initial settings
 app_settings = load_settings()
+app_settings['ftp_targets'] = sanitize_ftp_targets(
+    app_settings.get('ftp_targets'))
+app_settings['ftp_ping_interval'] = sanitize_ping_interval(
+    app_settings.get('ftp_ping_interval'), DEFAULT_FTP_PING_INTERVAL)
+
+with ftp_status_lock:
+    ftp_status_cache = build_initial_ftp_status_cache(
+        app_settings['ftp_targets'])
+
+
+class FTPStatusMonitor:
+    """Background worker to monitor FTP endpoint availability."""
+
+    def __init__(self):
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.settings = {
+            'ftp_targets': sanitize_ftp_targets([]),
+            'ftp_ping_interval': DEFAULT_FTP_PING_INTERVAL
+        }
+
+    def start(self, settings):
+        """Start monitoring with the provided settings."""
+        self.stop()
+
+        ftp_targets = sanitize_ftp_targets(settings.get('ftp_targets'))
+        ftp_interval = sanitize_ping_interval(
+            settings.get('ftp_ping_interval'), DEFAULT_FTP_PING_INTERVAL)
+
+        global ftp_status_cache
+        with ftp_status_lock:
+            ftp_status_cache = build_initial_ftp_status_cache(ftp_targets)
+
+        self.settings = {
+            'ftp_targets': ftp_targets,
+            'ftp_ping_interval': ftp_interval
+        }
+
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        """Stop the monitoring thread if it is running."""
+        if self.thread and self.thread.is_alive():
+            self.stop_event.set()
+            self.thread.join(timeout=5)
+        self.stop_event.clear()
+        self.thread = None
+
+    def run(self):
+        """Run the monitoring loop until stopped."""
+        while not self.stop_event.is_set():
+            try:
+                self._poll_once()
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.exception("Unexpected error while polling FTP targets: %s", exc)
+
+            interval = self._get_interval()
+            if self.stop_event.wait(interval):
+                break
+
+    def _get_interval(self):
+        interval = self.settings.get('ftp_ping_interval',
+                                      DEFAULT_FTP_PING_INTERVAL)
+        try:
+            interval = int(interval)
+        except (TypeError, ValueError):
+            interval = DEFAULT_FTP_PING_INTERVAL
+
+        return max(5, interval)
+
+    def _poll_once(self):
+        timestamp = datetime.utcnow().isoformat() + 'Z'
+        targets = sanitize_ftp_targets(self.settings.get('ftp_targets'))
+        statuses = []
+
+        for index, target in enumerate(targets, start=1):
+            host = target['host']
+            port = target['port']
+            status = 'unconfigured'
+            error_message = None
+
+            if host:
+                try:
+                    with socket.create_connection((host, port), timeout=5):
+                        status = 'online'
+                except Exception as exc:  # pragma: no cover - network dependent
+                    status = 'offline'
+                    error_message = str(exc)
+                    logger.warning(
+                        "FTP status check failed for %s:%s - %s",
+                        host, port, exc
+                    )
+
+            statuses.append({
+                'name': f'FTP Server {index}',
+                'host': host,
+                'port': port,
+                'status': status,
+                'error': error_message,
+                'last_checked': timestamp
+            })
+
+        global ftp_status_cache
+        with ftp_status_lock:
+            ftp_status_cache = statuses
 
 
 class LogParser:
@@ -64,9 +283,125 @@ class LogParser:
     def parse_log_file(self, file_path):
         """Parse a single log file and extract JSON data"""
         data = []
+        provisional_entries = {}
+        completed_task_ids = set()
+
+        def parse_task_time(raw_value):
+            """Convert datetime.datetime(...) text to a formatted string."""
+            if not raw_value:
+                return None
+            parts = [part.strip() for part in raw_value.split(',')]
+            try:
+                if len(parts) < 3:
+                    return None
+                year = int(parts[0])
+                month = int(parts[1])
+                day = int(parts[2])
+                hour = int(parts[3]) if len(parts) > 3 else 0
+                minute = int(parts[4]) if len(parts) > 4 else 0
+                second = int(parts[5]) if len(parts) > 5 else 0
+                dt_obj = datetime(year, month, day, hour, minute, second)
+                return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+            except (ValueError, TypeError, IndexError):
+                return None
+
+        def extract_upload_info(line):
+            """Extract task details from upload related log lines."""
+            if ('Task.py-build_upload_data' not in line and
+                    'XmlParse.py-parse_xml' not in line):
+                return None
+
+            timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
+                                        line)
+            log_timestamp = timestamp_match.group(1) if timestamp_match else None
+
+            task_no_match = (re.search(r"'task_no':\s*'([^']+)'", line) or
+                             re.search(r"'pic_no':\s*'([^']+)'", line))
+            image_path_match = (re.search(r"'image_path':\s*'([^']*)'", line) or
+                                re.search(r"'img_dir_path':\s*'([^']*)'", line))
+            retry_match = re.search(r"'retry_(?:count|time)':\s*(\d+)", line)
+            task_time_match = re.search(
+                r"'task_time':\s*datetime\.datetime\(([^)]+)\)", line)
+
+            task_time = parse_task_time(task_time_match.group(1)
+                                        if task_time_match else None)
+
+            if not task_no_match:
+                return None
+
+            return {
+                'task_no': task_no_match.group(1),
+                'image_path': image_path_match.group(1)
+                if image_path_match else '',
+                'retry_count': int(retry_match.group(1))
+                if retry_match else 0,
+                'task_time': task_time,
+                'log_timestamp': log_timestamp
+            }
+
+        def update_provisional_entry(info):
+            """Create or update provisional entries for upload events."""
+            task_no = info.get('task_no')
+            if not task_no or task_no in completed_task_ids:
+                return
+
+            log_timestamp = info.get('log_timestamp')
+            scan_time = info.get('task_time') or log_timestamp or 'N/A'
+            image_path = info.get('image_path', '')
+            retry_count = info.get('retry_count', 0)
+
+            entry = provisional_entries.get(task_no)
+            if entry:
+                if scan_time and scan_time != 'N/A':
+                    entry['scan_time'] = scan_time
+                if log_timestamp:
+                    entry['update_time'] = log_timestamp
+                    entry['log_timestamp'] = log_timestamp
+                raw_data = entry.setdefault('raw_data', {})
+                raw_data['task_no'] = task_no
+                if image_path:
+                    raw_data['image_path'] = image_path
+                if retry_count or 'retry_count' not in raw_data:
+                    raw_data['retry_count'] = retry_count
+                if scan_time and scan_time != 'N/A':
+                    raw_data['task_time'] = scan_time
+                if log_timestamp:
+                    raw_data['log_timestamp'] = log_timestamp
+                return
+
+            raw_data = {
+                'task_no': task_no,
+                'image_path': image_path,
+                'retry_count': retry_count,
+                'task_time': scan_time,
+                'source': 'upload'
+            }
+            if log_timestamp:
+                raw_data['log_timestamp'] = log_timestamp
+
+            provisional_entries[task_no] = {
+                'id_scan': task_no,
+                'container_no': '',
+                'scan_time': scan_time,
+                'scan_duration': 'N/A',
+                'overall_time': 'N/A',
+                'update_time': log_timestamp or 'N/A',
+                'time_difference': 'N/A',
+                'image_count': 0,
+                'status': 'NOK',
+                'log_timestamp': log_timestamp,
+                'file_name': os.path.basename(file_path),
+                'raw_data': raw_data
+            }
+
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line in f:
+                    upload_info = extract_upload_info(line)
+                    if upload_info:
+                        update_provisional_entry(upload_info)
+                        continue
+
                     # Look for lines with response text (both success and failure)
                     if 'response text:' in line and 'center response:' in line:
                         try:
@@ -123,11 +458,17 @@ class LogParser:
                                     'raw_data': result_data
                                 }
                                 data.append(entry)
-                            
+                                if entry['id_scan']:
+                                    completed_task_ids.add(entry['id_scan'])
+                                    provisional_entries.pop(entry['id_scan'], None)
+                                elif response_id:
+                                    completed_task_ids.add(response_id)
+                                    provisional_entries.pop(response_id, None)
+
                             # Handle failed responses (resultCode: false)
-                            elif (response_data.get('resultCode') is False and 
+                            elif (response_data.get('resultCode') is False and
                                   response_data.get('resultData') == '-'):
-                                
+
                                 # Extract container number from response description if available
                                 container_no = "Failed!"
                                 desc = response_data.get('resultDesc', '')
@@ -154,12 +495,17 @@ class LogParser:
                                     'error_description': desc
                                 }
                                 data.append(entry)
-                                
+                                if response_id:
+                                    completed_task_ids.add(response_id)
+                                    provisional_entries.pop(response_id, None)
+
                         except (json.JSONDecodeError, KeyError):
                             continue
         except IOError as e:
             print(f"Error reading file {file_path}: {e}")
-        
+
+        data.extend(provisional_entries.values())
+
         return data
     
     def calculate_scan_duration(self, data):
@@ -251,6 +597,10 @@ class LogParser:
 
 # Initialize log parser with settings
 log_parser = LogParser(app_settings['logs_directory'])
+
+# Start FTP monitoring thread
+ftp_monitor = FTPStatusMonitor()
+ftp_monitor.start(app_settings)
 
 
 @app.route('/')
@@ -398,33 +748,104 @@ def get_settings():
     return jsonify(app_settings)
 
 
+@app.route('/api/ftp-status')
+def get_ftp_status():
+    """API endpoint to get cached FTP statuses."""
+    with ftp_status_lock:
+        status_snapshot = copy.deepcopy(ftp_status_cache)
+
+    return jsonify({
+        'statuses': status_snapshot,
+        'ping_interval': app_settings.get('ftp_ping_interval',
+                                          DEFAULT_FTP_PING_INTERVAL)
+    })
+
+
 @app.route('/api/settings', methods=['POST'])
 def update_settings():
     """API endpoint to update settings"""
-    global app_settings, log_parser
-    
+    global app_settings, log_parser, ftp_monitor
+
     try:
-        new_settings = request.get_json()
-        
-        # Validate logs directory
+        new_settings = request.get_json(silent=True)
+        if not isinstance(new_settings, dict):
+            return jsonify({'error': 'Invalid JSON payload'}), 400
+
+        sanitized_settings = {}
+        settings_changed = False
+
         if 'logs_directory' in new_settings:
             logs_dir = new_settings['logs_directory']
-            if not os.path.exists(logs_dir):
+            if not logs_dir or not os.path.exists(logs_dir):
                 return jsonify({'error': 'Logs directory does not exist'}), 400
-            
-            # Update log parser with new directory
-            log_parser = LogParser(logs_dir)
-        
-        # Update settings
-        app_settings.update(new_settings)
-        
-        # Save to file
-        if save_settings(app_settings):
-            return jsonify({'message': 'Settings updated successfully'})
-        else:
+            sanitized_settings['logs_directory'] = logs_dir
+
+        if 'auto_refresh_interval' in new_settings:
+            try:
+                auto_refresh = int(new_settings['auto_refresh_interval'])
+            except (TypeError, ValueError):
+                return jsonify({
+                    'error': 'Auto refresh interval must be a positive integer'
+                }), 400
+
+            if auto_refresh <= 0:
+                return jsonify({
+                    'error': 'Auto refresh interval must be a positive integer'
+                }), 400
+
+            sanitized_settings['auto_refresh_interval'] = auto_refresh
+
+        if 'ftp_targets' in new_settings:
+            try:
+                ftp_targets = sanitize_ftp_targets(
+                    new_settings['ftp_targets'], strict=True)
+            except ValueError as exc:
+                return jsonify({'error': str(exc)}), 400
+
+            sanitized_settings['ftp_targets'] = ftp_targets
+
+        if 'ftp_ping_interval' in new_settings:
+            try:
+                ftp_interval = validate_ping_interval(
+                    new_settings['ftp_ping_interval'])
+            except ValueError as exc:
+                return jsonify({'error': str(exc)}), 400
+
+            sanitized_settings['ftp_ping_interval'] = ftp_interval
+
+        if not sanitized_settings:
+            return jsonify({'message': 'No settings were changed'}), 200
+
+        if 'logs_directory' in sanitized_settings:
+            logs_dir = sanitized_settings['logs_directory']
+            if app_settings.get('logs_directory') != logs_dir:
+                log_parser = LogParser(logs_dir)
+                settings_changed = True
+
+        if 'auto_refresh_interval' in sanitized_settings:
+            if app_settings.get('auto_refresh_interval') != sanitized_settings['auto_refresh_interval']:
+                settings_changed = True
+
+        if 'ftp_targets' in sanitized_settings:
+            if app_settings.get('ftp_targets') != sanitized_settings['ftp_targets']:
+                settings_changed = True
+
+        if 'ftp_ping_interval' in sanitized_settings:
+            if app_settings.get('ftp_ping_interval') != sanitized_settings['ftp_ping_interval']:
+                settings_changed = True
+
+        app_settings.update(sanitized_settings)
+
+        if not save_settings(app_settings):
             return jsonify({'error': 'Failed to save settings'}), 500
-            
-    except Exception as e:
+
+        if settings_changed:
+            ftp_monitor.start(app_settings)
+
+        return jsonify({'message': 'Settings updated successfully'})
+
+    except Exception as e:  # pragma: no cover - defensive
+        logger.exception("Failed to update settings: %s", e)
         return jsonify({'error': str(e)}), 400
 
 
