@@ -1,16 +1,22 @@
+
 # -*- mode: python ; coding: utf-8 -*-
+
+import os
+from pathlib import Path
 
 block_cipher = None
 
+PROJECT_DIR = Path(__file__).resolve().parent
+
 a = Analysis(
     ['server_runner.py'],
-    pathex=['X:\Source Codes\Web\transmissions_dashboard'],
+    pathex=[os.fspath(PROJECT_DIR)],
     binaries=[],
     datas=[
-        ('templates', 'templates'),
-        ('app.py', '.'),
-        ('settings.json', '.'),
-        ('logs', 'logs'),
+        (os.fspath(PROJECT_DIR / 'templates'), 'templates'),
+        (os.fspath(PROJECT_DIR / 'assets'), 'assets'),
+        (os.fspath(PROJECT_DIR / 'settings.json'), '.'),
+        (os.fspath(PROJECT_DIR / 'logs'), 'logs'),
     ],
     hiddenimports=[],
     hookspath=[],
@@ -38,7 +44,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_info_entries=None,
-    console=True, # This is a console application
+    console=True,  # Run with a console to show server logs
     disable_window_close=False,
     argv_emulation=False,
     target_arch=None,

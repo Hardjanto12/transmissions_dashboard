@@ -1,133 +1,100 @@
 # Transmission Dashboard
 
-A Flask-based web dashboard for monitoring transmission log data from X-ray scanning systems.
+Transmission Dashboard is a Flask-powered monitoring console that tracks X-ray transmission jobs in real time. The refreshed interface delivers a clean, modern layout with a responsive sidebar, vibrant metric tiles, and rich tables so operators can focus on operational health, log details, and FTP connectivity at a glance.
 
-## Features
+## Highlights
 
-- **Real-time Dashboard**: Monitor transmission logs with live updates
-- **Data Filtering**: Filter by status (OK/NOK), search terms, and log files
-- **Statistics**: View success rates, scan counts, and performance metrics
-- **Responsive Design**: Modern, mobile-friendly interface
-- **Auto-refresh**: Automatic data updates every 30 seconds
-- **Configurable Settings**: Customize logs directory and refresh intervals
-- **FTP Connectivity Monitoring**: Track availability of up to two FTP endpoints with scheduled health checks
+- **Polished UI/UX** – Redesigned navigation, cards, and typography provide a contemporary control room experience that works on desktops and tablets alike.
+- **Live telemetry** – Aggregated statistics, activity feeds, and uptime counters update automatically while you browse the dashboard.
+- **Deep log exploration** – Dedicated OK/NOK views with DataTables search, filters, pagination, and Excel export for audit-ready reports.
+- **Connectivity monitoring** – Built-in FTP status widget with manual ping, configurable polling cadence, and visual health chips.
+- **Flexible settings** – Runtime configuration for log directories, refresh cadence, and monitored FTP endpoints stored in `settings.json`.
+- **Packaged distribution** – A curated PyInstaller spec (`server_runner.spec`) ships with the repository for producing a standalone Windows executable of the web server.
 
-## Installation
+## Requirements
 
-1. Install Python dependencies:
+- Python 3.9 or newer (3.10+ recommended)
+- pip for dependency management
+- Windows users need the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) when running the packaged executable.
+
+Install Python dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Run the application (choose one method):
+## Getting Started
 
-**Method 1: Using the startup script (recommended)**
-```bash
-python run.py
+1. **Activate your environment** (optional but recommended):
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Linux/macOS
+   .\.venv\Scripts\activate   # Windows
+   ```
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **Run the dashboard** – choose the method that best matches your workflow:
+   - **Development server (auto reload)**
+     ```bash
+     python run.py
+     ```
+   - **Waitress production server**
+     ```bash
+     python server_runner.py
+     ```
+   - **Direct Flask entry point**
+     ```bash
+     python app.py
+     ```
+4. Open your browser to [http://localhost:5000](http://localhost:5000). The homepage features the Overview, Detail Log OK/NOK, Statistics, and Settings sections controlled from the left navigation.
+
+### Initial configuration
+
+- Place `Transmission.log` files (and rotated variants) inside the `logs/` directory or point the Settings page to an external folder.
+- Adjust auto refresh, FTP targets, and ping interval from the **Settings** section. Changes persist automatically to `settings.json`.
+- Use the **Validate Directory** button to confirm the dashboard can read your logs path before saving.
+
+## Packaging the web server as an executable
+
+A ready-to-use PyInstaller specification is included so the Flask/Waitress server can be delivered as a single `.exe`.
+
+1. **Ensure dependencies are installed**, including `pyinstaller` (already listed in `requirements.txt`).
+2. **(Optional) Clean previous builds**:
+   ```bash
+   pyinstaller --clean server_runner.spec
+   ```
+3. **Build the executable**:
+   ```bash
+   pyinstaller server_runner.spec
+   ```
+4. The packaged server lives at `dist/TransmissionWebServer/TransmissionWebServer.exe`. Launch it to start the Waitress host on port 5000.
+5. Distribute the contents of the `dist/TransmissionWebServer/` directory. It already embeds templates, assets, settings, and a `logs/` folder scaffold. Update `settings.json` or replace the `logs/` directory with production data before shipping.
+
+> **Tip:** Remove or trim large log archives before building so the bundled executable stays lean. You can also regenerate `settings.json` after deployment if the target environment requires different defaults.
+
+## Project structure
+
+```
+transmissions_dashboard/
+├── app.py                 # Flask application factory and routes
+├── server_runner.py       # Waitress entry point used for production/packaging
+├── templates/             # Jinja2 templates (modernised dashboard UI)
+├── assets/                # Static assets bundled with the executable
+├── logs/                  # Sample log files (replace with operational data)
+├── settings.json          # Persisted UI/server configuration
+├── server_runner.spec     # PyInstaller spec for building the web server exe
+├── gui_controller.py/.spec# Desktop controller application and build spec
+├── run.py                 # Convenience launcher that opens a browser window
+└── requirements.txt       # Python dependencies
 ```
 
-**Method 2: Direct execution**
-```bash
-python app.py
-```
+## Development tips
 
-**Method 3: Windows batch file**
-```cmd
-start_dashboard.bat
-```
+- The dashboard uses Bootstrap 5, Font Awesome 6, DataTables, and Chart.js via CDN. Custom styling lives directly in `templates/dashboard.html`.
+- JavaScript utilities near the bottom of `dashboard.html` handle AJAX polling, DataTables initialisation, and notification handling.
+- To tweak refresh cadence or log parsing defaults programmatically, edit the constants near the top of `app.py`.
+- When contributing UI tweaks, keep the responsive layout in mind—most grid rows already use `col-md-6`/`col-xl-3` breakpoints for fluid layouts.
 
-3. The dashboard will automatically open in your browser at:
-```
-http://localhost:5000
-```
-
-## Quick Start
-
-1. Place your log files in the `logs/` directory
-2. Run `python run.py`
-3. The dashboard will open automatically in your browser
-4. Navigate between different sections using the sidebar
-
-## Usage
-
-### Dashboard Sections
-
-1. **Overview**: Main dashboard with statistics and recent activity
-2. **Detail Log OK**: View successful transmission logs
-3. **Detail Log NOK**: View failed transmission logs
-4. **Statistics**: Charts and analytics
-5. **Settings**: Configure logs directory and application settings
-
-### Data Fields
-
-- **ID Scan**: Unique scan identifier (PICNO)
-- **Nomor Container**: Container number
-- **Jam Scan**: Scan timestamp
-- **Scan Time**: Duration of the scan
-- **Overall Time**: Total processing time
-- **Jam Update**: Last update timestamp
-- **Selisih Waktu**: Time difference between update and scan
-- **Jumlah Gambar**: Number of images
-- **Status**: OK or NOK
-
-### Filtering Options
-
-- **Log File**: Select specific log file to analyze
-- **Search**: Search by ID Scan or Container Number
-- **Status**: Filter by OK or NOK status
-
-## Log File Structure
-
-The application reads log files from the `logs/` directory. It looks for lines containing:
-- `resultCode":true` for successful transmissions
-- `response text:` followed by JSON data
-
-## API Endpoints
-
-- `GET /` - Main dashboard
-- `GET /api/data` - Get log data with optional filtering
-- `GET /api/log-files` - Get available log files
-- `GET /api/stats` - Get statistics
-- `GET /api/settings` - Get current application settings
-- `POST /api/settings` - Update application settings
-- `GET /api/validate-directory` - Validate logs directory path
-- `GET /api/ftp-status` - Get cached FTP connectivity status
-
-## Configuration
-
-### Settings Page
-
-The application includes a settings page where you can:
-
-1. **Configure Logs Directory**: Set the path to your Transmission log files
-2. **Auto-refresh Interval**: Adjust how often the dashboard updates (10-300 seconds)
-3. **FTP Targets**: Define up to two FTP host/port pairs for connectivity checks
-4. **FTP Ping Interval**: Configure how often the background worker pings the FTP endpoints
-5. **Directory Validation**: Verify that your logs directory contains valid log files
-
-### Default Configuration
-
-- **Logs Directory**: `logs/` (relative to application directory)
-- **Auto-refresh**: 30 seconds
-- **FTP Targets**: `ftp.primary.example.com:21` and `ftp.backup.example.com:21`
-- **FTP Ping Interval**: 60 seconds
-- **Log File Pattern**: `Transmission.log*`
-
-### Settings File
-
-Settings are automatically saved to `settings.json` in the application directory. You can also manually edit this file if needed. The key values include:
-
-- `logs_directory`: Absolute or relative path to the Transmission logs
-- `auto_refresh_interval`: Dashboard auto-refresh cadence in seconds
-- `ftp_targets`: An array of two objects (`host` and `port`) representing the primary and backup FTP endpoints. Leave a host blank to disable monitoring for that slot.
-- `ftp_ping_interval`: Ping cadence (seconds) used by the background FTP status worker
-
-### FTP Monitoring
-
-The overview dashboard displays a dedicated FTP connectivity widget that refreshes on the same cadence as the background worker. Each configured FTP endpoint is probed on the configured interval and reported as **Online**, **Offline**, or **Not configured**. Connection issues are logged server-side for troubleshooting while keeping the dashboard responsive.
-
-## Requirements
-
-- Python 3.7+
-- Flask 2.3.3
-- Modern web browser with JavaScript enabled
+Enjoy the streamlined monitoring experience!
