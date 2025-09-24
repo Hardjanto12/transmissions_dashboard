@@ -1,18 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_submodules
+
 block_cipher = None
+
+hiddenimports = collect_submodules('waitress')
 
 a = Analysis(
     ['server_runner.py'],
-    pathex=['X:\Source Codes\Web\transmissions_dashboard'],
+    pathex=['.'],
     binaries=[],
     datas=[
         ('templates', 'templates'),
+        ('assets', 'assets'),
+        ('logs', 'logs'),
         ('app.py', '.'),
         ('settings.json', '.'),
-        ('logs', 'logs'),
     ],
-    hiddenimports=[],
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
