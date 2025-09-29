@@ -1,0 +1,15 @@
+{
+  "logs_directory": "C:\\Users\\IPS2\\Downloads\\new_dashboard\\logs",
+  "auto_refresh_interval": 30,
+  "ftp_targets": [
+    {
+      "host": "10.226.52.31",
+      "port": 21
+    },
+    {
+      "host": "10.226.52.32",
+      "port": 8040
+    }
+  ],
+  "ftp_ping_interval": 5
+}

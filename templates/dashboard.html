@@ -1,0 +1,2317 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transmission Dashboard - Server Activity Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inter.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.bootstrap5.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
+    <style>
+        :root {
+            --brand-50: #eef2ff;
+            --brand-100: #e0e7ff;
+            --brand-500: #6366f1;
+            --brand-600: #4f46e5;
+            --brand-700: #4338ca;
+            --accent-500: #22d3ee;
+            --success-500: #22c55e;
+            --danger-500: #ef4444;
+            --warning-500: #f97316;
+            --surface-0: rgba(255, 255, 255, 0.92);
+            --surface-100: rgba(241, 245, 249, 0.7);
+            --border-color: rgba(99, 102, 241, 0.12);
+            --shadow-soft: 0 24px 48px -32px rgba(15, 23, 42, 0.45);
+            --text-muted: #64748b;
+            --text-strong: #0f172a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, #f8faff 0%, #eef2ff 45%, #e2e8f0 100%);
+            color: var(--text-strong);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-weight: 600;
+        }
+
+        .content-section {
+            animation: fadeIn 0.45s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(30, 64, 175, 0.9));
+            color: #f8fafc;
+            padding-top: 2.5rem;
+            border-right: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: inset -1px 0 0 rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(14px);
+        }
+
+        .sidebar h4 {
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+            color: rgba(226, 232, 240, 0.85);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(241, 245, 249, 0.65);
+            font-weight: 500;
+            border-radius: 14px;
+            padding: 12px 18px;
+            margin-bottom: 10px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 0.01em;
+        }
+
+        .sidebar .nav-link i {
+            font-size: 1rem;
+            opacity: 0.85;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.35), rgba(129, 140, 248, 0.35));
+            transform: translateX(6px);
+            box-shadow: 0 18px 36px -24px rgba(79, 70, 229, 0.8);
+        }
+
+        .main-content {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 246, 255, 0.96));
+            min-height: 100vh;
+            padding: 2.5rem 3rem 4rem;
+        }
+
+        .page-header {
+            background: var(--surface-0);
+            border-radius: 24px;
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            margin-bottom: 6px;
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .real-time-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: linear-gradient(120deg, rgba(99, 102, 241, 0.18), rgba(34, 211, 238, 0.22));
+            border-radius: 999px;
+            padding: 0.45rem 0.95rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--brand-600);
+            font-weight: 700;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .real-time-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-500);
+            box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.25);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.6;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .btn {
+            border-radius: 999px;
+            font-weight: 600;
+            padding: 0.55rem 1.35rem;
+            transition: all 0.25s ease;
+        }
+
+        .btn-sm {
+            padding: 0.45rem 1.1rem;
+        }
+
+        .btn-outline-primary {
+            border-color: var(--brand-500);
+            color: var(--brand-600);
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--brand-500);
+            color: #fff;
+            box-shadow: 0 16px 28px -20px rgba(99, 102, 241, 0.7);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary,
+        .btn-success,
+        .btn-primary {
+            border: none;
+            box-shadow: 0 16px 30px -24px rgba(99, 102, 241, 0.75);
+        }
+
+        .btn-secondary:hover,
+        .btn-success:hover,
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 20px 34px -24px rgba(15, 23, 42, 0.35);
+        }
+
+        .btn-custom {
+            border-radius: 999px;
+        }
+
+        .server-status-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.98), rgba(14, 165, 233, 0.92));
+            color: #f8fafc;
+            border-radius: 26px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 32px 60px -36px rgba(14, 165, 233, 0.85);
+        }
+
+        .server-status-card::after {
+            content: '';
+            position: absolute;
+            top: -90px;
+            right: -90px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.38), transparent 65%);
+            opacity: 0.7;
+        }
+
+        .server-status-card h4 {
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        .server-status-card p {
+            color: rgba(226, 232, 240, 0.82);
+            margin-bottom: 0;
+        }
+
+        .server-status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.22);
+        }
+
+        .server-status-indicator.online {
+            background: var(--success-500);
+        }
+
+        .server-status-indicator.offline {
+            background: var(--danger-500);
+            box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.28);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(15, 23, 42, 0.3);
+            padding: 0.45rem 1.1rem;
+            border-radius: 999px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .status-pill .server-status-indicator {
+            margin-right: 0;
+        }
+
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 22px;
+            box-shadow: var(--shadow-soft);
+            background: var(--surface-0);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .card-body {
+            padding: 1.6rem;
+        }
+
+        .metric-card {
+            border-radius: 22px;
+            padding: 24px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(236, 239, 255, 0.95));
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.22), transparent 60%);
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 32px 56px -32px rgba(15, 23, 42, 0.4);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: var(--brand-600);
+            background: rgba(99, 102, 241, 0.16);
+        }
+
+        .metric-value {
+            font-size: 2.45rem;
+            font-weight: 700;
+            margin: 18px 0 6px;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        .activity-feed {
+            max-height: 420px;
+            overflow-y: auto;
+            background: rgba(248, 250, 255, 0.7);
+            border-radius: 18px;
+            padding: 12px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 10px 25px -20px rgba(15, 23, 42, 0.35);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(6px);
+            box-shadow: 0 18px 30px -18px rgba(99, 102, 241, 0.35);
+        }
+
+        .activity-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+
+        .activity-icon.success {
+            background: linear-gradient(135deg, #22c55e, #10b981);
+        }
+
+        .activity-icon.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .activity-icon.info {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .filter-section {
+            background: var(--surface-0);
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 14px;
+            padding: 0.7rem 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            transition: border 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--brand-500);
+            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.18);
+        }
+
+        .table-container {
+            border-radius: 22px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+            background: var(--surface-0);
+        }
+
+        .table-modern thead {
+            background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+            color: #fff;
+            border-bottom: none;
+        }
+
+        .table-modern thead th {
+            border: none;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .table-modern tbody tr {
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .table-modern tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+            transform: translateX(4px);
+        }
+
+        .table-modern tbody td {
+            vertical-align: middle;
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+
+        .status-badge,
+        .status-badge-custom {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .status-ok,
+        .status-ok-custom {
+            background: rgba(34, 197, 94, 0.15);
+            color: #15803d;
+        }
+
+        .status-nok,
+        .status-nok-custom {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+        }
+
+        .ftp-status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+        }
+
+        .ftp-status-item:last-child {
+            border-bottom: none;
+        }
+
+        .ftp-status-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .ftp-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .ftp-status-indicator.online {
+            background: var(--success-500);
+        }
+
+        .ftp-status-indicator.offline {
+            background: var(--danger-500);
+        }
+
+        .ftp-status-indicator.unconfigured,
+        .ftp-status-indicator.unknown {
+            background: rgba(148, 163, 184, 0.8);
+        }
+
+        .ftp-status-state {
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+        }
+
+        .ftp-status-state.online {
+            color: var(--success-500);
+        }
+
+        .ftp-status-state.offline {
+            color: var(--danger-500);
+        }
+
+        .ftp-status-state.unconfigured,
+        .ftp-status-state.unknown {
+            color: var(--text-muted);
+        }
+
+        .ftp-status-updated {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .quick-stat {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+        }
+
+        .quick-stat:last-child {
+            border-bottom: none;
+        }
+
+        .quick-stat-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .quick-stat-value {
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: var(--surface-0);
+            border-radius: 22px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+        }
+
+        .spinner-border {
+            color: var(--brand-500);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+
+        .loading-spinner {
+            width: 54px;
+            height: 54px;
+            border: 5px solid rgba(255, 255, 255, 0.35);
+            border-top: 5px solid var(--brand-500);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .activity-indicator {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            background: var(--surface-0);
+            border-radius: 999px;
+            padding: 10px 18px;
+            box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border-color);
+            color: var(--brand-600);
+            font-weight: 600;
+            z-index: 1200;
+        }
+
+        .activity-indicator .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-500);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 18px 36px -26px rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        .status-indicator.online {
+            background: rgba(34, 197, 94, 0.85);
+            color: #f0fdf4;
+        }
+
+        .status-indicator.offline {
+            background: rgba(239, 68, 68, 0.9);
+            color: #fff5f5;
+        }
+
+        .notification {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            background: var(--surface-0);
+            border-radius: 18px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--brand-500);
+            box-shadow: 0 24px 48px -28px rgba(15, 23, 42, 0.45);
+            max-width: 320px;
+            z-index: 1200;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: var(--success-500);
+        }
+
+        .notification.error {
+            border-left-color: var(--danger-500);
+        }
+
+        .notification.warning {
+            border-left-color: var(--warning-500);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 24px 40px -24px rgba(79, 70, 229, 0.75);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 50px -24px rgba(79, 70, 229, 0.85);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-strong);
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .main-content {
+                padding: 1.5rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 20px;
+            }
+
+            .status-indicator,
+            .activity-indicator {
+                right: 16px;
+                left: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Activity Indicators -->
+    <div class="activity-indicator" id="activity-indicator" style="display: none;">
+        <span class="pulse"></span>
+        <span id="activity-text">Processing...</span>
+    </div>
+    
+    <div class="status-indicator online" id="status-indicator">
+        <i class="fas fa-circle me-1"></i>
+        <span>Dashboard Online</span>
+    </div>
+    
+    <div class="notification" id="notification">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-2"></i>
+            <span id="notification-text">Welcome to Transmission Dashboard!</span>
+        </div>
+    </div>
+
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="p-4">
+                    <div class="text-center mb-4">
+                        <div class="badge bg-white text-dark rounded-pill mb-3 px-3 py-2 shadow-sm">
+                            <i class="fas fa-wave-square me-1"></i> Transmission Hub
+                        </div>
+                        <h4 class="fw-semibold mb-1 text-uppercase">Control Center</h4>
+                        <p class="small opacity-75 mb-0">Navigate the monitoring tools.</p>
+                    </div>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="showSection('overview')">
+                            <i class="fas fa-tachometer-alt me-2"></i> Overview
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('detail-ok')">
+                            <i class="fas fa-check-circle me-2"></i> Detail Log OK
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('detail-nok')">
+                            <i class="fas fa-times-circle me-2"></i> Detail Log NOK
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('statistics')">
+                            <i class="fas fa-chart-bar me-2"></i> Statistics
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('settings')">
+                            <i class="fas fa-cog me-2"></i> Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Overview Section -->
+                <div id="overview-section" class="content-section">
+                <div class="page-header flex-wrap">
+                    <div>
+                        <h2 class="page-title mb-1">Server Activity Overview</h2>
+                        <p class="page-subtitle mb-0">Live insights into transmission health and system activity.</p>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <span class="real-time-badge">Live Monitor</span>
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshAllData()">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+                    
+                    <!-- Server Status Card -->
+                    <div class="server-status-card mb-4">
+                        <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-2">
+                            <i class="fas fa-server me-2"></i>
+                            Transmission Server Status
+                        </h4>
+                        <p class="mb-2">Monitoring transmission logs in real-time with proactive health checks.</p>
+                        <div class="d-flex flex-wrap gap-3 text-white-50 small">
+                            <span><i class="fas fa-bolt me-2"></i>Auto-refresh enabled</span>
+                            <span><i class="fas fa-database me-2"></i>Logs directory watched continuously</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
+                        <div class="status-pill justify-content-md-end justify-content-center">
+                            <span class="server-status-indicator online"></span>
+                            <span class="text-uppercase small fw-semibold">Online</span>
+                        </div>
+                        <div class="mt-3 text-white-50 small">
+                            <i class="fas fa-signal me-1"></i>All systems nominal
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                    <!-- FTP Connectivity Card -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0"><i class="fas fa-network-wired me-2"></i>FTP Connectivity</h5>
+                                <small class="text-muted">Monitoring configured FTP endpoints</small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="ftp-status-updated" id="ftp-status-updated">Awaiting check...</span>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="ftp-ping-now-btn" onclick="pingFtpNow(this)" title="Check FTP status now">
+                                    <i class="fas fa-bolt me-1"></i> Ping Now
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="ftp-status-container">
+                                <div class="text-muted">Loading FTP status...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-list-alt"></i>
+                                </div>
+                                <div class="metric-value" id="total-scans">0</div>
+                                <div class="metric-label">Total Scans</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-icon text-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="metric-value text-success" id="ok-scans">0</div>
+                                <div class="metric-label">Successful</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-icon text-danger">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="metric-value text-danger" id="nok-scans">0</div>
+                                <div class="metric-label">Failed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-card">
+                                <div class="metric-icon text-info">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="metric-value text-info" id="success-rate">0%</div>
+                                <div class="metric-label">Success Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row g-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                                    <span class="badge bg-primary">Live Updates</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="activity-feed" id="recent-activity">
+                                        <div class="loading">
+                                            <div class="spinner-border" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading recent activity...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Quick Stats</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="quick-stat">
+                                        <span class="quick-stat-label">Uptime</span>
+                                        <span class="quick-stat-value" id="uptime">--:--:--</span>
+                                    </div>
+                                    <div class="quick-stat">
+                                        <span class="quick-stat-label">Last Update</span>
+                                        <span class="quick-stat-value" id="last-update">--:--:--</span>
+                                    </div>
+                                    <div class="quick-stat">
+                                        <span class="quick-stat-label">Active Connections</span>
+                                        <span class="quick-stat-value text-success" id="active-connections">1</span>
+                                    </div>
+                                    <div class="quick-stat">
+                                        <span class="quick-stat-label">Log Files</span>
+                                        <span class="quick-stat-value" id="log-files-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Log OK Section -->
+                <div id="detail-ok-section" class="content-section" style="display: none;">
+                    <h2 class="section-title">Detail Log - OK</h2>
+                    <div class="filter-section">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Pilih Transmission Log:</label>
+                                <select class="form-select" id="log-file-select">
+                                    <option value="">All Log Files</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cari:</label>
+                                <input type="text" class="form-control" id="search-input" placeholder="Search...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status:</label>
+                                <select class="form-select" id="status-filter" disabled>
+                                    <option value="OK" selected>OK Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary btn-custom w-100" onclick="filterData()">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-success btn-custom w-100" onclick="exportToExcel()">
+                                    <i class="fas fa-file-excel me-1"></i> Export Excel
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-secondary btn-custom w-100" onclick="refreshData()">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="loading" id="table-loading">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-modern align-middle" id="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Scan</th>
+                                        <th>Nomor Container</th>
+                                        <th>Jam Scan</th>
+                                        <th>Scan Time</th>
+                                        <th>Overall Time</th>
+                                        <th>Jam Update</th>
+                                        <th>Selisih Waktu</th>
+                                        <th>Jumlah Gambar</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Log NOK Section -->
+                <div id="detail-nok-section" class="content-section" style="display: none;">
+                    <h2 class="section-title">Detail Log - NOK</h2>
+                    <div class="filter-section">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Pilih Transmission Log:</label>
+                                <select class="form-select" id="log-file-select-nok">
+                                    <option value="">All Log Files</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cari:</label>
+                                <input type="text" class="form-control" id="search-input-nok" placeholder="Search...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status:</label>
+                                <select class="form-select" id="status-filter-nok" disabled>
+                                    <option value="NOK" selected>NOK Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-primary btn-custom w-100" onclick="filterDataNOK()">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-secondary btn-custom w-100" onclick="refreshDataNOK()">
+                                    <i class="fas fa-sync-alt me-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="loading" id="table-loading-nok">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-modern align-middle" id="data-table-nok">
+                                <thead>
+                                    <tr>
+                                        <th>ID Scan</th>
+                                        <th>Jam Scan</th>
+                                        <th>Status</th>
+                                        <th>Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div id="statistics-section" class="content-section" style="display: none;">
+                    <h2 class="section-title">Statistics</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Scan Status Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Activity Timeline</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="timelineChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settings-section" class="content-section" style="display: none;">
+                    <h2 class="section-title">Settings</h2>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i>Logs Directory Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="settings-form">
+                                        <div class="mb-3">
+                                            <label for="logs-directory" class="form-label">Logs Directory Path</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="logs-directory" 
+                                                       placeholder="Enter logs directory path">
+                                                <button class="btn btn-outline-secondary" type="button" 
+                                                        onclick="browseDirectory()">
+                                                    <i class="fas fa-folder-open me-1"></i> Browse
+                                                </button>
+                                            </div>
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Enter the full path to the directory containing Transmission.log files
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="auto-refresh" class="form-label">Auto Refresh Interval (seconds)</label>
+                                            <input type="number" class="form-control" id="auto-refresh"
+                                                   min="10" max="300" value="30">
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    How often to automatically refresh the dashboard data
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <h6 class="text-uppercase text-muted small">FTP Monitoring</h6>
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-md-8">
+                                                    <label for="ftp-host-1" class="form-label">FTP Server 1 Host</label>
+                                                    <input type="text" class="form-control" id="ftp-host-1"
+                                                           placeholder="e.g. ftp1.example.com">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="ftp-port-1" class="form-label">Port</label>
+                                                    <input type="number" class="form-control" id="ftp-port-1"
+                                                           min="1" max="65535" value="21">
+                                                </div>
+                                            </div>
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-md-8">
+                                                    <label for="ftp-host-2" class="form-label">FTP Server 2 Host</label>
+                                                    <input type="text" class="form-control" id="ftp-host-2"
+                                                           placeholder="Optional secondary host">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="ftp-port-2" class="form-label">Port</label>
+                                                    <input type="number" class="form-control" id="ftp-port-2"
+                                                           min="1" max="65535" value="21">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="ftp-interval" class="form-label">FTP Ping Interval (seconds)</label>
+                                                <input type="number" class="form-control" id="ftp-interval" min="5" value="60">
+                                                <div class="form-text">
+                                                    <small class="text-muted">
+                                                        How often the dashboard checks connectivity for each FTP target
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-primary" onclick="saveSettings()">
+                                                <i class="fas fa-save me-1"></i> Save Settings
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" onclick="loadCurrentSettings()">
+                                                <i class="fas fa-undo me-1"></i> Reset
+                                            </button>
+                                            <button type="button" class="btn btn-info" onclick="validateDirectory()">
+                                                <i class="fas fa-check-circle me-1"></i> Validate Directory
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Current Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="settings-status">
+                                        <div class="loading">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <span class="ms-2">Loading settings...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Help</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>How to configure logs directory:</h6>
+                                    <ol class="small">
+                                        <li>Navigate to the folder containing your Transmission.log files</li>
+                                        <li>Copy the full path (e.g., C:\logs\ or /var/log/transmission/)</li>
+                                        <li>Paste the path in the "Logs Directory Path" field</li>
+                                        <li>Click "Validate Directory" to verify the path</li>
+                                        <li>Click "Save Settings" to apply changes</li>
+                                    </ol>
+                                    <div class="alert alert-info mt-3">
+                                        <small>
+                                            <i class="fas fa-lightbulb me-1"></i>
+                                            <strong>Tip:</strong> The directory should contain files named "Transmission.log" or "Transmission.log.1", etc.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- NOK Detail Modal -->
+    <div class="modal fade" id="nokDetailModal" tabindex="-1" aria-labelledby="nokDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nokDetailModalLabel">NOK Scan Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small">Core Information</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">ID Scan</dt>
+                                <dd class="col-sm-7" id="modal-id-scan">N/A</dd>
+                                <dt class="col-sm-5">Container No</dt>
+                                <dd class="col-sm-7" id="modal-container-no">N/A</dd>
+                                <dt class="col-sm-5">Scan Time</dt>
+                                <dd class="col-sm-7" id="modal-scan-time">N/A</dd>
+                                <dt class="col-sm-5">Scan Duration</dt>
+                                <dd class="col-sm-7" id="modal-scan-duration">N/A</dd>
+                                <dt class="col-sm-5">Overall Time</dt>
+                                <dd class="col-sm-7" id="modal-overall-time">N/A</dd>
+                                <dt class="col-sm-5">Status</dt>
+                                <dd class="col-sm-7" id="modal-status">N/A</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-muted small">Timing Details</h6>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Update Time</dt>
+                                <dd class="col-sm-7" id="modal-update-time">N/A</dd>
+                                <dt class="col-sm-5">Time Difference</dt>
+                                <dd class="col-sm-7" id="modal-time-difference">N/A</dd>
+                                <dt class="col-sm-5">Image Count</dt>
+                                <dd class="col-sm-7" id="modal-image-count">N/A</dd>
+                                <dt class="col-sm-5">Task Time</dt>
+                                <dd class="col-sm-7" id="modal-task-time">N/A</dd>
+                                <dt class="col-sm-5">Retry Count</dt>
+                                <dd class="col-sm-7" id="modal-retry-count">N/A</dd>
+                            </dl>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-muted small">Image Information</h6>
+                            <div class="p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Image Path</span>
+                                    <span class="fw-semibold" id="modal-image-path">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-muted small">Additional Raw Data</h6>
+                            <ul class="list-group" id="modal-additional-raw">
+                                <li class="list-group-item text-muted">No additional data</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery-3.7.0.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+    <script>
+        let currentData = [];
+        let dataTable = null;
+        let dataTableNOK = null;
+        let nokDetailModalInstance = null;
+        let startTime = new Date();
+        let lastUpdateTime = new Date();
+        let ftpStatusTimer = null;
+        let ftpStatusPollInterval = 15000;
+        const MIN_FTP_STATUS_INTERVAL = 5000;
+
+        // Initialize the dashboard
+        $(document).ready(function() {
+            loadLogFiles();
+            loadStats();
+            loadRecentActivity();
+            updateQuickStats();
+            showNotification('Dashboard loaded successfully!', 'success');
+
+            // Initialize scroll to top button
+            initScrollToTop();
+
+            // Start real-time updates
+            startRealTimeUpdates();
+
+            // Start FTP status polling
+            initFtpStatusPolling();
+        });
+
+        function escapeHtml(value) {
+            if (value === undefined || value === null) {
+                return '';
+            }
+            return $('<div>').text(value).html();
+        }
+
+        function isInvalidNumber(value) {
+            if (typeof Number.isNaN === 'function') {
+                return Number.isNaN(value);
+            }
+            return isNaN(value);
+        }
+
+        // Enhanced functions
+        function initScrollToTop() {
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > 100) {
+                    $('#scrollToTop').fadeIn();
+                } else {
+                    $('#scrollToTop').fadeOut();
+                }
+            });
+        }
+
+        function scrollToTop() {
+            $('html, body').animate({scrollTop: 0}, 800);
+        }
+
+        function startRealTimeUpdates() {
+            // Update uptime every second
+            setInterval(updateUptime, 1000);
+            
+            // Update last update time
+            setInterval(function() {
+                lastUpdateTime = new Date();
+                updateQuickStats();
+            }, 5000);
+        }
+
+        function updateUptime() {
+            const now = new Date();
+            const diff = now - startTime;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            const uptime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            $('#uptime').text(uptime);
+        }
+
+        function updateQuickStats() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            $('#last-update').text(timeStr);
+        }
+
+        function refreshAllData() {
+            showActivityIndicator('Refreshing all data...');
+            loadStats();
+            loadRecentActivity();
+            loadLogFiles();
+            hideActivityIndicator();
+            showNotification('All data refreshed successfully!', 'success');
+        }
+
+        // Navigation functions
+        function showSection(section) {
+            $('.content-section').hide();
+            $('.nav-link').removeClass('active');
+            
+            if (section === 'overview') {
+                $('#overview-section').show();
+                $('.nav-link').eq(0).addClass('active');
+            } else if (section === 'detail-ok') {
+                $('#detail-ok-section').show();
+                $('.nav-link').eq(1).addClass('active');
+                if (!dataTable) {
+                    loadData();
+                }
+            } else if (section === 'detail-nok') {
+                $('#detail-nok-section').show();
+                $('.nav-link').eq(2).addClass('active');
+                if (!dataTableNOK) {
+                    loadDataNOK();
+                }
+            } else if (section === 'statistics') {
+                $('#statistics-section').show();
+                $('.nav-link').eq(3).addClass('active');
+                loadCharts();
+            } else if (section === 'settings') {
+                $('#settings-section').show();
+                $('.nav-link').eq(4).addClass('active');
+                loadCurrentSettings();
+            }
+        }
+
+        // Load log files
+        function loadLogFiles() {
+            $.get('/api/log-files', function(files) {
+                const select = $('#log-file-select, #log-file-select-nok');
+                select.empty().append('<option value="">All Log Files</option>');
+                files.forEach(file => {
+                    select.append(`<option value="${file}">${file}</option>`);
+                });
+            });
+        }
+
+        // Load statistics
+        function loadStats() {
+            $.get('/api/stats', function(stats) {
+                $('#total-scans').text(stats.total_scans);
+                $('#ok-scans').text(stats.ok_scans);
+                $('#nok-scans').text(stats.nok_scans);
+                $('#success-rate').text(stats.success_rate + '%');
+            });
+        }
+
+        // Load recent activity
+        function loadRecentActivity() {
+            $.get('/api/data?status=OK', function(response) {
+                const recentData = response.data.slice(0, 5);
+                let html = '';
+                
+                if (recentData.length === 0) {
+                    html = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2"></i><p>No recent activity found.</p></div>';
+                } else {
+                    recentData.forEach((entry, index) => {
+                        const iconClass = entry.status === 'OK' ? 'success' : 'error';
+                        const icon = entry.status === 'OK' ? 'fa-check-circle' : 'fa-times-circle';
+                        const timeAgo = getTimeAgo(entry.scan_time);
+                        
+                        html += `
+                            <div class="activity-item animate__animated animate__fadeInUp" style="animation-delay: ${index * 0.1}s">
+                                <div class="activity-icon ${iconClass}">
+                                    <i class="fas ${icon}"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">${entry.id_scan}</div>
+                                    <div class="activity-time">
+                                        <i class="fas fa-box me-1"></i>${entry.container_no} â€¢ 
+                                        <i class="fas fa-clock me-1"></i>${timeAgo}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="status-badge-custom ${entry.status === 'OK' ? 'status-ok-custom' : 'status-nok-custom'}">${entry.status}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                $('#recent-activity').html(html);
+            });
+        }
+
+        function getTimeAgo(scanTime) {
+            if (!scanTime || scanTime === 'N/A') return 'Unknown';
+            
+            try {
+                const scanDate = new Date(scanTime);
+                const now = new Date();
+                const diffMs = now - scanDate;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                
+                if (diffDays > 0) return `${diffDays}d ago`;
+                if (diffHours > 0) return `${diffHours}h ago`;
+                if (diffMins > 0) return `${diffMins}m ago`;
+                return 'Just now';
+            } catch (e) {
+                return 'Unknown';
+            }
+        }
+
+        // Load data for OK section
+        function loadData() {
+            $('#table-loading').show();
+            // Always filter for OK status in Detail Log OK section
+            $.get('/api/data?status=OK', function(response) {
+                currentData = response.data;
+                $('#table-loading').hide();
+                
+                if (!dataTable) {
+                    // Initialize DataTable with data
+                    dataTable = $('#data-table').DataTable({
+                        data: response.data,
+                        columns: [
+                            { data: 'id_scan' },
+                            { data: 'container_no' },
+                            { data: 'scan_time' },
+                            { data: 'scan_duration' },
+                            { data: 'overall_time' },
+                            { data: 'update_time' },
+                            { data: 'time_difference' },
+                            { data: 'image_count' },
+                            { 
+                                data: 'status',
+                                render: function(data, type, row) {
+                                    const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
+                                    return `<span class="status-badge ${statusClass}">${data}</span>`;
+                                }
+                            }
+                        ],
+                        pageLength: 25,
+                        order: [[2, 'desc']],
+                        language: {
+                            search: "Cari:",
+                            lengthMenu: "Tampilkan _MENU_ entri",
+                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                            paginate: {
+                                first: "Pertama",
+                                last: "Terakhir",
+                                next: "Selanjutnya",
+                                previous: "Sebelumnya"
+                            }
+                        }
+                    });
+                } else {
+                    dataTable.clear().rows.add(response.data).draw();
+                }
+            });
+        }
+
+        // Load data for NOK section
+        function loadDataNOK() {
+            $('#table-loading-nok').show();
+            $.get('/api/data?status=NOK', function(response) {
+                $('#table-loading-nok').hide();
+                
+                if (!dataTableNOK) {
+                    // Initialize DataTable with data
+                    dataTableNOK = $('#data-table-nok').DataTable({
+                        data: response.data,
+                        columns: [
+                            { data: 'id_scan' },
+                            { data: 'scan_time' },
+                            {
+                                data: 'status',
+                                render: function(data, type, row) {
+                                    const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
+                                    return `<span class="status-badge ${statusClass}">${data}</span>`;
+                                }
+                            },
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row) {
+                                    return '<button type="button" class="btn btn-sm btn-outline-primary btn-detail">' +
+                                           '<i class="fas fa-info-circle me-1"></i> Detail' +
+                                           '</button>';
+                                }
+                            }
+                        ],
+                        pageLength: 25,
+                        order: [[1, 'desc']],
+                        language: {
+                            search: "Cari:",
+                            lengthMenu: "Tampilkan _MENU_ entri",
+                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                            paginate: {
+                                first: "Pertama",
+                                last: "Terakhir",
+                                next: "Selanjutnya",
+                                previous: "Sebelumnya"
+                            }
+                        }
+                    });
+
+                    $('#data-table-nok tbody').on('click', '.btn-detail', function() {
+                        const rowData = dataTableNOK.row($(this).closest('tr')).data();
+
+                        if (!rowData) {
+                            return;
+                        }
+
+                        populateDetailModal(rowData);
+
+                        if (!nokDetailModalInstance) {
+                            nokDetailModalInstance = new bootstrap.Modal(document.getElementById('nokDetailModal'));
+                        }
+
+                        nokDetailModalInstance.show();
+                    });
+                } else {
+                    dataTableNOK.clear().rows.add(response.data).draw();
+                }
+            });
+        }
+
+        function populateDetailModal(data) {
+            const rawData = (data.raw_data && typeof data.raw_data === 'object' && !Array.isArray(data.raw_data)) ? data.raw_data : {};
+
+            const formatValue = (value) => {
+                if (value === undefined || value === null) {
+                    return 'N/A';
+                }
+
+                if (typeof value === 'string' && value.trim() === '') {
+                    return 'N/A';
+                }
+
+                return value;
+            };
+
+            const setText = (selector, value) => {
+                $(selector).text(formatValue(value));
+            };
+
+            setText('#modal-id-scan', data.id_scan);
+            setText('#modal-container-no', data.container_no);
+            setText('#modal-scan-time', data.scan_time);
+            setText('#modal-scan-duration', data.scan_duration);
+            setText('#modal-overall-time', data.overall_time);
+            setText('#modal-status', data.status);
+            setText('#modal-update-time', data.update_time);
+            setText('#modal-time-difference', data.time_difference);
+            setText('#modal-image-count', data.image_count);
+            setText('#modal-task-time', rawData.task_time);
+            setText('#modal-retry-count', rawData.retry_count);
+
+            const imagePathElement = $('#modal-image-path');
+            const imagePathValue = formatValue(rawData.image_path);
+            imagePathElement.empty();
+            if (imagePathValue !== 'N/A' && typeof rawData.image_path === 'string') {
+                $('<a/>', {
+                    href: rawData.image_path,
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                }).text(rawData.image_path).appendTo(imagePathElement);
+            } else {
+                imagePathElement.text('N/A');
+            }
+
+            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count']);
+            const additionalRawContainer = $('#modal-additional-raw');
+            additionalRawContainer.empty();
+
+            let hasAdditional = false;
+            Object.entries(rawData).forEach(([key, value]) => {
+                if (knownRawKeys.has(key)) {
+                    return;
+                }
+
+                const listItem = $('<li/>', {
+                    class: 'list-group-item d-flex justify-content-between align-items-center'
+                });
+
+                $('<span/>', { class: 'text-muted small' }).text(key).appendTo(listItem);
+                $('<span/>', { class: 'fw-semibold' }).text(formatValue(value)).appendTo(listItem);
+
+                additionalRawContainer.append(listItem);
+                hasAdditional = true;
+            });
+
+            if (!hasAdditional) {
+                additionalRawContainer.append(
+                    $('<li/>', { class: 'list-group-item text-muted' }).text('No additional raw data available.')
+                );
+            }
+        }
+
+
+        // Filter data
+        function filterData() {
+            const search = $('#search-input').val();
+            const logFile = $('#log-file-select').val();
+            
+            // Always filter for OK status in Detail Log OK section
+            let url = '/api/data?status=OK&';
+            if (search) url += `search=${encodeURIComponent(search)}&`;
+            if (logFile) url += `log_file=${encodeURIComponent(logFile)}&`;
+            
+            $('#table-loading').show();
+            $.get(url, function(response) {
+                currentData = response.data;
+                $('#table-loading').hide();
+                
+                if (dataTable) {
+                    dataTable.clear().rows.add(response.data).draw();
+                }
+            });
+        }
+
+        // Filter data for NOK section
+        function filterDataNOK() {
+            const search = $('#search-input-nok').val();
+            const logFile = $('#log-file-select-nok').val();
+            
+            // Always filter for NOK status in Detail Log NOK section
+            let url = '/api/data?status=NOK&';
+            if (search) url += `search=${encodeURIComponent(search)}&`;
+            if (logFile) url += `log_file=${encodeURIComponent(logFile)}&`;
+            
+            $('#table-loading-nok').show();
+            $.get(url, function(response) {
+                $('#table-loading-nok').hide();
+                
+                if (dataTableNOK) {
+                    dataTableNOK.clear().rows.add(response.data).draw();
+                }
+            });
+        }
+
+        // Refresh data
+        function refreshData() {
+            loadData();
+            loadStats();
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            const search = $('#search-input').val();
+            const logFile = $('#log-file-select').val();
+            
+            // Always export OK status data from Detail Log OK section
+            let url = '/api/export/excel?status=OK&';
+            if (search) url += `search=${encodeURIComponent(search)}&`;
+            if (logFile) url += `log_file=${encodeURIComponent(logFile)}&`;
+            
+            // Show loading indicator
+            const exportBtn = event.target;
+            const originalText = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Exporting...';
+            exportBtn.disabled = true;
+            
+            // Create a temporary link to trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Reset button after a short delay
+            setTimeout(() => {
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Refresh data for NOK section
+        function refreshDataNOK() {
+            loadDataNOK();
+            loadStats();
+        }
+
+        // Load charts
+        function loadCharts() {
+            $.get('/api/stats', function(stats) {
+                // Status distribution chart
+                const statusCtx = document.getElementById('statusChart').getContext('2d');
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['OK', 'NOK'],
+                        datasets: [{
+                            data: [stats.ok_scans, stats.nok_scans],
+                            backgroundColor: ['#4facfe', '#fa709a'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Timeline chart (placeholder)
+                const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+                new Chart(timelineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'Scans per Hour',
+                            data: [12, 19, 3, 5, 2, 3],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(function() {
+            if ($('#overview-section').is(':visible')) {
+                loadStats();
+                loadRecentActivity();
+            }
+        }, 30000);
+
+        // FTP status helpers
+        function scheduleFtpStatusPolling(intervalMs) {
+            const safeInterval = Math.max(MIN_FTP_STATUS_INTERVAL, intervalMs);
+            ftpStatusPollInterval = safeInterval;
+
+            if (ftpStatusTimer) {
+                clearInterval(ftpStatusTimer);
+            }
+
+            ftpStatusTimer = setInterval(loadFtpStatus, safeInterval);
+        }
+
+        function initFtpStatusPolling() {
+            loadFtpStatus();
+            scheduleFtpStatusPolling(ftpStatusPollInterval);
+        }
+
+        function processFtpStatusResponse(response) {
+            const container = $('#ftp-status-container');
+            container.empty();
+
+            const statuses = (response && Array.isArray(response.statuses))
+                ? response.statuses
+                : [];
+
+            if (statuses.length === 0) {
+                container.append(
+                    $('<div/>', { class: 'text-muted' }).text('No FTP servers configured.')
+                );
+            } else {
+                statuses.forEach(status => {
+                    container.append(renderFtpStatus(status));
+                });
+            }
+
+            const firstTimestamp = statuses.find(status => status && status.last_checked);
+            const pingInterval = parseInt(response ? response.ping_interval : NaN, 10);
+            const intervalSuffix = (!isNaN(pingInterval) && pingInterval > 0)
+                ? ` â€¢ Every ${pingInterval}s`
+                : '';
+
+            if (firstTimestamp) {
+                $('#ftp-status-updated').text(
+                    `Updated ${formatTimestamp(firstTimestamp.last_checked)}${intervalSuffix}`
+                );
+            } else {
+                $('#ftp-status-updated').text(
+                    intervalSuffix ? `Awaiting check${intervalSuffix}` : 'Awaiting check...'
+                );
+            }
+
+            if (!isNaN(pingInterval) && pingInterval > 0) {
+                const desiredInterval = Math.max(
+                    MIN_FTP_STATUS_INTERVAL,
+                    pingInterval * 1000
+                );
+
+                if (desiredInterval !== ftpStatusPollInterval) {
+                    scheduleFtpStatusPolling(desiredInterval);
+                }
+            }
+        }
+
+        function loadFtpStatus() {
+            $.get('/api/ftp-status', function(response) {
+                processFtpStatusResponse(response);
+            }).fail(function() {
+                $('#ftp-status-container').html(
+                    '<div class="text-danger">Unable to load FTP status.</div>'
+                );
+                $('#ftp-status-updated').text('Status unavailable');
+            });
+        }
+
+        function pingFtpNow(buttonElement) {
+            const $button = buttonElement ? $(buttonElement) : $('#ftp-ping-now-btn');
+            if ($button.length) {
+                $button.data('original-html', $button.html());
+                $button.prop('disabled', true);
+                $button.html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Checking...');
+            }
+
+            const $statusLabel = $('#ftp-status-updated');
+            const previousStatusText = $statusLabel.text();
+            $statusLabel.text('Checking now...');
+
+            $.ajax({
+                url: '/api/ftp-status/ping',
+                method: 'POST',
+                success: function(response) {
+                    processFtpStatusResponse(response);
+                    showNotification('FTP status refreshed successfully.', 'success');
+                },
+                error: function() {
+                    showNotification('Failed to ping FTP servers. Please try again.', 'error');
+                    $statusLabel.text(previousStatusText || 'Status unavailable');
+                },
+                complete: function() {
+                    if ($button.length) {
+                        const originalHtml = $button.data('original-html');
+                        $button.html(originalHtml || '<i class="fas fa-bolt me-1"></i> Ping Now');
+                        $button.prop('disabled', false);
+                        $button.removeData('original-html');
+                    }
+                }
+            });
+        }
+
+        function renderFtpStatus(status) {
+            const normalizedStatus = (status && status.status)
+                ? String(status.status).toLowerCase()
+                : 'unknown';
+            const allowedStatuses = ['online', 'offline', 'unconfigured', 'unknown'];
+            const statusClass = allowedStatuses.includes(normalizedStatus)
+                ? normalizedStatus
+                : 'unknown';
+
+            const hostText = (status && status.host)
+                ? `${status.host}:${status.port}`
+                : 'Not configured';
+
+            const item = $('<div/>', { class: 'ftp-status-item' });
+            const info = $('<div/>', { class: 'ftp-status-info' }).appendTo(item);
+            $('<span/>', { class: `ftp-status-indicator ${statusClass}` }).appendTo(info);
+
+            const infoText = $('<div/>').appendTo(info);
+            $('<div/>', { class: 'fw-semibold' })
+                .text(status && status.name ? status.name : 'FTP Server')
+                .appendTo(infoText);
+            $('<div/>', { class: 'text-muted small' })
+                .text(hostText)
+                .appendTo(infoText);
+            $('<div/>', { class: 'text-muted small' })
+                .text(`Last checked: ${formatTimestamp(status ? status.last_checked : null)}`)
+                .appendTo(infoText);
+
+            const statusColumn = $('<div/>', { class: 'text-end' }).appendTo(item);
+            $('<div/>', { class: `ftp-status-state ${statusClass}` })
+                .text((status && status.status ? status.status : 'UNKNOWN').toUpperCase())
+                .appendTo(statusColumn);
+
+            if (status && status.error) {
+                $('<div/>', { class: 'text-muted small' })
+                    .text(status.error)
+                    .appendTo(statusColumn);
+            }
+
+            return item;
+        }
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) {
+                return 'N/A';
+            }
+
+            const date = new Date(timestamp);
+            if (isInvalidNumber(date.getTime())) {
+                return 'N/A';
+            }
+
+            return date.toLocaleString();
+        }
+
+        // Settings functions
+        function loadCurrentSettings() {
+            $.get('/api/settings', function(settings) {
+                $('#logs-directory').val(settings.logs_directory || '');
+                $('#auto-refresh').val(settings.auto_refresh_interval);
+
+                const ftpTargets = Array.isArray(settings.ftp_targets)
+                    ? settings.ftp_targets
+                    : [];
+
+                const ftp1 = ftpTargets[0] || {};
+                const ftp2 = ftpTargets[1] || {};
+
+                $('#ftp-host-1').val(ftp1.host || '');
+                $('#ftp-port-1').val(
+                    ftp1.port !== undefined && ftp1.port !== null ? ftp1.port : 21
+                );
+                $('#ftp-host-2').val(ftp2.host || '');
+                $('#ftp-port-2').val(
+                    ftp2.port !== undefined && ftp2.port !== null ? ftp2.port : 21
+                );
+
+                const ftpInterval = settings.ftp_ping_interval;
+                $('#ftp-interval').val(ftpInterval || 60);
+
+                const intervalSeconds = parseInt(ftpInterval, 10);
+                if (!isInvalidNumber(intervalSeconds) && intervalSeconds > 0) {
+                    const desiredInterval = Math.max(
+                        MIN_FTP_STATUS_INTERVAL,
+                        intervalSeconds * 1000
+                    );
+                    scheduleFtpStatusPolling(desiredInterval);
+                }
+
+                // Update status display
+                updateSettingsStatus(settings);
+            }).fail(function() {
+                $('#settings-status').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Failed to load settings
+                    </div>
+                `);
+            });
+        }
+
+        function updateSettingsStatus(settings) {
+            const logsDirectory = settings.logs_directory
+                ? escapeHtml(settings.logs_directory)
+                : 'Not configured';
+            const autoRefresh = parseInt(settings.auto_refresh_interval, 10);
+            const ftpInterval = parseInt(settings.ftp_ping_interval, 10);
+
+            const ftpTargets = Array.isArray(settings.ftp_targets)
+                ? settings.ftp_targets
+                : [];
+
+            const ftpListItems = [];
+            for (let i = 0; i < 2; i += 1) {
+                const target = ftpTargets[i] || {};
+                if (target.host) {
+                    const hostValue = escapeHtml(target.host);
+                    const portValue = target.port !== undefined && target.port !== null
+                        ? escapeHtml(String(target.port))
+                        : '21';
+                    const hostLabel = `${hostValue}:${portValue}`;
+                    ftpListItems.push(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>FTP Server ${i + 1}</span>
+                            <span class="text-monospace">${hostLabel}</span>
+                        </li>
+                    `);
+                } else {
+                    ftpListItems.push(`
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>FTP Server ${i + 1}</span>
+                            <span class="text-muted">Not configured</span>
+                        </li>
+                    `);
+                }
+            }
+
+            const statusHtml = `
+                <div class="mb-2">
+                    <strong>Current Logs Directory:</strong><br>
+                    <code class="small">${logsDirectory}</code>
+                </div>
+                <div class="mb-2">
+                    <strong>Auto Refresh:</strong><br>
+                    <span class="badge bg-info">${!isInvalidNumber(autoRefresh) && autoRefresh > 0 ? autoRefresh : 'N/A'}s</span>
+                </div>
+                <div class="mb-2">
+                    <strong>FTP Ping Interval:</strong><br>
+                    <span class="badge bg-secondary">${!isInvalidNumber(ftpInterval) && ftpInterval > 0 ? ftpInterval : 60}s</span>
+                </div>
+                <div class="mb-3">
+                    <strong>FTP Targets:</strong>
+                    <ul class="list-group list-group-flush small mt-2">
+                        ${ftpListItems.join('')}
+                    </ul>
+                </div>
+                <div class="text-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Settings loaded successfully
+                </div>
+            `;
+            $('#settings-status').html(statusHtml);
+        }
+
+        function saveSettings() {
+            const logsDirectory = $('#logs-directory').val().trim();
+            const autoRefresh = parseInt($('#auto-refresh').val(), 10);
+            const ftpTargets = [
+                {
+                    host: $('#ftp-host-1').val().trim(),
+                    port: $('#ftp-port-1').val()
+                },
+                {
+                    host: $('#ftp-host-2').val().trim(),
+                    port: $('#ftp-port-2').val()
+                }
+            ];
+            const ftpInterval = parseInt($('#ftp-interval').val(), 10);
+
+            if (!logsDirectory) {
+                alert('Please enter a logs directory path');
+                return;
+            }
+
+            if (isInvalidNumber(autoRefresh) || autoRefresh <= 0) {
+                alert('Please enter a valid auto refresh interval.');
+                return;
+            }
+
+            if (isInvalidNumber(ftpInterval) || ftpInterval <= 0) {
+                alert('Please enter a valid FTP ping interval.');
+                return;
+            }
+
+            let ftpValidationError = null;
+            ftpTargets.forEach((target, index) => {
+                let port = parseInt(target.port, 10);
+                if (isInvalidNumber(port)) {
+                    port = 21;
+                }
+
+                if (port < 1 || port > 65535) {
+                    ftpValidationError = `FTP Server ${index + 1} port must be between 1 and 65535.`;
+                    return;
+                }
+
+                target.port = port;
+                target.host = target.host || '';
+            });
+
+            if (ftpValidationError) {
+                alert(ftpValidationError);
+                return;
+            }
+
+            const settings = {
+                logs_directory: logsDirectory,
+                auto_refresh_interval: autoRefresh,
+                ftp_targets: ftpTargets,
+                ftp_ping_interval: ftpInterval
+            };
+
+            $.ajax({
+                url: '/api/settings',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(settings),
+                success: function() {
+                    alert('Settings saved successfully! The application will now use the updated configuration.');
+                    loadCurrentSettings();
+                    // Refresh data to use new directory
+                    loadLogFiles();
+                    loadStats();
+                    loadRecentActivity();
+
+                    const intervalMs = Math.max(
+                        MIN_FTP_STATUS_INTERVAL,
+                        ftpInterval * 1000
+                    );
+                    scheduleFtpStatusPolling(intervalMs);
+                    $('#ftp-status-updated').text('Awaiting check...');
+                    loadFtpStatus();
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings';
+                    alert('Error: ' + error);
+                }
+            });
+        }
+
+        function validateDirectory() {
+            const directory = $('#logs-directory').val().trim();
+            
+            if (!directory) {
+                alert('Please enter a directory path first');
+                return;
+            }
+            
+            $.get('/api/validate-directory', { directory: directory })
+                .done(function(response) {
+                    if (response.valid) {
+                        alert(`âœ… Directory is valid!\n\nFound ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`);
+                    } else {
+                        alert(`âŒ Directory validation failed:\n${response.message}`);
+                    }
+                })
+                .fail(function() {
+                    alert('âŒ Failed to validate directory. Please check the path and try again.');
+                });
+        }
+
+        function browseDirectory() {
+            // Note: This is a simplified implementation
+            // In a real application, you might want to use a file dialog library
+            const directory = prompt('Enter the full path to your logs directory:');
+            if (directory) {
+                $('#logs-directory').val(directory);
+            }
+        }
+
+        // Activity and notification functions
+        function showActivityIndicator(text = 'Processing...') {
+            $('#activity-text').text(text);
+            $('#activity-indicator').show();
+        }
+
+        function hideActivityIndicator() {
+            $('#activity-indicator').hide();
+        }
+
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = $('#notification');
+            const text = $('#notification-text');
+            
+            // Update notification content
+            text.text(message);
+            notification.removeClass('success error warning').addClass(type);
+            
+            // Show notification
+            notification.addClass('show');
+            
+            // Auto-hide after duration
+            setTimeout(() => {
+                notification.removeClass('show');
+            }, duration);
+        }
+
+        function updateStatusIndicator(online = true) {
+            const indicator = $('#status-indicator');
+            if (online) {
+                indicator.removeClass('offline').addClass('online');
+                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Online</span>');
+            } else {
+                indicator.removeClass('online').addClass('offline');
+                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Offline</span>');
+            }
+        }
+
+        // Enhanced AJAX wrapper with activity indicators
+        function ajaxWithIndicator(url, options = {}) {
+            showActivityIndicator(options.loadingText || 'Loading...');
+            
+            const defaultOptions = {
+                success: function(data) {
+                    hideActivityIndicator();
+                    if (options.success) options.success(data);
+                },
+                error: function(xhr, status, error) {
+                    hideActivityIndicator();
+                    showNotification('Request failed: ' + error, 'error');
+                    if (options.error) options.error(xhr, status, error);
+                }
+            };
+            
+            $.ajax(url, $.extend(defaultOptions, options));
+        }
+    </script>
+</body>
+</html>
+
