@@ -458,6 +458,26 @@
             transform: translateX(4px);
         }
 
+        .dataTables_wrapper .dataTables_length label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            min-width: 90px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background-color: var(--surface-0);
+        }
+
+        .dataTables_wrapper .dataTables_length select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.15);
+        }
+
         .table-modern tbody td {
             vertical-align: middle;
             border-color: rgba(148, 163, 184, 0.2);
@@ -639,28 +659,6 @@
             animation: pulse 2s infinite;
         }
 
-        .status-indicator {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 18px 36px -26px rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(12px);
-        }
-
-        .status-indicator.online {
-            background: rgba(34, 197, 94, 0.85);
-            color: #f0fdf4;
-        }
-
-        .status-indicator.offline {
-            background: rgba(239, 68, 68, 0.9);
-            color: #fff5f5;
-        }
-
         .notification {
             position: fixed;
             top: 90px;
@@ -739,7 +737,6 @@
                 padding: 20px;
             }
 
-            .status-indicator,
             .activity-indicator {
                 right: 16px;
                 left: 16px;
@@ -752,11 +749,6 @@
     <div class="activity-indicator" id="activity-indicator" style="display: none;">
         <span class="pulse"></span>
         <span id="activity-text">Processing...</span>
-    </div>
-    
-    <div class="status-indicator online" id="status-indicator">
-        <i class="fas fa-circle me-1"></i>
-        <span>Dashboard Online</span>
     </div>
     
     <div class="notification" id="notification">
@@ -1005,6 +997,7 @@
                             <table class="table table-hover table-modern align-middle" id="data-table">
                                 <thead>
                                     <tr>
+                                        <th>No.</th>
                                         <th>ID Scan</th>
                                         <th>Nomor Container</th>
                                         <th>Jam Scan</th>
@@ -1027,7 +1020,7 @@
                 <div id="detail-nok-section" class="content-section" style="display: none;">
                     <h2 class="section-title">Detail Log - NOK</h2>
                     <div class="filter-section">
-                        <div class="row g-3">
+                        <div class="row g-3 align-items-end">
                             <div class="col-md-3">
                                 <label class="form-label">Pilih Transmission Log:</label>
                                 <select class="form-select" id="log-file-select-nok">
@@ -1044,17 +1037,19 @@
                                     <option value="NOK" selected>NOK Only</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-4">
                                 <label class="form-label">&nbsp;</label>
-                                <button class="btn btn-primary btn-custom w-100" onclick="filterDataNOK()">
-                                    <i class="fas fa-search me-1"></i> Search
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
-                                <button class="btn btn-secondary btn-custom w-100" onclick="refreshDataNOK()">
-                                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                                </button>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-primary btn-custom flex-grow-1" onclick="filterDataNOK()">
+                                        <i class="fas fa-search me-1"></i> Search
+                                    </button>
+                                    <button class="btn btn-success btn-custom flex-grow-1" onclick="openNokExportModal(this)">
+                                        <i class="fas fa-file-excel me-1"></i> Export Excel
+                                    </button>
+                                    <button class="btn btn-secondary btn-custom flex-grow-1" onclick="refreshDataNOK()">
+                                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1070,6 +1065,7 @@
                             <table class="table table-hover table-modern align-middle" id="data-table-nok">
                                 <thead>
                                     <tr>
+                                        <th>No.</th>
                                         <th>ID Scan</th>
                                         <th>Jam Scan</th>
                                         <th>Status</th>
@@ -1254,6 +1250,78 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <!-- OK Export Modal -->
+    <div class="modal fade" id="okExportModal" tabindex="-1" aria-labelledby="okExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="okExportModalLabel">Export OK Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
+                    <div class="row g-2" id="ok-export-fields">
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-id-scan" data-field="id_scan" checked>
+                                <label class="form-check-label" for="ok-export-id-scan">ID Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-container" data-field="container_no" checked>
+                                <label class="form-check-label" for="ok-export-container">Nomor Container</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-scan-time" data-field="scan_time" checked>
+                                <label class="form-check-label" for="ok-export-scan-time">Jam Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-update-time" data-field="update_time" checked>
+                                <label class="form-check-label" for="ok-export-update-time">Jam Update</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-time-diff" data-field="time_difference" checked>
+                                <label class="form-check-label" for="ok-export-time-diff">Selisih Waktu</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-image-count" data-field="image_count" checked>
+                                <label class="form-check-label" for="ok-export-image-count">Jumlah Gambar</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-status" data-field="status" checked>
+                                <label class="form-check-label" for="ok-export-status">Status</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ok-export-error-desc" data-field="error_description">
+                                <label class="form-check-label" for="ok-export-error-desc">Deskripsi Error</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none mt-3" id="ok-export-error">Please select at least one column to export.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="ok-export-confirm" onclick="exportOkToExcel()">
+                        <i class="fas fa-file-export me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- NOK Detail Modal -->
     <div class="modal fade" id="nokDetailModal" tabindex="-1" aria-labelledby="nokDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1273,10 +1341,6 @@
                                 <dd class="col-sm-7" id="modal-container-no">N/A</dd>
                                 <dt class="col-sm-5">Scan Time</dt>
                                 <dd class="col-sm-7" id="modal-scan-time">N/A</dd>
-                                <dt class="col-sm-5">Scan Duration</dt>
-                                <dd class="col-sm-7" id="modal-scan-duration">N/A</dd>
-                                <dt class="col-sm-5">Overall Time</dt>
-                                <dd class="col-sm-7" id="modal-overall-time">N/A</dd>
                                 <dt class="col-sm-5">Status</dt>
                                 <dd class="col-sm-7" id="modal-status">N/A</dd>
                             </dl>
@@ -1319,6 +1383,78 @@
             </div>
         </div>
     </div>
+    <!-- NOK Export Modal -->
+    <div class="modal fade" id="nokExportModal" tabindex="-1" aria-labelledby="nokExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nokExportModalLabel">Export NOK Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
+                    <div class="row g-2" id="nok-export-fields">
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-id-scan" data-field="id_scan" checked>
+                                <label class="form-check-label" for="nok-export-id-scan">ID Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-container" data-field="container_no" checked>
+                                <label class="form-check-label" for="nok-export-container">Nomor Container</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-scan-time" data-field="scan_time" checked>
+                                <label class="form-check-label" for="nok-export-scan-time">Jam Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-update-time" data-field="update_time" checked>
+                                <label class="form-check-label" for="nok-export-update-time">Jam Update</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-time-diff" data-field="time_difference" checked>
+                                <label class="form-check-label" for="nok-export-time-diff">Selisih Waktu</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-image-count" data-field="image_count" checked>
+                                <label class="form-check-label" for="nok-export-image-count">Jumlah Gambar</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-status" data-field="status" checked>
+                                <label class="form-check-label" for="nok-export-status">Status</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="nok-export-error-desc" data-field="error_description">
+                                <label class="form-check-label" for="nok-export-error-desc">Deskripsi Error</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none mt-3" id="nok-export-error">Please select at least one column to export.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="nok-export-confirm" onclick="exportNokToExcel()">
+                        <i class="fas fa-file-export me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
 
@@ -1332,6 +1468,8 @@
         let dataTable = null;
         let dataTableNOK = null;
         let nokDetailModalInstance = null;
+        let okExportModalInstance = null;
+        let nokExportModalInstance = null;
         let startTime = new Date();
         let lastUpdateTime = new Date();
         let ftpStatusTimer = null;
@@ -1545,6 +1683,15 @@
                     dataTable = $('#data-table').DataTable({
                         data: response.data,
                         columns: [
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row, meta) {
+                                    return meta.row + meta.settings._iDisplayStart + 1;
+                                }
+                            },
                             { data: 'id_scan' },
                             { data: 'container_no' },
                             { data: 'scan_time' },
@@ -1553,7 +1700,7 @@
                             { data: 'update_time' },
                             { data: 'time_difference' },
                             { data: 'image_count' },
-                            { 
+                            {
                                 data: 'status',
                                 render: function(data, type, row) {
                                     const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
@@ -1562,7 +1709,7 @@
                             }
                         ],
                         pageLength: 25,
-                        order: [[2, 'desc']],
+                        order: [[3, 'desc']],
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -1592,6 +1739,15 @@
                     dataTableNOK = $('#data-table-nok').DataTable({
                         data: response.data,
                         columns: [
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row, meta) {
+                                    return meta.row + meta.settings._iDisplayStart + 1;
+                                }
+                            },
                             { data: 'id_scan' },
                             { data: 'scan_time' },
                             {
@@ -1614,7 +1770,7 @@
                             }
                         ],
                         pageLength: 25,
-                        order: [[1, 'desc']],
+                        order: [[2, 'desc']],
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -1671,8 +1827,6 @@
             setText('#modal-id-scan', data.id_scan);
             setText('#modal-container-no', data.container_no);
             setText('#modal-scan-time', data.scan_time);
-            setText('#modal-scan-duration', data.scan_duration);
-            setText('#modal-overall-time', data.overall_time);
             setText('#modal-status', data.status);
             setText('#modal-update-time', data.update_time);
             setText('#modal-time-difference', data.time_difference);
@@ -1693,7 +1847,7 @@
                 imagePathElement.text('N/A');
             }
 
-            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count']);
+            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count', 'scan_duration', 'overall_time']);
             const additionalRawContainer = $('#modal-additional-raw');
             additionalRawContainer.empty();
 
@@ -1771,32 +1925,128 @@
 
         // Export to Excel
         function exportToExcel() {
+            if (!okExportModalInstance) {
+                okExportModalInstance = new bootstrap.Modal(document.getElementById('okExportModal'));
+            }
+
+            $('#ok-export-error').addClass('d-none');
+
+            $('#ok-export-confirm')
+                .prop('disabled', false)
+                .html('<i class="fas fa-file-export me-1"></i> Export');
+
+            okExportModalInstance.show();
+        }
+
+        function exportOkToExcel() {
+            const modal = $('#okExportModal');
+            const exportBtn = $('#ok-export-confirm');
+            const selectedFields = [];
+
+            modal.find('input[type="checkbox"]:checked').each(function() {
+                const field = $(this).data('field');
+                if (field) {
+                    selectedFields.push(field);
+                }
+            });
+
+            if (selectedFields.length === 0) {
+                $('#ok-export-error').removeClass('d-none');
+                return;
+            }
+
+            $('#ok-export-error').addClass('d-none');
+
             const search = $('#search-input').val();
             const logFile = $('#log-file-select').val();
-            
-            // Always export OK status data from Detail Log OK section
-            let url = '/api/export/excel?status=OK&';
-            if (search) url += `search=${encodeURIComponent(search)}&`;
-            if (logFile) url += `log_file=${encodeURIComponent(logFile)}&`;
-            
-            // Show loading indicator
-            const exportBtn = event.target;
-            const originalText = exportBtn.innerHTML;
-            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Exporting...';
-            exportBtn.disabled = true;
-            
-            // Create a temporary link to trigger download
+
+            const params = new URLSearchParams();
+            params.append('status', 'OK');
+            if (search) {
+                params.append('search', search);
+            }
+            if (logFile) {
+                params.append('log_file', logFile);
+            }
+            params.append('fields', selectedFields.join(','));
+
+            exportBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Exporting...');
+
             const link = document.createElement('a');
-            link.href = url;
+            link.href = `/api/export/excel?${params.toString()}`;
             link.download = '';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            // Reset button after a short delay
+
             setTimeout(() => {
-                exportBtn.innerHTML = originalText;
-                exportBtn.disabled = false;
+                exportBtn.prop('disabled', false).html('<i class="fas fa-file-export me-1"></i> Export');
+                if (okExportModalInstance) {
+                    okExportModalInstance.hide();
+                }
+            }, 2000);
+        }
+
+        function openNokExportModal(button) {
+            if (!nokExportModalInstance) {
+                nokExportModalInstance = new bootstrap.Modal(document.getElementById('nokExportModal'));
+            }
+
+            $('#nok-export-error').addClass('d-none');
+
+            $('#nok-export-confirm')
+                .prop('disabled', false)
+                .html('<i class="fas fa-file-export me-1"></i> Export');
+
+            nokExportModalInstance.show();
+        }
+
+        function exportNokToExcel() {
+            const modal = $('#nokExportModal');
+            const exportBtn = $('#nok-export-confirm');
+            const selectedFields = [];
+
+            modal.find('input[type="checkbox"]:checked').each(function() {
+                const field = $(this).data('field');
+                if (field) {
+                    selectedFields.push(field);
+                }
+            });
+
+            if (selectedFields.length === 0) {
+                $('#nok-export-error').removeClass('d-none');
+                return;
+            }
+
+            $('#nok-export-error').addClass('d-none');
+
+            const search = $('#search-input-nok').val();
+            const logFile = $('#log-file-select-nok').val();
+
+            const params = new URLSearchParams();
+            params.append('status', 'NOK');
+            if (search) {
+                params.append('search', search);
+            }
+            if (logFile) {
+                params.append('log_file', logFile);
+            }
+            params.append('fields', selectedFields.join(','));
+
+            exportBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Exporting...');
+
+            const link = document.createElement('a');
+            link.href = `/api/export/excel?${params.toString()}`;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                exportBtn.prop('disabled', false).html('<i class="fas fa-file-export me-1"></i> Export');
+                if (nokExportModalInstance) {
+                    nokExportModalInstance.hide();
+                }
             }, 2000);
         }
 
@@ -2280,17 +2530,6 @@
             setTimeout(() => {
                 notification.removeClass('show');
             }, duration);
-        }
-
-        function updateStatusIndicator(online = true) {
-            const indicator = $('#status-indicator');
-            if (online) {
-                indicator.removeClass('offline').addClass('online');
-                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Online</span>');
-            } else {
-                indicator.removeClass('online').addClass('offline');
-                indicator.html('<i class="fas fa-circle me-1"></i><span>Dashboard Offline</span>');
-            }
         }
 
         // Enhanced AJAX wrapper with activity indicators

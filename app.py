@@ -386,13 +386,71 @@ class LogParser:
 
         def extract_upload_info(line):
             """Extract task details from upload related log lines."""
-            if ('Task.py-build_upload_data' not in line and
-                    'XmlParse.py-parse_xml' not in line):
-                return None
-
             timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
                                         line)
             log_timestamp = timestamp_match.group(1) if timestamp_match else None
+
+            if ('Task.py-send_message_handler' in line and
+                    'json_data is' in line):
+                picno_match = re.search(r'<PICNO>([^<]+)</PICNO>', line, re.IGNORECASE)
+                if not picno_match:
+                    return None
+
+                scan_time_match = re.search(r'<SCANTIME>([^<]+)</SCANTIME>', line, re.IGNORECASE)
+                container_match = re.search(r'<container_no>([^<]+)</container_no>', line, re.IGNORECASE)
+
+                info = {
+                    'task_no': picno_match.group(1).strip(),
+                    'image_path': '',
+                    'retry_count': 0,
+                    'task_time': scan_time_match.group(1).strip()
+                    if scan_time_match else None,
+                    'log_timestamp': log_timestamp
+                }
+
+                if container_match:
+                    info['container_no'] = container_match.group(1).strip()
+
+                scan_start_match = (
+                    re.search(r'<Time_ScanStart>([^<]+)</Time_ScanStart>', line, re.IGNORECASE) or
+                    re.search(r'<Time_Scan_Start>([^<]+)</Time_Scan_Start>', line, re.IGNORECASE)
+                )
+                scan_stop_match = (
+                    re.search(r'<Time_Scan_Stop>([^<]+)</Time_Scan_Stop>', line, re.IGNORECASE) or
+                    re.search(r'<Time_ScanStop>([^<]+)</Time_ScanStop>', line, re.IGNORECASE)
+                )
+                scan_duration_value = None
+                if scan_start_match and scan_stop_match:
+                    try:
+                        start_val = int(scan_start_match.group(1).strip())
+                        stop_val = int(scan_stop_match.group(1).strip())
+                        if stop_val >= start_val:
+                            seconds = stop_val - start_val
+                            scan_duration_value = f"{seconds} detik"
+                    except ValueError:
+                        pass
+
+                if scan_duration_value:
+                    info['scan_duration'] = scan_duration_value
+                    info['overall_time'] = scan_duration_value
+
+                scan_time_value = info.get('task_time')
+                if scan_time_value and log_timestamp:
+                    try:
+                        time_diff_value = self.calculate_time_difference({
+                            'SCANTIME': scan_time_value,
+                            'UPDATE_TIME': log_timestamp
+                        })
+                        if time_diff_value and time_diff_value != 'N/A':
+                            info['time_difference'] = time_diff_value
+                    except Exception:
+                        pass
+
+                return info
+
+            if ('Task.py-build_upload_data' not in line and
+                    'XmlParse.py-parse_xml' not in line):
+                return None
 
             task_no_match = (re.search(r"'task_no':\s*'([^']+)'", line) or
                              re.search(r"'pic_no':\s*'([^']+)'", line))
@@ -428,24 +486,59 @@ class LogParser:
             scan_time = info.get('task_time') or log_timestamp or 'N/A'
             image_path = info.get('image_path', '')
             retry_count = info.get('retry_count', 0)
+            container_no = info.get('container_no')
+            if container_no:
+                container_no = str(container_no).strip()
+            else:
+                container_no = ''
+            scan_duration = info.get('scan_duration')
+            overall_time = info.get('overall_time') or scan_duration
+            time_difference = info.get('time_difference')
+
+            effective_scan_duration = scan_duration if scan_duration else 'N/A'
+            effective_overall_time = overall_time or (scan_duration if scan_duration else None)
+            if not effective_overall_time:
+                effective_overall_time = 'N/A'
+            effective_time_difference = time_difference if time_difference else 'N/A'
 
             entry = provisional_entries.get(task_no)
             if entry:
+                raw_data = entry.setdefault('raw_data', {})
+                raw_data['task_no'] = task_no
+
                 if scan_time and scan_time != 'N/A':
                     entry['scan_time'] = scan_time
+                    raw_data['task_time'] = scan_time
+
                 if log_timestamp:
                     entry['update_time'] = log_timestamp
                     entry['log_timestamp'] = log_timestamp
-                raw_data = entry.setdefault('raw_data', {})
-                raw_data['task_no'] = task_no
+                    raw_data['log_timestamp'] = log_timestamp
+
+                if container_no:
+                    entry['container_no'] = container_no
+                    raw_data['container_no'] = container_no
+
+                if scan_duration and scan_duration != 'N/A':
+                    entry['scan_duration'] = scan_duration
+                    entry['overall_time'] = overall_time or scan_duration
+                    raw_data['scan_duration'] = scan_duration
+                    if overall_time:
+                        raw_data['overall_time'] = overall_time
+                elif overall_time and overall_time != 'N/A':
+                    entry['overall_time'] = overall_time
+                    raw_data['overall_time'] = overall_time
+
+                if time_difference and time_difference != 'N/A':
+                    entry['time_difference'] = time_difference
+                    raw_data['time_difference'] = time_difference
+
                 if image_path:
                     raw_data['image_path'] = image_path
+
                 if retry_count or 'retry_count' not in raw_data:
                     raw_data['retry_count'] = retry_count
-                if scan_time and scan_time != 'N/A':
-                    raw_data['task_time'] = scan_time
-                if log_timestamp:
-                    raw_data['log_timestamp'] = log_timestamp
+
                 return
 
             raw_data = {
@@ -457,15 +550,23 @@ class LogParser:
             }
             if log_timestamp:
                 raw_data['log_timestamp'] = log_timestamp
+            if container_no:
+                raw_data['container_no'] = container_no
+            if scan_duration and scan_duration != 'N/A':
+                raw_data['scan_duration'] = scan_duration
+            if overall_time and overall_time != 'N/A':
+                raw_data['overall_time'] = overall_time
+            if time_difference and time_difference != 'N/A':
+                raw_data['time_difference'] = time_difference
 
             provisional_entries[task_no] = {
                 'id_scan': task_no,
-                'container_no': '',
+                'container_no': container_no or '',
                 'scan_time': scan_time,
-                'scan_duration': 'N/A',
-                'overall_time': 'N/A',
+                'scan_duration': effective_scan_duration,
+                'overall_time': effective_overall_time,
                 'update_time': log_timestamp or 'N/A',
-                'time_difference': 'N/A',
+                'time_difference': effective_time_difference,
                 'image_count': 0,
                 'status': 'NOK',
                 'log_timestamp': log_timestamp,
@@ -557,20 +658,63 @@ class LogParser:
                                         r'Container[^:]*:?\s*([A-Z0-9]+)', desc)
                                     if container_match:
                                         container_no = container_match.group(1)
-                                
+
+                                provisional_entry = provisional_entries.get(response_id) if response_id else None
+                                xml_container = None
+                                if provisional_entry:
+                                    xml_container = (provisional_entry.get('container_no') or
+                                                     provisional_entry.get('raw_data', {}).get('container_no'))
+                                if xml_container:
+                                    container_no = xml_container
+
+                                def resolve_field(field_name, fallback='N/A'):
+                                    if not provisional_entry:
+                                        return fallback
+                                    value = provisional_entry.get(field_name)
+                                    if not value or value == 'N/A':
+                                        value = provisional_entry.get('raw_data', {}).get(field_name)
+                                    if not value or value == 'N/A':
+                                        return fallback
+                                    return value
+
+                                scan_duration_value = resolve_field('scan_duration')
+                                overall_time_value = resolve_field('overall_time')
+                                if overall_time_value == 'N/A' and scan_duration_value != 'N/A':
+                                    overall_time_value = scan_duration_value
+                                time_difference_value = resolve_field('time_difference')
+
+                                scan_time_value = log_timestamp or 'N/A'
+                                if (provisional_entry and provisional_entry.get('scan_time') and
+                                        provisional_entry['scan_time'] != 'N/A'):
+                                    scan_time_value = provisional_entry['scan_time']
+                                elif provisional_entry:
+                                    raw_task_time = provisional_entry.get('raw_data', {}).get('task_time')
+                                    if raw_task_time:
+                                        scan_time_value = raw_task_time
+
+                                entry_raw_data = dict(response_data)
+                                if container_no and container_no != "Failed!":
+                                    entry_raw_data['container_no'] = container_no
+                                if scan_duration_value != 'N/A':
+                                    entry_raw_data['scan_duration'] = scan_duration_value
+                                if overall_time_value != 'N/A':
+                                    entry_raw_data['overall_time'] = overall_time_value
+                                if time_difference_value != 'N/A':
+                                    entry_raw_data['time_difference'] = time_difference_value
+
                                 entry = {
                                     'id_scan': response_id,
                                     'container_no': container_no,
-                                    'scan_time': log_timestamp or 'N/A',
-                                    'scan_duration': 'N/A',
-                                    'overall_time': 'N/A',
+                                    'scan_time': scan_time_value,
+                                    'scan_duration': scan_duration_value,
+                                    'overall_time': overall_time_value,
                                     'update_time': log_timestamp or 'N/A',
-                                    'time_difference': 'N/A',
+                                    'time_difference': time_difference_value,
                                     'image_count': 0,
                                     'status': 'NOK',
                                     'log_timestamp': log_timestamp,
                                     'file_name': os.path.basename(file_path),
-                                    'raw_data': response_data,
+                                    'raw_data': entry_raw_data,
                                     'error_description': desc
                                 }
                                 data.append(entry)
@@ -747,72 +891,80 @@ def get_stats():
 @app.route('/api/export/excel')
 def export_excel():
     """API endpoint to export data to Excel"""
-    # Get filter parameters
     status_filter = request.args.get('status', 'OK')
     search_term = request.args.get('search')
     log_file = request.args.get('log_file')
-    
-    # Get filtered data
+    fields_param = request.args.get('fields')
+
     data = log_parser.get_all_data(status_filter, search_term, log_file)
-    
-    # Create Excel workbook
+
+    column_definitions = [
+        ('id_scan', 'ID Scan'),
+        ('container_no', 'Nomor Container'),
+        ('scan_time', 'Jam Scan'),
+        ('update_time', 'Jam Update'),
+        ('time_difference', 'Selisih Waktu'),
+        ('image_count', 'Jumlah Gambar'),
+        ('status', 'Status'),
+        ('error_description', 'Deskripsi Error')
+    ]
+    column_map = {key: label for key, label in column_definitions}
+    default_fields = [key for key, _ in column_definitions if key != 'error_description']
+
+    requested_fields = []
+    if fields_param:
+        for field in fields_param.split(','):
+            field_key = field.strip()
+            if field_key and field_key in column_map and field_key not in requested_fields:
+                requested_fields.append(field_key)
+
+    if not requested_fields:
+        requested_fields = default_fields
+
+    headers = [column_map[field] for field in requested_fields]
+
     wb = Workbook()
     ws = wb.active
-    ws.title = "Transmission Log Data"
-    
-    # Define headers
-    headers = [
-        'ID Scan', 'Nomor Container', 'Jam Scan', 'Scan Time', 
-        'Overall Time', 'Jam Update', 'Selisih Waktu', 
-        'Jumlah Gambar', 'Status'
-    ]
-    
-    # Style for headers
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="366092", end_color="366092", 
-                             fill_type="solid")
-    header_alignment = Alignment(horizontal="center", vertical="center")
-    
-    # Add headers
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=header)
+    if status_filter:
+        sheet_title = f"Transmission {status_filter.upper()} Data"
+    else:
+        sheet_title = 'Transmission Log Data'
+    ws.title = sheet_title[:31]
+
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center')
+
+    for col_index, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_index, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_alignment
-    
-    # Add data rows
-    for row, entry in enumerate(data, 2):
-        ws.cell(row=row, column=1, value=entry['id_scan'])
-        ws.cell(row=row, column=2, value=entry['container_no'])
-        ws.cell(row=row, column=3, value=entry['scan_time'])
-        ws.cell(row=row, column=4, value=entry['scan_duration'])
-        ws.cell(row=row, column=5, value=entry['overall_time'])
-        ws.cell(row=row, column=6, value=entry['update_time'])
-        ws.cell(row=row, column=7, value=entry['time_difference'])
-        ws.cell(row=row, column=8, value=entry['image_count'])
-        ws.cell(row=row, column=9, value=entry['status'])
-    
-    # Auto-adjust column widths
-    for col in range(1, len(headers) + 1):
-        column_letter = get_column_letter(col)
+
+    for row_index, entry in enumerate(data, 2):
+        for col_index, field in enumerate(requested_fields, 1):
+            value = entry.get(field, '')
+            if value is None:
+                value = ''
+            ws.cell(row=row_index, column=col_index, value=value)
+
+    for col_index in range(1, len(headers) + 1):
+        column_letter = get_column_letter(col_index)
         max_length = 0
-        
-        for row in range(1, len(data) + 2):
-            cell_value = ws[f"{column_letter}{row}"].value
-            if cell_value:
+        for row_index in range(1, len(data) + 2):
+            cell_value = ws[f"{column_letter}{row_index}"].value
+            if cell_value is not None:
                 max_length = max(max_length, len(str(cell_value)))
-        
         ws.column_dimensions[column_letter].width = min(max_length + 2, 50)
-    
-    # Create temporary file
+
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
     wb.save(temp_file.name)
     temp_file.close()
-    
-    # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"transmission_log_{status_filter}_{timestamp}.xlsx"
-    
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename_status = (status_filter or 'all').lower()
+    filename = f"transmission_log_{filename_status}_{timestamp}.xlsx"
+
     return send_file(
         temp_file.name,
         as_attachment=True,
