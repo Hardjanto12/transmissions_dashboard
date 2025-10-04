@@ -209,8 +209,8 @@ class LogParser:
         
         return unique_data
 
-# Initialize log parser
-log_parser = LogParser()
+# Initialize log parser with the 'logs' folder
+log_parser = LogParser(logs_dir="logs")
 
 
 @app.route('/')
