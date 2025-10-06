@@ -120,7 +120,9 @@
             font-size: 1.75rem;
             margin-bottom: 6px;
         }
-
+        .table-responsive {
+            padding: 1rem;
+        }
         .page-subtitle {
             color: var(--text-muted);
             font-size: 0.95rem;
@@ -812,6 +814,9 @@
                         <a class="nav-link" href="#" onclick="showSection('detail-ok')">
                             <i class="fas fa-check-circle me-2"></i> Detail Log OK
                         </a>
+                        <a class="nav-link" href="#" onclick="showSection('detail-all')">
+                            <i class="fas fa-layer-group me-2"></i> Detail Log All
+                        </a>
                         <a class="nav-link" href="#" onclick="showSection('detail-nok')">
                             <i class="fas fa-times-circle me-2"></i> Detail Log NOK
                         </a>
@@ -1037,7 +1042,75 @@
                                         <th>Scan Time</th>
                                         <th>Overall Time</th>
                                         <th>Jam Update</th>
-                                        <th>Selisih Waktu</th>
+                                        <th>Jumlah Gambar</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Log ALL Section -->
+                <div id="detail-all-section" class="content-section" style="display: none;">
+                    <h2 class="section-title">Detail Log - All</h2>
+                    <div class="filter-section">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Pilih Transmission Log:</label>
+                                <select class="form-select" id="log-file-select-all">
+                                    <option value="">All Log Files</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cari:</label>
+                                <input type="text" class="form-control" id="search-input-all" placeholder="Search...">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status:</label>
+                                <select class="form-select" id="status-filter-all">
+                                    <option value="ALL" selected>All Status</option>
+                                    <option value="OK">OK Only</option>
+                                    <option value="NOK">NOK Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-primary btn-custom flex-grow-1" onclick="filterDataAll()">
+                                        <i class="fas fa-search me-1"></i> Search
+                                    </button>
+                                    <button class="btn btn-success btn-custom flex-grow-1" onclick="openAllExportModal(this)">
+                                        <i class="fas fa-file-excel me-1"></i> Export Excel
+                                    </button>
+                                    <button class="btn btn-secondary btn-custom flex-grow-1" onclick="refreshDataAll()">
+                                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <div class="loading" id="table-loading-all">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-modern align-middle" id="data-table-all">
+                                <thead>
+                                    <tr>
+                                        <th>No.</th>
+                                        <th>ID Scan</th>
+                                        <th>Nomor Container</th>
+                                        <th>Jam Scan</th>
+                                        <th>Scan Time</th>
+                                        <th>Overall Time</th>
+                                        <th>Jam Update</th>
                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
                                     </tr>
@@ -1355,6 +1428,74 @@
         </div>
     </div>
 
+    <!-- ALL Export Modal -->
+    <div class="modal fade" id="allExportModal" tabindex="-1" aria-labelledby="allExportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allExportModalLabel">Export All Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
+                    <div class="row g-2" id="all-export-fields">
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-id-scan" data-field="id_scan" checked>
+                                <label class="form-check-label" for="all-export-id-scan">ID Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-container" data-field="container_no" checked>
+                                <label class="form-check-label" for="all-export-container">Nomor Container</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-scan-time" data-field="scan_time" checked>
+                                <label class="form-check-label" for="all-export-scan-time">Jam Scan</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-update-time" data-field="update_time" checked>
+                                <label class="form-check-label" for="all-export-update-time">Jam Update</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-image-count" data-field="image_count" checked>
+                                <label class="form-check-label" for="all-export-image-count">Jumlah Gambar</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-status" data-field="status" checked>
+                                <label class="form-check-label" for="all-export-status">Status</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="all-export-error-desc" data-field="error_description">
+                                <label class="form-check-label" for="all-export-error-desc">Deskripsi Error</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none mt-3" id="all-export-error">Please select at least one column to export.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="all-export-confirm" onclick="exportAllToExcel()">
+                        <i class="fas fa-file-export me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- NOK Detail Modal -->
     <div class="modal fade" id="nokDetailModal" tabindex="-1" aria-labelledby="nokDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1499,10 +1640,23 @@
     <script>
         let currentData = [];
         let dataTable = null;
+        let dataTableAll = null;
         let dataTableNOK = null;
         let nokDetailModalInstance = null;
         let okExportModalInstance = null;
+        let allExportModalInstance = null;
         let nokExportModalInstance = null;
+
+        const nokDetailModalElement = document.getElementById('nokDetailModal');
+        if (nokDetailModalElement) {
+            nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
+                nokDetailModalElement.classList.remove('show');
+                nokDetailModalElement.style.display = 'none';
+                nokDetailModalElement.setAttribute('aria-hidden', 'true');
+                nokDetailModalElement.removeAttribute('aria-modal');
+                nokDetailModalInstance = null;
+            });
+        }
         let startTime = new Date();
         let lastUpdateTime = new Date();
         let ftpStatusTimer = null;
@@ -1604,22 +1758,22 @@
             } else if (section === 'detail-ok') {
                 $('#detail-ok-section').show();
                 $('.nav-link').eq(1).addClass('active');
-                if (!dataTable) {
                     loadData();
-                }
+            } else if (section === 'detail-all') {
+                $('#detail-all-section').show();
+                $('.nav-link').eq(2).addClass('active');
+                    loadDataAll();
             } else if (section === 'detail-nok') {
                 $('#detail-nok-section').show();
-                $('.nav-link').eq(2).addClass('active');
-                if (!dataTableNOK) {
+                $('.nav-link').eq(3).addClass('active');
                     loadDataNOK();
-                }
             } else if (section === 'statistics') {
                 $('#statistics-section').show();
-                $('.nav-link').eq(3).addClass('active');
+                $('.nav-link').eq(4).addClass('active');
                 loadCharts();
             } else if (section === 'settings') {
                 $('#settings-section').show();
-                $('.nav-link').eq(4).addClass('active');
+                $('.nav-link').eq(5).addClass('active');
                 loadCurrentSettings();
             }
         }
@@ -1627,7 +1781,7 @@
         // Load log files
         function loadLogFiles() {
             $.get('/api/log-files', function(files) {
-                const select = $('#log-file-select, #log-file-select-nok');
+                const select = $('#log-file-select, #log-file-select-all, #log-file-select-nok');
                 select.empty().append('<option value="">All Log Files</option>');
                 files.forEach(file => {
                     select.append(`<option value="${file}">${file}</option>`);
@@ -1705,6 +1859,9 @@
 
         // Load data for OK section
         function loadData() {
+            if (!dataTable && $.fn.DataTable.isDataTable('#data-table')) {
+                dataTable = $('#data-table').DataTable();
+            }
             $('#table-loading').show();
             // Always filter for OK status in Detail Log OK section
             $.get('/api/data?status=OK', function(response) {
@@ -1731,7 +1888,6 @@
                             { data: 'scan_duration' },
                             { data: 'overall_time' },
                             { data: 'update_time' },
-                            { data: 'time_difference' },
                             { data: 'image_count' },
                             {
                                 data: 'status',
@@ -1761,14 +1917,87 @@
             });
         }
 
+        // Load data for All section
+        function loadDataAll() {
+            if (!dataTableAll && $.fn.DataTable.isDataTable('#data-table-all')) {
+                dataTableAll = $('#data-table-all').DataTable();
+            }
+            const search = $('#search-input-all').val();
+            const logFile = $('#log-file-select-all').val();
+            const status = $('#status-filter-all').val();
+
+            const params = new URLSearchParams();
+            if (status && status !== 'ALL') {
+                params.append('status', status);
+            }
+            if (search) {
+                params.append('search', search);
+            }
+            if (logFile) {
+                params.append('log_file', logFile);
+            }
+
+            const url = params.toString() ? `/api/data?${params.toString()}` : '/api/data';
+
+            $('#table-loading-all').show();
+            $.get(url, function(response) {
+                $('#table-loading-all').hide();
+
+                if (!dataTableAll) {
+                    dataTableAll = $('#data-table-all').DataTable({
+                        data: response.data,
+                        columns: [
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row, meta) {
+                                    return meta.row + meta.settings._iDisplayStart + 1;
+                                }
+                            },
+                            { data: 'id_scan' },
+                            { data: 'container_no' },
+                            { data: 'scan_time' },
+                            { data: 'scan_duration' },
+                            { data: 'overall_time' },
+                            { data: 'update_time' },
+                            { data: 'image_count' },
+                            {
+                                data: 'status',
+                                render: function(data) {
+                                    const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
+                                    return `<span class="status-badge ${statusClass}">${data}</span>`;
+                                }
+                            }
+                        ],
+                        pageLength: 25,
+                        order: [[3, 'desc']],
+                        language: {
+                            search: "Cari:",
+                            lengthMenu: "Tampilkan _MENU_ entri",
+                            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                            paginate: {
+                                first: "Pertama",
+                                last: "Terakhir",
+                                next: "Selanjutnya",
+                                previous: "Sebelumnya"
+                            }
+                        }
+                    });
+                } else {
+                    dataTableAll.clear().rows.add(response.data).draw();
+                }
+            });
+        }
+
         // Load data for NOK section
-        function loadDataNOK() {
+                function loadDataNOK() {
             $('#table-loading-nok').show();
             $.get('/api/data?status=NOK', function(response) {
                 $('#table-loading-nok').hide();
-                
+
                 if (!dataTableNOK) {
-                    // Initialize DataTable with data
                     dataTableNOK = $('#data-table-nok').DataTable({
                         data: response.data,
                         columns: [
@@ -1795,7 +2024,7 @@
                                 orderable: false,
                                 searchable: false,
                                 className: 'text-center',
-                                render: function(data, type, row) {
+                                render: function() {
                                     return '<button type="button" class="btn btn-sm btn-outline-primary btn-detail">' +
                                            '<i class="fas fa-info-circle me-1"></i> Detail' +
                                            '</button>';
@@ -1816,29 +2045,43 @@
                             }
                         }
                     });
-
-                    $('#data-table-nok tbody').on('click', '.btn-detail', function() {
-                        const rowData = dataTableNOK.row($(this).closest('tr')).data();
-
-                        if (!rowData) {
-                            return;
-                        }
-
-                        populateDetailModal(rowData);
-
-                        if (!nokDetailModalInstance) {
-                            nokDetailModalInstance = new bootstrap.Modal(document.getElementById('nokDetailModal'));
-                        }
-
-                        nokDetailModalInstance.show();
-                    });
                 } else {
                     dataTableNOK.clear().rows.add(response.data).draw();
                 }
+
+                $('#data-table-nok tbody').off('click', '.btn-detail').on('click', '.btn-detail', function() {
+                    let tr = $(this).closest('tr');
+                    if (tr.hasClass('child')) {
+                        tr = tr.prev();
+                    }
+                    const rowData = dataTableNOK.row(tr).data();
+                    if (!rowData) {
+                        return;
+                    }
+
+                    populateDetailModal(rowData);
+
+                    const modalElement = document.getElementById('nokDetailModal');
+                    if (!modalElement) {
+                        console.warn('nokDetailModal element not found');
+                        return;
+                    }
+
+                    if (modalElement.parentElement !== document.body) {
+                        document.body.appendChild(modalElement);
+                    }
+
+                    nokDetailModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+                    nokDetailModalInstance.show();
+                    modalElement.classList.add('show');
+                    modalElement.style.display = 'block';
+                    modalElement.removeAttribute('aria-hidden');
+                    modalElement.setAttribute('aria-modal', 'true');
+                    modalElement.scrollTop = 0;
+                });
             });
         }
-
-        function populateDetailModal(data) {
+function populateDetailModal(data) {
             const rawData = (data.raw_data && typeof data.raw_data === 'object' && !Array.isArray(data.raw_data)) ? data.raw_data : {};
 
             const formatValue = (value) => {
@@ -1930,6 +2173,10 @@
             });
         }
 
+        function filterDataAll() {
+            loadDataAll();
+        }
+
         // Filter data for NOK section
         function filterDataNOK() {
             const search = $('#search-input-nok').val();
@@ -1953,6 +2200,11 @@
         // Refresh data
         function refreshData() {
             loadData();
+            loadStats();
+        }
+
+        function refreshDataAll() {
+            loadDataAll();
             loadStats();
         }
 
@@ -2001,7 +2253,8 @@
             if (logFile) {
                 params.append('log_file', logFile);
             }
-            params.append('fields', selectedFields.join(','));
+            const filteredFields = selectedFields.filter(field => field !== 'time_difference');
+            params.append('fields', filteredFields.join(','));
 
             exportBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Exporting...');
 
@@ -2016,6 +2269,73 @@
                 exportBtn.prop('disabled', false).html('<i class="fas fa-file-export me-1"></i> Export');
                 if (okExportModalInstance) {
                     okExportModalInstance.hide();
+                }
+            }, 2000);
+        }
+
+        function openAllExportModal(button) {
+            if (!allExportModalInstance) {
+                allExportModalInstance = new bootstrap.Modal(document.getElementById('allExportModal'));
+            }
+
+            $('#all-export-error').addClass('d-none');
+
+            $('#all-export-confirm')
+                .prop('disabled', false)
+                .html('<i class="fas fa-file-export me-1"></i> Export');
+
+            allExportModalInstance.show();
+        }
+
+        function exportAllToExcel() {
+            const modal = $('#allExportModal');
+            const exportBtn = $('#all-export-confirm');
+            const selectedFields = [];
+
+            modal.find('input[type="checkbox"]:checked').each(function() {
+                const field = $(this).data('field');
+                if (field) {
+                    selectedFields.push(field);
+                }
+            });
+
+            if (selectedFields.length === 0) {
+                $('#all-export-error').removeClass('d-none');
+                return;
+            }
+
+            $('#all-export-error').addClass('d-none');
+
+            const search = $('#search-input-all').val();
+            const logFile = $('#log-file-select-all').val();
+            const status = $('#status-filter-all').val();
+
+            const params = new URLSearchParams();
+            if (status && status !== 'ALL') {
+                params.append('status', status);
+            }
+            if (search) {
+                params.append('search', search);
+            }
+            if (logFile) {
+                params.append('log_file', logFile);
+            }
+            const filteredFields = selectedFields.filter(field => field !== 'time_difference');
+            params.append('fields', filteredFields.join(','));
+
+            exportBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Exporting...');
+
+            const link = document.createElement('a');
+            link.href = `/api/export/excel?${params.toString()}`;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                exportBtn.prop('disabled', false).html('<i class="fas fa-file-export me-1"></i> Export');
+                if (allExportModalInstance) {
+                    allExportModalInstance.hide();
                 }
             }, 2000);
         }
@@ -2597,4 +2917,15 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 

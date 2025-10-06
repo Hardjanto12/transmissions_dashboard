@@ -1,5 +1,5 @@
 {
-  "logs_directory": "X:\\Python\\transmissions_dashboard\\logs",
+  "logs_directory": "C:\\Users\\IPS2\\Downloads\\logss",
   "auto_refresh_interval": 30,
   "ftp_targets": [
     {

@@ -14,6 +14,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 import tempfile
+from html import unescape
 from pathlib import Path
 
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
@@ -364,6 +365,48 @@ class LogParser:
         data = []
         provisional_entries = {}
         completed_task_ids = set()
+        known_containers = {}
+        known_upload_metadata = {}
+
+        def remember_container(entry_id, container_value):
+            """Persist sanitized container numbers for reuse across retries."""
+            if not entry_id or container_value is None:
+                return
+            container_value = str(container_value).strip()
+            if not container_value or container_value.lower() == 'failed!':
+                return
+            known_containers[entry_id] = container_value
+
+        def sync_entry_container(entry_id, container_value):
+            """Update existing entries once a container number is identified."""
+            if not entry_id or container_value is None:
+                return
+            container_value = str(container_value).strip()
+            if not container_value or container_value.lower() == 'failed!':
+                return
+            remember_container(entry_id, container_value)
+            for existing_entry in reversed(data):
+                if existing_entry.get('id_scan') == entry_id:
+                    current_container = existing_entry.get('container_no')
+                    if (not current_container or
+                            str(current_container).strip().lower() == 'failed!'):
+                        existing_entry['container_no'] = container_value
+                    existing_raw = existing_entry.setdefault('raw_data', {})
+                    existing_raw['container_no'] = container_value
+                    existing_raw['CONTAINER_NO'] = container_value
+                    break
+
+        def remember_upload_metadata(entry_id, metadata):
+            """Store supplemental upload metadata for reuse across retries."""
+            if not entry_id or metadata is None:
+                return
+            stored = known_upload_metadata.setdefault(entry_id, {})
+            for key, value in metadata.items():
+                if value is None:
+                    continue
+                if isinstance(value, str) and value.strip() in ('', 'N/A'):
+                    continue
+                stored[key] = value
 
         def parse_task_time(raw_value):
             """Convert datetime.datetime(...) text to a formatted string."""
@@ -392,12 +435,19 @@ class LogParser:
 
             if ('Task.py-send_message_handler' in line and
                     'json_data is' in line):
-                picno_match = re.search(r'<PICNO>([^<]+)</PICNO>', line, re.IGNORECASE)
+                decoded_line = line
+                try:
+                    decoded_line = unescape(line)
+                except Exception:
+                    pass
+
+                picno_match = re.search(r'<PICNO>([^<]+)</PICNO>', decoded_line, re.IGNORECASE)
                 if not picno_match:
                     return None
 
-                scan_time_match = re.search(r'<SCANTIME>([^<]+)</SCANTIME>', line, re.IGNORECASE)
-                container_match = re.search(r'<container_no>([^<]+)</container_no>', line, re.IGNORECASE)
+                scan_time_match = re.search(r'<SCANTIME>([^<]+)</SCANTIME>', decoded_line, re.IGNORECASE)
+                container_match = re.search(r'<container_no>([^<]+)</container_no>', decoded_line, re.IGNORECASE)
+                checkin_match = re.search(r'<CHECKINTIME>([^<]+)</CHECKINTIME>', decoded_line, re.IGNORECASE)
 
                 info = {
                     'task_no': picno_match.group(1).strip(),
@@ -409,15 +459,28 @@ class LogParser:
                 }
 
                 if container_match:
-                    info['container_no'] = container_match.group(1).strip()
+                    container_value = container_match.group(1).strip()
+                    info['container_no'] = container_value
+                    remember_container(info['task_no'], container_value)
+
+                if checkin_match:
+                    update_time_value = checkin_match.group(1).strip()
+                    if update_time_value:
+                        info['update_time'] = update_time_value
+
+                scanimg_count = len(re.findall(r'<SCANIMG', decoded_line, re.IGNORECASE))
+                img_tag_count = len(re.findall(r'<img>', decoded_line, re.IGNORECASE))
+                image_count = max(scanimg_count, img_tag_count)
+                if image_count:
+                    info['image_count'] = image_count
 
                 scan_start_match = (
-                    re.search(r'<Time_ScanStart>([^<]+)</Time_ScanStart>', line, re.IGNORECASE) or
-                    re.search(r'<Time_Scan_Start>([^<]+)</Time_Scan_Start>', line, re.IGNORECASE)
+                    re.search(r'<Time_ScanStart>([^<]+)</Time_ScanStart>', decoded_line, re.IGNORECASE) or
+                    re.search(r'<Time_Scan_Start>([^<]+)</Time_Scan_Start>', decoded_line, re.IGNORECASE)
                 )
                 scan_stop_match = (
-                    re.search(r'<Time_Scan_Stop>([^<]+)</Time_Scan_Stop>', line, re.IGNORECASE) or
-                    re.search(r'<Time_ScanStop>([^<]+)</Time_ScanStop>', line, re.IGNORECASE)
+                    re.search(r'<Time_Scan_Stop>([^<]+)</Time_Scan_Stop>', decoded_line, re.IGNORECASE) or
+                    re.search(r'<Time_ScanStop>([^<]+)</Time_ScanStop>', decoded_line, re.IGNORECASE)
                 )
                 scan_duration_value = None
                 if scan_start_match and scan_stop_match:
@@ -435,16 +498,29 @@ class LogParser:
                     info['overall_time'] = scan_duration_value
 
                 scan_time_value = info.get('task_time')
-                if scan_time_value and log_timestamp:
+                update_time_candidate = info.get('update_time') or log_timestamp
+                if scan_time_value and update_time_candidate:
                     try:
                         time_diff_value = self.calculate_time_difference({
                             'SCANTIME': scan_time_value,
-                            'UPDATE_TIME': log_timestamp
+                            'UPDATE_TIME': update_time_candidate
                         })
                         if time_diff_value and time_diff_value != 'N/A':
                             info['time_difference'] = time_diff_value
                     except Exception:
                         pass
+
+                metadata_snapshot = {
+                    'task_time': info.get('task_time'),
+                    'update_time': info.get('update_time'),
+                    'scan_duration': info.get('scan_duration'),
+                    'overall_time': info.get('overall_time'),
+                    'time_difference': info.get('time_difference'),
+                    'image_count': info.get('image_count'),
+                    'container_no': info.get('container_no'),
+                    'log_timestamp': log_timestamp
+                }
+                remember_upload_metadata(info['task_no'], metadata_snapshot)
 
                 return info
 
@@ -494,12 +570,33 @@ class LogParser:
             scan_duration = info.get('scan_duration')
             overall_time = info.get('overall_time') or scan_duration
             time_difference = info.get('time_difference')
+            update_time_value = info.get('update_time') or log_timestamp
+            image_count_value = info.get('image_count')
+            if isinstance(image_count_value, str):
+                stripped_count = image_count_value.strip()
+                if stripped_count.isdigit():
+                    image_count_value = int(stripped_count)
+            elif image_count_value is not None:
+                try:
+                    image_count_value = int(image_count_value)
+                except (TypeError, ValueError):
+                    pass
 
             effective_scan_duration = scan_duration if scan_duration else 'N/A'
             effective_overall_time = overall_time or (scan_duration if scan_duration else None)
             if not effective_overall_time:
                 effective_overall_time = 'N/A'
             effective_time_difference = time_difference if time_difference else 'N/A'
+            if ((not effective_time_difference) or effective_time_difference == 'N/A') and scan_time and update_time_value:
+                try:
+                    computed_diff = self.calculate_time_difference({
+                        'SCANTIME': scan_time,
+                        'UPDATE_TIME': update_time_value
+                    })
+                    if computed_diff and computed_diff != 'N/A':
+                        effective_time_difference = computed_diff
+                except Exception:
+                    pass
 
             entry = provisional_entries.get(task_no)
             if entry:
@@ -510,14 +607,22 @@ class LogParser:
                     entry['scan_time'] = scan_time
                     raw_data['task_time'] = scan_time
 
+                if update_time_value:
+                    entry['update_time'] = update_time_value
+                    raw_data['update_time'] = update_time_value
+                elif 'update_time' not in raw_data and log_timestamp:
+                    raw_data['update_time'] = log_timestamp
+
                 if log_timestamp:
-                    entry['update_time'] = log_timestamp
                     entry['log_timestamp'] = log_timestamp
                     raw_data['log_timestamp'] = log_timestamp
 
                 if container_no:
                     entry['container_no'] = container_no
                     raw_data['container_no'] = container_no
+                    raw_data['CONTAINER_NO'] = container_no
+                    remember_container(task_no, container_no)
+                    sync_entry_container(task_no, container_no)
 
                 if scan_duration and scan_duration != 'N/A':
                     entry['scan_duration'] = scan_duration
@@ -529,15 +634,37 @@ class LogParser:
                     entry['overall_time'] = overall_time
                     raw_data['overall_time'] = overall_time
 
-                if time_difference and time_difference != 'N/A':
+                if effective_time_difference and effective_time_difference != 'N/A':
+                    entry['time_difference'] = effective_time_difference
+                    raw_data['time_difference'] = effective_time_difference
+                elif time_difference and time_difference != 'N/A':
                     entry['time_difference'] = time_difference
                     raw_data['time_difference'] = time_difference
+
+                if image_count_value is not None:
+                    try:
+                        count_int = int(image_count_value)
+                    except (TypeError, ValueError):
+                        count_int = image_count_value
+                    entry['image_count'] = count_int
+                    raw_data['image_count'] = count_int
 
                 if image_path:
                     raw_data['image_path'] = image_path
 
                 if retry_count or 'retry_count' not in raw_data:
                     raw_data['retry_count'] = retry_count
+
+                remember_upload_metadata(task_no, {
+                    'task_time': scan_time if scan_time != 'N/A' else None,
+                    'update_time': update_time_value,
+                    'scan_duration': effective_scan_duration if effective_scan_duration != 'N/A' else None,
+                    'overall_time': effective_overall_time if effective_overall_time != 'N/A' else None,
+                    'time_difference': entry.get('time_difference'),
+                    'image_count': entry.get('image_count'),
+                    'container_no': container_no or None,
+                    'log_timestamp': log_timestamp
+                })
 
                 return
 
@@ -548,15 +675,23 @@ class LogParser:
                 'task_time': scan_time,
                 'source': 'upload'
             }
+            if update_time_value:
+                raw_data['update_time'] = update_time_value
+            if image_count_value is not None:
+                raw_data['image_count'] = image_count_value
             if log_timestamp:
                 raw_data['log_timestamp'] = log_timestamp
             if container_no:
                 raw_data['container_no'] = container_no
+                raw_data['CONTAINER_NO'] = container_no
+                remember_container(task_no, container_no)
             if scan_duration and scan_duration != 'N/A':
                 raw_data['scan_duration'] = scan_duration
             if overall_time and overall_time != 'N/A':
                 raw_data['overall_time'] = overall_time
-            if time_difference and time_difference != 'N/A':
+            if effective_time_difference and effective_time_difference != 'N/A':
+                raw_data['time_difference'] = effective_time_difference
+            elif time_difference and time_difference != 'N/A':
                 raw_data['time_difference'] = time_difference
 
             provisional_entries[task_no] = {
@@ -565,14 +700,27 @@ class LogParser:
                 'scan_time': scan_time,
                 'scan_duration': effective_scan_duration,
                 'overall_time': effective_overall_time,
-                'update_time': log_timestamp or 'N/A',
+                'update_time': update_time_value or (log_timestamp or 'N/A'),
                 'time_difference': effective_time_difference,
-                'image_count': 0,
+                'image_count': image_count_value if image_count_value is not None else 0,
                 'status': 'NOK',
                 'log_timestamp': log_timestamp,
                 'file_name': os.path.basename(file_path),
                 'raw_data': raw_data
             }
+
+            remember_upload_metadata(task_no, {
+                'task_time': scan_time if scan_time != 'N/A' else None,
+                'update_time': update_time_value or log_timestamp,
+                'scan_duration': effective_scan_duration if effective_scan_duration != 'N/A' else None,
+                'overall_time': effective_overall_time if effective_overall_time != 'N/A' else None,
+                'time_difference': effective_time_difference if effective_time_difference != 'N/A' else None,
+                'image_count': image_count_value if image_count_value is not None else 0,
+                'container_no': container_no or None,
+                'log_timestamp': log_timestamp
+            })
+
+            sync_entry_container(task_no, container_no)
 
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -607,29 +755,83 @@ class LogParser:
                                     response_data.get('resultData') and
                                     response_data.get('resultData') != '-'):
                                 result_data = response_data['resultData']
+
+                                container_no = result_data.get('CONTAINER_NO', '')
+                                provisional_entry = None
+                                result_picno = result_data.get('PICNO')
+                                if result_picno:
+                                    provisional_entry = provisional_entries.get(result_picno)
+                                upload_meta = known_upload_metadata.get(result_picno, {}) if result_picno else {}
+                                if provisional_entry:
+                                    provisional_raw = provisional_entry.get('raw_data', {})
+                                    for key, value in provisional_raw.items():
+                                        result_data.setdefault(key, value)
+                                for key, value in upload_meta.items():
+                                    result_data.setdefault(key, value)
+                                xml_container = None
+                                if provisional_entry:
+                                    xml_container = (provisional_entry.get('container_no') or
+                                                     provisional_entry.get('raw_data', {}).get('container_no') or
+                                                     provisional_entry.get('raw_data', {}).get('CONTAINER_NO'))
+                                clean_container = str(container_no).strip() if container_no else ''
+                                if ((not clean_container) or clean_container.lower() == 'failed!') and xml_container:
+                                    clean_container = str(xml_container).strip()
+                                if ((not clean_container) or clean_container.lower() == 'failed!') and result_picno:
+                                    known_value = known_containers.get(result_picno)
+                                    if known_value:
+                                        clean_container = known_value
+                                if ((not clean_container) or clean_container.lower() == 'failed!') and upload_meta.get('container_no'):
+                                    clean_container = str(upload_meta['container_no']).strip()
+                                container_no = clean_container
+                                if container_no:
+                                    result_data['CONTAINER_NO'] = container_no
+                                    result_data['container_no'] = container_no
+                                    remember_container(result_picno, container_no)
+                                sync_entry_container(result_picno, container_no)
+
                                 
                                 # Calculate scan duration
                                 scan_duration = self.calculate_scan_duration(
                                     result_data)
-                                
+                                if (not scan_duration or scan_duration == 'N/A') and upload_meta.get('scan_duration'):
+                                    scan_duration = upload_meta['scan_duration']
+
                                 # Calculate time difference
                                 time_diff = self.calculate_time_difference(
                                     result_data)
-                                
+                                if (not time_diff or time_diff == 'N/A') and upload_meta.get('time_difference'):
+                                    time_diff = upload_meta['time_difference']
+
                                 # Count images
                                 image_count = self.count_images(result_data)
+                                if (not image_count or image_count == 0) and upload_meta.get('image_count') is not None:
+                                    try:
+                                        image_count = int(upload_meta['image_count'])
+                                    except (TypeError, ValueError):
+                                        image_count = upload_meta['image_count']
                                 
                                 # Determine status
                                 status = ("OK" if result_data.get('RESPON_TPS_API') 
                                          == 'OK' else "NOK")
                                 
+                                if not result_data.get('UPDATE_TIME') and (upload_meta.get('update_time') or upload_meta.get('log_timestamp') or log_timestamp):
+                                    result_data['UPDATE_TIME'] = upload_meta.get('update_time') or upload_meta.get('log_timestamp') or log_timestamp
+                                effective_scan_time = result_data.get('SCANTIME') or upload_meta.get('task_time') or log_timestamp or 'N/A'
+                                effective_update_time = result_data.get('UPDATE_TIME') or upload_meta.get('update_time') or upload_meta.get('log_timestamp') or log_timestamp or 'N/A'
+                                overall_time_value = scan_duration if scan_duration and scan_duration != 'N/A' else upload_meta.get('overall_time', scan_duration)
+                                if image_count is None:
+                                    image_count = upload_meta.get('image_count') if upload_meta.get('image_count') is not None else 0
+                                result_data.setdefault('image_count', image_count)
+                                if effective_update_time and effective_update_time != 'N/A':
+                                    result_data['UPDATE_TIME'] = effective_update_time
+                                effective_container = container_no or known_containers.get(result_data.get('PICNO', '')) or ''
                                 entry = {
                                     'id_scan': result_data.get('PICNO', ''),
-                                    'container_no': result_data.get('CONTAINER_NO', ''),
-                                    'scan_time': result_data.get('SCANTIME', ''),
+                                    'container_no': effective_container,
+                                    'scan_time': effective_scan_time,
                                     'scan_duration': scan_duration,
-                                    'overall_time': scan_duration,
-                                    'update_time': result_data.get('UPDATE_TIME', ''),
+                                    'overall_time': overall_time_value,
+                                    'update_time': effective_update_time,
                                     'time_difference': time_diff,
                                     'image_count': image_count,
                                     'status': status,
@@ -660,12 +862,26 @@ class LogParser:
                                         container_no = container_match.group(1)
 
                                 provisional_entry = provisional_entries.get(response_id) if response_id else None
+                                upload_meta = known_upload_metadata.get(response_id, {}) if response_id else {}
                                 xml_container = None
                                 if provisional_entry:
+                                    raw_provisional = provisional_entry.get('raw_data', {})
                                     xml_container = (provisional_entry.get('container_no') or
-                                                     provisional_entry.get('raw_data', {}).get('container_no'))
+                                                     raw_provisional.get('container_no') or
+                                                     raw_provisional.get('CONTAINER_NO'))
                                 if xml_container:
                                     container_no = xml_container
+                                if (not container_no or container_no.lower() == 'failed!') and upload_meta.get('container_no'):
+                                    container_no = str(upload_meta['container_no']).strip()
+
+                                container_no = str(container_no).strip() if container_no else ''
+                                if (not container_no or container_no.lower() == 'failed!') and response_id:
+                                    known_value = known_containers.get(response_id)
+                                    if known_value:
+                                        container_no = known_value
+                                if container_no:
+                                    remember_container(response_id, container_no)
+                                sync_entry_container(response_id, container_no)
 
                                 def resolve_field(field_name, fallback='N/A'):
                                     if not provisional_entry:
@@ -681,7 +897,13 @@ class LogParser:
                                 overall_time_value = resolve_field('overall_time')
                                 if overall_time_value == 'N/A' and scan_duration_value != 'N/A':
                                     overall_time_value = scan_duration_value
+                                if (not scan_duration_value or scan_duration_value == 'N/A') and upload_meta.get('scan_duration'):
+                                    scan_duration_value = upload_meta['scan_duration']
+                                if (not overall_time_value or overall_time_value == 'N/A') and upload_meta.get('overall_time'):
+                                    overall_time_value = upload_meta['overall_time']
                                 time_difference_value = resolve_field('time_difference')
+                                if (not time_difference_value or time_difference_value == 'N/A') and upload_meta.get('time_difference'):
+                                    time_difference_value = upload_meta['time_difference']
 
                                 scan_time_value = log_timestamp or 'N/A'
                                 if (provisional_entry and provisional_entry.get('scan_time') and
@@ -691,26 +913,55 @@ class LogParser:
                                     raw_task_time = provisional_entry.get('raw_data', {}).get('task_time')
                                     if raw_task_time:
                                         scan_time_value = raw_task_time
+                                if (not scan_time_value or scan_time_value == 'N/A') and upload_meta.get('task_time'):
+                                    scan_time_value = upload_meta['task_time']
 
                                 entry_raw_data = dict(response_data)
-                                if container_no and container_no != "Failed!":
+                                if provisional_entry:
+                                    provisional_raw = provisional_entry.get('raw_data', {})
+                                    for key, value in provisional_raw.items():
+                                        entry_raw_data.setdefault(key, value)
+                                for key, value in upload_meta.items():
+                                    entry_raw_data.setdefault(key, value)
+                                if container_no and container_no.lower() != 'failed!':
                                     entry_raw_data['container_no'] = container_no
+                                    entry_raw_data['CONTAINER_NO'] = container_no
+                                elif response_id:
+                                    known_value = known_containers.get(response_id)
+                                    if known_value:
+                                        entry_raw_data['container_no'] = known_value
+                                        entry_raw_data['CONTAINER_NO'] = known_value
                                 if scan_duration_value != 'N/A':
                                     entry_raw_data['scan_duration'] = scan_duration_value
                                 if overall_time_value != 'N/A':
                                     entry_raw_data['overall_time'] = overall_time_value
                                 if time_difference_value != 'N/A':
                                     entry_raw_data['time_difference'] = time_difference_value
+                                effective_update_time = upload_meta.get('update_time') or upload_meta.get('log_timestamp') or log_timestamp or 'N/A'
+                                if effective_update_time and effective_update_time != 'N/A':
+                                    entry_raw_data.setdefault('update_time', effective_update_time)
+
+                                effective_container = container_no or known_containers.get(response_id, '')
+                                image_count_effective = entry_raw_data.get('image_count')
+                                if image_count_effective is None and provisional_entry:
+                                    image_count_effective = (provisional_entry.get('image_count') or
+                                                             provisional_entry.get('raw_data', {}).get('image_count'))
+                                if image_count_effective is None:
+                                    image_count_effective = 0
+                                try:
+                                    image_count_effective = int(image_count_effective)
+                                except (TypeError, ValueError):
+                                    pass
 
                                 entry = {
                                     'id_scan': response_id,
-                                    'container_no': container_no,
+                                    'container_no': effective_container,
                                     'scan_time': scan_time_value,
                                     'scan_duration': scan_duration_value,
                                     'overall_time': overall_time_value,
-                                    'update_time': log_timestamp or 'N/A',
+                                    'update_time': effective_update_time,
                                     'time_difference': time_difference_value,
-                                    'image_count': 0,
+                                    'image_count': image_count_effective,
                                     'status': 'NOK',
                                     'log_timestamp': log_timestamp,
                                     'file_name': os.path.basename(file_path),
