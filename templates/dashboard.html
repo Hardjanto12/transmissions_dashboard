@@ -1039,14 +1039,14 @@
                                         <th>ID Scan</th>
                                         <th>Nomor Container</th>
                                         <th>Jam Scan</th>
-                                        <th>Scan Time</th>
-                                        <th>Overall Time</th>
-                                        <th>Jam Update</th>
-                                        <th>Jumlah Gambar</th>
+                                         <th>Scan Time</th>
+                                         <th>Overall Time</th>
+                                         <th>Jam Update</th>
+                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
                                 </tbody>
                             </table>
                         </div>
@@ -1113,6 +1113,7 @@
                                         <th>Jam Update</th>
                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
+                                        <th>Resend</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1249,6 +1250,29 @@
                                             <div class="form-text">
                                                 <small class="text-muted">
                                                     How often to automatically refresh the dashboard data
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <h6 class="text-uppercase text-muted small">Resend Target</h6>
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="resend-server" class="form-label">Server</label>
+                                                    <input type="text" class="form-control" id="resend-server"
+                                                           placeholder="e.g. http://10.226.52.32:8040">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="resend-endpoint" class="form-label">Endpoint</label>
+                                                    <input type="text" class="form-control" id="resend-endpoint"
+                                                           placeholder="e.g. /services/xRaySby/in">
+                                                </div>
+                                            </div>
+                                            <div class="form-text">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Provide the server base URL and endpoint path for resend requests.
+                                                    Leave endpoint blank to post directly to the server URL, or enter a full URL in the endpoint field.
                                                 </small>
                                             </div>
                                         </div>
@@ -1646,6 +1670,7 @@
         let okExportModalInstance = null;
         let allExportModalInstance = null;
         let nokExportModalInstance = null;
+        let resendTargetConfigured = false;
 
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
@@ -1668,6 +1693,7 @@
             loadLogFiles();
             loadStats();
             loadRecentActivity();
+            loadCurrentSettings();
             updateQuickStats();
             showNotification('Dashboard loaded successfully!', 'success');
 
@@ -1969,6 +1995,21 @@
                                     const statusClass = data === 'OK' ? 'status-ok' : 'status-nok';
                                     return `<span class="status-badge ${statusClass}">${data}</span>`;
                                 }
+                            },
+                            {
+                                data: null,
+                                orderable: false,
+                                searchable: false,
+                                className: 'text-center',
+                                render: function(data, type, row) {
+                                    if (type !== 'display') {
+                                        return '';
+                                    }
+                                    const disabledAttr = resendTargetConfigured ? '' : ' disabled';
+                                    return '<button type="button" class="btn btn-sm btn-outline-success btn-resend"' + disabledAttr + '>' +
+                                           '<i class="fas fa-paper-plane me-1"></i> Resend' +
+                                           '</button>';
+                                }
                             }
                         ],
                         pageLength: 25,
@@ -1988,6 +2029,79 @@
                 } else {
                     dataTableAll.clear().rows.add(response.data).draw();
                 }
+
+                attachResendHandlerAll();
+            });
+        }
+
+        function attachResendHandlerAll() {
+            if (!dataTableAll) {
+                return;
+            }
+
+            $('#data-table-all tbody').off('click', '.btn-resend').on('click', '.btn-resend', function() {
+                if (!resendTargetConfigured) {
+                    alert('Please configure the resend server and endpoint from the Settings page before resending data.');
+                    return;
+                }
+
+                let tr = $(this).closest('tr');
+                if (tr.hasClass('child')) {
+                    tr = tr.prev();
+                }
+
+                const rowData = dataTableAll.row(tr).data();
+                if (!rowData) {
+                    return;
+                }
+
+                const confirmationMessage = `Send data for ID ${rowData.id_scan}?`;
+                if (!confirm(confirmationMessage)) {
+                    return;
+                }
+
+                const button = $(this);
+                const originalHtml = button.html();
+                button.prop('disabled', true);
+                button.html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Sending...');
+
+                const requestBody = {
+                    id_scan: rowData.id_scan,
+                    log_file: rowData.file_name || null
+                };
+
+                $.ajax({
+                    url: '/api/resend',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestBody),
+                    success: function(response) {
+                        const statusCode = response && response.status_code !== undefined
+                            ? response.status_code
+                            : 'unknown';
+                        const successMessage = response && response.success
+                            ? `Resend succeeded (HTTP ${statusCode}).`
+                            : `Resend completed with HTTP ${statusCode}.`;
+                        const targetSegment = response && response.target_url
+                            ? `\nTarget: ${response.target_url}`
+                            : '';
+                        const responseText = response && response.response_text
+                            ? `\nResponse:\n${response.response_text}`
+                            : '';
+                        alert(successMessage + targetSegment + responseText);
+                    },
+                    error: function(xhr) {
+                        let message = 'Failed to resend data.';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            message += `\n${xhr.responseJSON.error}`;
+                        }
+                        alert(message);
+                    },
+                    complete: function() {
+                        button.html(originalHtml);
+                        button.prop('disabled', !resendTargetConfigured);
+                    }
+                });
             });
         }
 
@@ -2638,6 +2752,18 @@ function populateDetailModal(data) {
             $.get('/api/settings', function(settings) {
                 $('#logs-directory').val(settings.logs_directory || '');
                 $('#auto-refresh').val(settings.auto_refresh_interval);
+                $('#resend-server').val(settings.resend_server || '');
+                $('#resend-endpoint').val(settings.resend_endpoint || '');
+
+                const resendServerTrimmed = (settings.resend_server || '').trim();
+                const resendEndpointTrimmed = (settings.resend_endpoint || '').trim();
+                const endpointLooksLikeUrl = resendEndpointTrimmed.toLowerCase().startsWith('http://') ||
+                                             resendEndpointTrimmed.toLowerCase().startsWith('https://');
+                resendTargetConfigured = Boolean(resendServerTrimmed || endpointLooksLikeUrl);
+
+                if (dataTableAll) {
+                    dataTableAll.rows().invalidate('data').draw(false);
+                }
 
                 const ftpTargets = Array.isArray(settings.ftp_targets)
                     ? settings.ftp_targets
@@ -2685,6 +2811,12 @@ function populateDetailModal(data) {
                 : 'Not configured';
             const autoRefresh = parseInt(settings.auto_refresh_interval, 10);
             const ftpInterval = parseInt(settings.ftp_ping_interval, 10);
+            const resendServerDisplay = settings.resend_server
+                ? `<code class="small">${escapeHtml(settings.resend_server)}</code>`
+                : '<span class="text-muted">Not configured</span>';
+            const resendEndpointDisplay = settings.resend_endpoint
+                ? `<code class="small">${escapeHtml(settings.resend_endpoint)}</code>`
+                : '<span class="text-muted">Not configured</span>';
 
             const ftpTargets = Array.isArray(settings.ftp_targets)
                 ? settings.ftp_targets
@@ -2725,6 +2857,14 @@ function populateDetailModal(data) {
                     <span class="badge bg-info">${!isInvalidNumber(autoRefresh) && autoRefresh > 0 ? autoRefresh : 'N/A'}s</span>
                 </div>
                 <div class="mb-2">
+                    <strong>Resend Server:</strong><br>
+                    ${resendServerDisplay}
+                </div>
+                <div class="mb-2">
+                    <strong>Resend Endpoint:</strong><br>
+                    ${resendEndpointDisplay}
+                </div>
+                <div class="mb-2">
                     <strong>FTP Ping Interval:</strong><br>
                     <span class="badge bg-secondary">${!isInvalidNumber(ftpInterval) && ftpInterval > 0 ? ftpInterval : 60}s</span>
                 </div>
@@ -2745,6 +2885,11 @@ function populateDetailModal(data) {
         function saveSettings() {
             const logsDirectory = $('#logs-directory').val().trim();
             const autoRefresh = parseInt($('#auto-refresh').val(), 10);
+            const resendServer = $('#resend-server').val().trim();
+            const resendEndpoint = $('#resend-endpoint').val().trim();
+            const endpointLooksLikeUrl = resendEndpoint.toLowerCase().startsWith('http://') ||
+                                         resendEndpoint.toLowerCase().startsWith('https://');
+            const resendConfiguredNext = Boolean(resendServer || endpointLooksLikeUrl);
             const ftpTargets = [
                 {
                     host: $('#ftp-host-1').val().trim(),
@@ -2764,6 +2909,11 @@ function populateDetailModal(data) {
 
             if (isInvalidNumber(autoRefresh) || autoRefresh <= 0) {
                 alert('Please enter a valid auto refresh interval.');
+                return;
+            }
+
+            if (!resendServer && resendEndpoint && !endpointLooksLikeUrl) {
+                alert('Please configure the resend server or provide a full URL in the endpoint field.');
                 return;
             }
 
@@ -2797,7 +2947,9 @@ function populateDetailModal(data) {
                 logs_directory: logsDirectory,
                 auto_refresh_interval: autoRefresh,
                 ftp_targets: ftpTargets,
-                ftp_ping_interval: ftpInterval
+                ftp_ping_interval: ftpInterval,
+                resend_server: resendServer,
+                resend_endpoint: resendEndpoint
             };
 
             $.ajax({
@@ -2807,6 +2959,10 @@ function populateDetailModal(data) {
                 data: JSON.stringify(settings),
                 success: function() {
                     alert('Settings saved successfully! The application will now use the updated configuration.');
+                    resendTargetConfigured = resendConfiguredNext;
+                    if (dataTableAll) {
+                        dataTableAll.rows().invalidate('data').draw(false);
+                    }
                     loadCurrentSettings();
                     // Refresh data to use new directory
                     loadLogFiles();

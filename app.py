@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file
+import ast
 import copy
 import logging
 import os
@@ -16,6 +17,7 @@ from openpyxl.utils import get_column_letter
 import tempfile
 from html import unescape
 from pathlib import Path
+import requests
 
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 TEMPLATE_FOLDER = BASE_DIR / "templates"
@@ -31,6 +33,8 @@ SETTINGS_FILE = 'settings.json'
 FTP_TARGET_SLOTS = 2
 DEFAULT_FTP_PORT = 21
 DEFAULT_FTP_PING_INTERVAL = 60
+DEFAULT_RESEND_TIMEOUT = 15
+MAX_REMOTE_RESPONSE_PREVIEW = 1000
 
 PING_LOG_MAX_BYTES = 10_000 * 1024 * 1024  # 10,000 MB limit for ping logs
 PING_LOG_FILENAME = 'ping_status.log'
@@ -132,6 +136,27 @@ def validate_ping_interval(value):
     return interval
 
 
+def build_resend_url(server, endpoint):
+    """Construct the resend URL from configured server and endpoint values."""
+    server_value = (server or '').strip()
+    endpoint_value = (endpoint or '').strip()
+
+    if endpoint_value:
+        endpoint_lower = endpoint_value.lower()
+        if endpoint_lower.startswith(('http://', 'https://')):
+            return endpoint_value
+
+    if not server_value:
+        raise ValueError('Resend server is not configured')
+
+    normalized_server = server_value.rstrip('/')
+    if not endpoint_value:
+        return normalized_server
+
+    normalized_endpoint = endpoint_value.lstrip('/')
+    return f"{normalized_server}/{normalized_endpoint}"
+
+
 def build_initial_ftp_status_cache(targets):
     """Create an initial FTP status cache from configured targets."""
     statuses = []
@@ -163,7 +188,9 @@ def load_settings():
             {'host': '', 'port': DEFAULT_FTP_PORT},
             {'host': '', 'port': DEFAULT_FTP_PORT}
         ],
-        'ftp_ping_interval': DEFAULT_FTP_PING_INTERVAL
+        'ftp_ping_interval': DEFAULT_FTP_PING_INTERVAL,
+        'resend_server': '',
+        'resend_endpoint': ''
     }
 
     if os.path.exists(SETTINGS_FILE):
@@ -182,6 +209,12 @@ def load_settings():
                     settings.get('ftp_ping_interval'),
                     default_settings['ftp_ping_interval']
                 )
+                settings['resend_server'] = str(
+                    settings.get('resend_server', '') or ''
+                ).strip()
+                settings['resend_endpoint'] = str(
+                    settings.get('resend_endpoint', '') or ''
+                ).strip()
                 return settings
         except (json.JSONDecodeError, IOError):
             pass
@@ -210,6 +243,12 @@ app_settings['ftp_targets'] = sanitize_ftp_targets(
     app_settings.get('ftp_targets'))
 app_settings['ftp_ping_interval'] = sanitize_ping_interval(
     app_settings.get('ftp_ping_interval'), DEFAULT_FTP_PING_INTERVAL)
+app_settings['resend_server'] = str(
+    app_settings.get('resend_server', '') or ''
+).strip()
+app_settings['resend_endpoint'] = str(
+    app_settings.get('resend_endpoint', '') or ''
+).strip()
 
 with ftp_status_lock:
     ftp_status_cache = build_initial_ftp_status_cache(
@@ -458,6 +497,19 @@ class LogParser:
                     'log_timestamp': log_timestamp
                 }
 
+                url_match = re.search(r'url is\s*([^,]+)', decoded_line, re.IGNORECASE)
+                if url_match:
+                    info['post_url'] = url_match.group(1).strip()
+
+                json_match = re.search(r'json_data is (.*)$', decoded_line, re.IGNORECASE)
+                if json_match:
+                    json_raw = json_match.group(1).strip()
+                    info['json_payload_raw'] = json_raw
+                    try:
+                        info['json_payload'] = ast.literal_eval(json_raw)
+                    except (ValueError, SyntaxError):
+                        pass
+
                 if container_match:
                     container_value = container_match.group(1).strip()
                     info['container_no'] = container_value
@@ -694,6 +746,16 @@ class LogParser:
             elif time_difference and time_difference != 'N/A':
                 raw_data['time_difference'] = time_difference
 
+            post_url_value = info.get('post_url')
+            if post_url_value:
+                raw_data['post_url'] = post_url_value
+
+            if 'json_payload' in info and info['json_payload'] is not None:
+                raw_data['json_payload'] = info['json_payload']
+
+            if 'json_payload_raw' in info:
+                raw_data['json_payload_raw'] = info['json_payload_raw']
+
             provisional_entries[task_no] = {
                 'id_scan': task_no,
                 'container_no': container_no or '',
@@ -717,7 +779,10 @@ class LogParser:
                 'time_difference': effective_time_difference if effective_time_difference != 'N/A' else None,
                 'image_count': image_count_value if image_count_value is not None else 0,
                 'container_no': container_no or None,
-                'log_timestamp': log_timestamp
+                'log_timestamp': log_timestamp,
+                'post_url': post_url_value,
+                'json_payload': info.get('json_payload') if info.get('json_payload') is not None else None,
+                'json_payload_raw': info.get('json_payload_raw')
             })
 
             sync_entry_container(task_no, container_no)
@@ -1069,6 +1134,53 @@ class LogParser:
         
         return unique_data
 
+    def find_json_payload(self, task_no, log_file=None):
+        """Locate the original JSON payload for a given task by scanning the logs."""
+        if not task_no:
+            return None
+
+        log_files = self.get_log_files()
+        if log_file:
+            log_files = [
+                f for f in log_files
+                if os.path.basename(f) == os.path.basename(log_file)
+            ]
+
+        for file_path in log_files:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as handle:
+                    for line in handle:
+                        if ('Task.py-send_message_handler' not in line or
+                                'json_data is' not in line or
+                                task_no not in line):
+                            continue
+
+                        decoded_line = unescape(line)
+                        url_match = re.search(r'url is\s*([^,]+)', decoded_line, re.IGNORECASE)
+                        json_match = re.search(r'json_data is (.*)$', decoded_line, re.IGNORECASE)
+                        if not json_match:
+                            continue
+
+                        raw_payload = json_match.group(1).strip()
+                        parsed_payload = None
+                        try:
+                            parsed_payload = ast.literal_eval(raw_payload)
+                        except (ValueError, SyntaxError):
+                            try:
+                                parsed_payload = json.loads(raw_payload)
+                            except json.JSONDecodeError:
+                                parsed_payload = None
+
+                        return {
+                            'post_url': url_match.group(1).strip() if url_match else None,
+                            'payload': parsed_payload,
+                            'payload_raw': raw_payload
+                        }
+            except IOError:
+                continue
+
+        return None
+
 # Initialize log parser with settings
 log_parser = LogParser(app_settings['logs_directory'])
 
@@ -1095,6 +1207,119 @@ def get_data():
     return jsonify({
         'data': data,
         'total': len(data)
+    })
+
+
+@app.route('/api/resend', methods=['POST'])
+def resend_payload():
+    """API endpoint to resend payload data for a specific scan."""
+    request_payload = request.get_json(silent=True) or {}
+    id_scan = str(request_payload.get('id_scan') or '').strip()
+    log_file = request_payload.get('log_file')
+
+    if not id_scan:
+        return jsonify({'error': 'id_scan is required'}), 400
+
+    if log_file:
+        log_file = str(log_file).strip()
+        if not log_file:
+            log_file = None
+
+    server_value = app_settings.get('resend_server', '')
+    endpoint_value = app_settings.get('resend_endpoint', '')
+
+    try:
+        target_url = build_resend_url(server_value, endpoint_value)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+
+    try:
+        entries = (log_parser.get_all_data(log_file=log_file)
+                   if log_file else log_parser.get_all_data())
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.exception("Failed to load log data for resend request: %s", exc)
+        return jsonify({'error': 'Failed to load log data'}), 500
+
+    entry = next(
+        (item for item in entries
+         if str(item.get('id_scan', '')).strip() == id_scan),
+        None
+    )
+
+    if not entry:
+        return jsonify({'error': f'ID scan {id_scan} was not found'}), 404
+
+    raw_data = entry.get('raw_data') or {}
+    json_payload = raw_data.get('json_payload')
+    payload_raw = raw_data.get('json_payload_raw')
+    post_url = raw_data.get('post_url')
+
+    def coerce_payload(value):
+        if isinstance(value, (dict, list)):
+            return value
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                try:
+                    return ast.literal_eval(value)
+                except (ValueError, SyntaxError):
+                    return None
+        return None
+
+    if isinstance(json_payload, str):
+        json_payload = coerce_payload(json_payload)
+
+    if not isinstance(json_payload, (dict, list)):
+        json_payload = coerce_payload(payload_raw)
+
+    fallback_payload = None
+    if not isinstance(json_payload, (dict, list)) or not post_url:
+        log_file_hint = log_file or entry.get('file_name')
+        fallback_payload = log_parser.find_json_payload(id_scan, log_file_hint)
+        if fallback_payload:
+            if not isinstance(json_payload, (dict, list)):
+                json_payload = fallback_payload.get('payload')
+            if not payload_raw:
+                payload_raw = fallback_payload.get('payload_raw')
+            if not post_url:
+                post_url = fallback_payload.get('post_url')
+            raw_data.setdefault('json_payload_raw', payload_raw)
+            if isinstance(json_payload, (dict, list)):
+                raw_data['json_payload'] = json_payload
+            if post_url:
+                raw_data['post_url'] = post_url
+
+    if not isinstance(json_payload, (dict, list)):
+        return jsonify({
+            'error': 'No resend payload is available for this entry'
+        }), 400
+
+    if fallback_payload and fallback_payload.get('post_url'):
+        target_url = fallback_payload['post_url']
+
+    if not post_url:
+        post_url = None
+
+    try:
+        response = requests.post(
+            target_url,
+            json=json_payload,
+            timeout=DEFAULT_RESEND_TIMEOUT
+        )
+    except requests.RequestException as exc:
+        logger.exception("Failed to resend data for %s: %s", id_scan, exc)
+        return jsonify({'error': f'Failed to send data: {exc}'}), 500
+
+    response_text = response.text or ''
+    if len(response_text) > MAX_REMOTE_RESPONSE_PREVIEW:
+        response_text = response_text[:MAX_REMOTE_RESPONSE_PREVIEW] + '...'
+
+    return jsonify({
+        'success': response.ok,
+        'status_code': response.status_code,
+        'response_text': response_text,
+        'target_url': target_url
     })
 
 
@@ -1311,6 +1536,16 @@ def update_settings():
 
             sanitized_settings['ftp_ping_interval'] = ftp_interval
 
+        if 'resend_server' in new_settings:
+            sanitized_settings['resend_server'] = str(
+                new_settings['resend_server'] or ''
+            ).strip()
+
+        if 'resend_endpoint' in new_settings:
+            sanitized_settings['resend_endpoint'] = str(
+                new_settings['resend_endpoint'] or ''
+            ).strip()
+
         if not sanitized_settings:
             return jsonify({'message': 'No settings were changed'}), 200
 
@@ -1331,6 +1566,14 @@ def update_settings():
 
         if 'ftp_ping_interval' in sanitized_settings:
             if app_settings.get('ftp_ping_interval') != sanitized_settings['ftp_ping_interval']:
+                settings_changed = True
+
+        if 'resend_server' in sanitized_settings:
+            if app_settings.get('resend_server', '') != sanitized_settings['resend_server']:
+                settings_changed = True
+
+        if 'resend_endpoint' in sanitized_settings:
+            if app_settings.get('resend_endpoint', '') != sanitized_settings['resend_endpoint']:
                 settings_changed = True
 
         app_settings.update(sanitized_settings)
