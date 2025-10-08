@@ -406,6 +406,7 @@ class LogParser:
         completed_task_ids = set()
         known_containers = {}
         known_upload_metadata = {}
+        resend_overrides = {}
 
         def remember_container(entry_id, container_value):
             """Persist sanitized container numbers for reuse across retries."""
@@ -446,6 +447,33 @@ class LogParser:
                 if isinstance(value, str) and value.strip() in ('', 'N/A'):
                     continue
                 stored[key] = value
+
+        def apply_resend_override(entry_obj):
+            """Merge resend override details into the parsed entry."""
+            if not entry_obj:
+                return
+            override = resend_overrides.get(entry_obj.get('id_scan'))
+            if not override:
+                return
+
+            raw = entry_obj.setdefault('raw_data', {})
+            raw['resend_status'] = override.get('status')
+            raw['resend_timestamp'] = override.get('timestamp')
+            raw['resend_http_status'] = override.get('http_status')
+            response_text = override.get('response_text') or ''
+            raw['resend_response_text'] = response_text.replace('\\n', '\n')
+            if override.get('target_url'):
+                raw.setdefault('post_url', override.get('target_url'))
+                raw['resend_target_url'] = override.get('target_url')
+
+            if override.get('status') == 'SUCCESS':
+                entry_obj['status'] = 'OK'
+                if override.get('timestamp'):
+                    entry_obj['update_time'] = override['timestamp']
+                entry_obj['error_description'] = ''
+                raw['status'] = 'OK'
+            else:
+                raw['status'] = entry_obj.get('status')
 
         def parse_task_time(raw_value):
             """Convert datetime.datetime(...) text to a formatted string."""
@@ -803,6 +831,18 @@ class LogParser:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line in f:
+                    if ('Dashboard-resend-handler' in line and
+                            'resend_result' in line):
+                        try:
+                            _, json_blob = line.split('resend_result', 1)
+                            override_payload = json.loads(json_blob.strip())
+                            override_id = (override_payload or {}).get('id_scan')
+                            if override_id:
+                                resend_overrides[override_id] = override_payload
+                        except (ValueError, json.JSONDecodeError):
+                            pass
+                        continue
+
                     upload_info = extract_upload_info(line)
                     if upload_info:
                         update_provisional_entry(upload_info)
@@ -1056,6 +1096,12 @@ class LogParser:
         except IOError as e:
             print(f"Error reading file {file_path}: {e}")
 
+        for entry in data:
+            apply_resend_override(entry)
+
+        for provisional in provisional_entries.values():
+            apply_resend_override(provisional)
+
         data.extend(provisional_entries.values())
 
         return data
@@ -1262,6 +1308,43 @@ def resend_payload():
     if not entry:
         return jsonify({'error': f'ID scan {id_scan} was not found'}), 404
 
+    def log_resend_outcome(entry_data, log_file_hint, status_value, response_obj=None, response_text_value='', target_url_value=None):
+        """Append resend outcome details (success or failure) to the transmission log."""
+        try:
+            logs_dir = app_settings.get('logs_directory', 'logs')
+        except Exception:
+            logs_dir = 'logs'
+
+        log_filename = os.path.basename(log_file_hint or entry_data.get('file_name') or 'Transmission.log')
+        log_path = os.path.join(logs_dir, log_filename)
+
+        timestamp = datetime.utcnow()
+        line_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+
+        payload = {
+            'id_scan': entry_data.get('id_scan'),
+            'status': status_value,
+            'http_status': getattr(response_obj, 'status_code', None),
+            'target_url': target_url_value,
+            'response_text': response_text_value,
+            'log_file': log_filename,
+            'timestamp': timestamp.isoformat(timespec='seconds') + 'Z'
+        }
+
+        try:
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        except OSError:
+            pass
+
+        try:
+            with open(log_path, 'a', encoding='utf-8') as handle:
+                handle.write(
+                    f"{line_timestamp} INFO [Dashboard-resend-handler] resend_result "
+                    f"{json.dumps(payload, ensure_ascii=False)}\n"
+                )
+        except OSError:
+            logger.exception("Failed to append resend outcome to %s", log_path)
+
     raw_data = entry.get('raw_data') or {}
     json_payload = raw_data.get('json_payload')
     payload_raw = raw_data.get('json_payload_raw')
@@ -1348,11 +1431,29 @@ def resend_payload():
         )
     except requests.RequestException as exc:
         logger.exception("Failed to resend data for %s: %s", id_scan, exc)
+        log_resend_outcome(
+            entry,
+            log_file,
+            'FAILED',
+            response_obj=None,
+            response_text_value=str(exc),
+            target_url_value=target_url
+        )
         return jsonify({'error': f'Failed to send data: {exc}'}), 500
 
     response_text = response.text or ''
     if len(response_text) > MAX_REMOTE_RESPONSE_PREVIEW:
         response_text = response_text[:MAX_REMOTE_RESPONSE_PREVIEW] + '...'
+
+    outcome_status = 'SUCCESS' if response.ok else 'FAILED'
+    log_resend_outcome(
+        entry,
+        log_file,
+        outcome_status,
+        response_obj=response,
+        response_text_value=response_text.replace('\n', '\\n'),
+        target_url_value=target_url
+    )
 
     return jsonify({
         'success': response.ok,
