@@ -3,12 +3,12 @@
   "auto_refresh_interval": 30,
   "ftp_targets": [
     {
-      "host": "10.226.52.31",
-      "port": 21
+      "host": "1.1.1.1",
+      "port": 80
     },
     {
-      "host": "10.226.52.32",
-      "port": 8040
+      "host": "8.8.8.8",
+      "port": 80
     }
   ],
   "ftp_ping_interval": 60,

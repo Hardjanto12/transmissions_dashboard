@@ -655,6 +655,10 @@ class LogParser:
                 raw_data = entry.setdefault('raw_data', {})
                 raw_data['task_no'] = task_no
 
+                post_url_value = info.get('post_url')
+                if post_url_value:
+                    raw_data['post_url'] = post_url_value
+
                 if scan_time and scan_time != 'N/A':
                     entry['scan_time'] = scan_time
                     raw_data['task_time'] = scan_time
@@ -707,6 +711,12 @@ class LogParser:
                 if retry_count or 'retry_count' not in raw_data:
                     raw_data['retry_count'] = retry_count
 
+                if 'json_payload' in info and info['json_payload'] is not None:
+                    raw_data['json_payload'] = info['json_payload']
+
+                if 'json_payload_raw' in info and info['json_payload_raw']:
+                    raw_data['json_payload_raw'] = info['json_payload_raw']
+
                 remember_upload_metadata(task_no, {
                     'task_time': scan_time if scan_time != 'N/A' else None,
                     'update_time': update_time_value,
@@ -715,7 +725,10 @@ class LogParser:
                     'time_difference': entry.get('time_difference'),
                     'image_count': entry.get('image_count'),
                     'container_no': container_no or None,
-                    'log_timestamp': log_timestamp
+                    'log_timestamp': log_timestamp,
+                    'post_url': post_url_value,
+                    'json_payload': info.get('json_payload') if info.get('json_payload') is not None else None,
+                    'json_payload_raw': info.get('json_payload_raw')
                 })
 
                 return
@@ -1284,13 +1297,29 @@ def resend_payload():
                 payload_raw = fallback_payload.get('payload_raw')
             if not post_url:
                 post_url = fallback_payload.get('post_url')
-            raw_data.setdefault('json_payload_raw', payload_raw)
-            if isinstance(json_payload, (dict, list)):
-                raw_data['json_payload'] = json_payload
+            if payload_raw:
+                raw_data.setdefault('json_payload_raw', payload_raw)
             if post_url:
                 raw_data['post_url'] = post_url
 
     if not isinstance(json_payload, (dict, list)):
+        json_payload = coerce_payload(payload_raw)
+
+    if isinstance(json_payload, (dict, list)):
+        raw_data['json_payload'] = json_payload
+    elif payload_raw:
+        if isinstance(payload_raw, (bytes, bytearray)):
+            try:
+                payload_raw = payload_raw.decode('utf-8')
+            except UnicodeDecodeError:
+                payload_raw = payload_raw.decode('latin-1', errors='ignore')
+        payload_raw = payload_raw.strip() if isinstance(payload_raw, str) else payload_raw
+        if isinstance(payload_raw, str) and payload_raw:
+            raw_data['json_payload_raw'] = payload_raw
+        else:
+            payload_raw = None
+
+    if not isinstance(json_payload, (dict, list)) and not isinstance(payload_raw, str):
         return jsonify({
             'error': 'No resend payload is available for this entry'
         }), 400
@@ -1302,10 +1331,20 @@ def resend_payload():
         post_url = None
 
     try:
+        request_kwargs = {
+            'timeout': DEFAULT_RESEND_TIMEOUT
+        }
+        if isinstance(json_payload, (dict, list)):
+            request_kwargs['json'] = json_payload
+        else:
+            request_kwargs['data'] = payload_raw
+            request_kwargs['headers'] = {
+                'Content-Type': 'application/json'
+            }
+
         response = requests.post(
             target_url,
-            json=json_payload,
-            timeout=DEFAULT_RESEND_TIMEOUT
+            **request_kwargs
         )
     except requests.RequestException as exc:
         logger.exception("Failed to resend data for %s: %s", id_scan, exc)

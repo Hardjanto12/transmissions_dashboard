@@ -121,7 +121,13 @@
             margin-bottom: 6px;
         }
         .table-responsive {
+            width: 100%;
             padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .table-modern {
+            width: 100%;
         }
         .page-subtitle {
             color: var(--text-muted);
@@ -398,8 +404,27 @@
         }
 
         .activity-time {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
             color: var(--text-muted);
             font-size: 0.85rem;
+        }
+
+        .activity-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .activity-separator {
+            color: var(--text-muted);
+        }
+
+        .raw-data-value {
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .filter-section {
@@ -1039,10 +1064,9 @@
                                         <th>ID Scan</th>
                                         <th>Nomor Container</th>
                                         <th>Jam Scan</th>
-                                         <th>Scan Time</th>
-                                         <th>Overall Time</th>
-                                         <th>Jam Update</th>
-                                         <th>Jumlah Gambar</th>
+                                        <th>Scan Time</th>
+                                        <th>Jam Update</th>
+                                        <th>Jumlah Gambar</th>
                                         <th>Status</th>
                                      </tr>
                                  </thead>
@@ -1109,7 +1133,6 @@
                                         <th>Nomor Container</th>
                                         <th>Jam Scan</th>
                                         <th>Scan Time</th>
-                                        <th>Overall Time</th>
                                         <th>Jam Update</th>
                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
@@ -1174,6 +1197,7 @@
                                     <tr>
                                         <th>No.</th>
                                         <th>ID Scan</th>
+                                        <th>Nomor Container</th>
                                         <th>Jam Scan</th>
                                         <th>Status</th>
                                         <th>Detail</th>
@@ -1672,6 +1696,22 @@
         let nokExportModalInstance = null;
         let resendTargetConfigured = false;
 
+        function adjustDataTable(tableInstance) {
+            if (!tableInstance) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                tableInstance.columns.adjust().draw(false);
+            });
+        }
+
+        function adjustAllTables() {
+            adjustDataTable(dataTable);
+            adjustDataTable(dataTableAll);
+            adjustDataTable(dataTableNOK);
+        }
+
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
             nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
@@ -1706,6 +1746,8 @@
             // Start FTP status polling
             initFtpStatusPolling();
         });
+
+        $(window).on('resize', adjustAllTables);
 
         function escapeHtml(value) {
             if (value === undefined || value === null) {
@@ -1802,6 +1844,8 @@
                 $('.nav-link').eq(5).addClass('active');
                 loadCurrentSettings();
             }
+
+            requestAnimationFrame(adjustAllTables);
         }
 
         // Load log files
@@ -1838,6 +1882,19 @@
                         const iconClass = entry.status === 'OK' ? 'success' : 'error';
                         const icon = entry.status === 'OK' ? 'fa-check-circle' : 'fa-times-circle';
                         const timeAgo = getTimeAgo(entry.scan_time);
+                        const containerText = (entry.container_no ?? '').toString().trim();
+                        const hasContainer = containerText.length > 0 && containerText !== 'N/A';
+                        const isFailedContainer = containerText.toLowerCase() === 'failed!';
+                        const containerClasses = ['activity-meta'];
+                        if (isFailedContainer) {
+                            containerClasses.push('text-danger', 'fw-semibold');
+                        }
+                        const sanitizedContainerText = escapeHtml(containerText);
+                        const containerSegment = hasContainer
+                            ? `<span class="${containerClasses.join(' ')}"><i class="fas fa-box me-1"></i>${sanitizedContainerText}</span>`
+                            : '';
+                        const separatorSegment = containerSegment ? '<span class="activity-separator" aria-hidden="true">&bull;</span>' : '';
+                        const timeSegment = `<span class="activity-meta"><i class="fas fa-clock me-1"></i>${timeAgo}</span>`;
                         
                         html += `
                             <div class="activity-item animate__animated animate__fadeInUp" style="animation-delay: ${index * 0.1}s">
@@ -1847,8 +1904,7 @@
                                 <div class="activity-content">
                                     <div class="activity-title">${entry.id_scan}</div>
                                     <div class="activity-time">
-                                        <i class="fas fa-box me-1"></i>${entry.container_no} â€¢ 
-                                        <i class="fas fa-clock me-1"></i>${timeAgo}
+                                        ${containerSegment}${separatorSegment}${timeSegment}
                                     </div>
                                 </div>
                                 <div class="text-end">
@@ -1912,7 +1968,6 @@
                             { data: 'container_no' },
                             { data: 'scan_time' },
                             { data: 'scan_duration' },
-                            { data: 'overall_time' },
                             { data: 'update_time' },
                             { data: 'image_count' },
                             {
@@ -1924,6 +1979,7 @@
                             }
                         ],
                         pageLength: 25,
+                        autoWidth: false,
                         order: [[3, 'desc']],
                         language: {
                             search: "Cari:",
@@ -1940,6 +1996,8 @@
                 } else {
                     dataTable.clear().rows.add(response.data).draw();
                 }
+
+                adjustDataTable(dataTable);
             });
         }
 
@@ -1986,7 +2044,6 @@
                             { data: 'container_no' },
                             { data: 'scan_time' },
                             { data: 'scan_duration' },
-                            { data: 'overall_time' },
                             { data: 'update_time' },
                             { data: 'image_count' },
                             {
@@ -2013,6 +2070,7 @@
                             }
                         ],
                         pageLength: 25,
+                        autoWidth: false,
                         order: [[3, 'desc']],
                         language: {
                             search: "Cari:",
@@ -2030,6 +2088,7 @@
                     dataTableAll.clear().rows.add(response.data).draw();
                 }
 
+                adjustDataTable(dataTableAll);
                 attachResendHandlerAll();
             });
         }
@@ -2125,6 +2184,23 @@
                                 }
                             },
                             { data: 'id_scan' },
+                            {
+                                data: 'container_no',
+                                render: function(data) {
+                                    if (data === null || data === undefined) {
+                                        return '<span class="text-muted">N/A</span>';
+                                    }
+                                    const value = String(data).trim();
+                                    if (!value) {
+                                        return '<span class="text-muted">N/A</span>';
+                                    }
+                                    const sanitized = escapeHtml(value);
+                                    if (value.toLowerCase() === 'failed!') {
+                                        return `<span class="text-danger fw-semibold">${sanitized}</span>`;
+                                    }
+                                    return sanitized;
+                                }
+                            },
                             { data: 'scan_time' },
                             {
                                 data: 'status',
@@ -2146,7 +2222,8 @@
                             }
                         ],
                         pageLength: 25,
-                        order: [[2, 'desc']],
+                        autoWidth: false,
+                        order: [[3, 'desc']],
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2163,6 +2240,7 @@
                     dataTableNOK.clear().rows.add(response.data).draw();
                 }
 
+                adjustDataTable(dataTableNOK);
                 $('#data-table-nok tbody').off('click', '.btn-detail').on('click', '.btn-detail', function() {
                     let tr = $(this).closest('tr');
                     if (tr.hasClass('child')) {
@@ -2203,11 +2281,24 @@ function populateDetailModal(data) {
                     return 'N/A';
                 }
 
-                if (typeof value === 'string' && value.trim() === '') {
-                    return 'N/A';
+                if (typeof value === 'string') {
+                    const trimmed = value.trim();
+                    return trimmed === '' ? 'N/A' : trimmed;
                 }
 
-                return value;
+                if (typeof value === 'number' || typeof value === 'boolean') {
+                    return String(value);
+                }
+
+                if (Array.isArray(value) || (value && typeof value === 'object')) {
+                    try {
+                        return JSON.stringify(value, null, 2);
+                    } catch (error) {
+                        return String(value);
+                    }
+                }
+
+                return String(value);
             };
 
             const setText = (selector, value) => {
@@ -2248,11 +2339,16 @@ function populateDetailModal(data) {
                 }
 
                 const listItem = $('<li/>', {
-                    class: 'list-group-item d-flex justify-content-between align-items-center'
+                    class: 'list-group-item d-flex flex-column flex-md-row gap-2 align-items-md-start justify-content-between'
                 });
 
-                $('<span/>', { class: 'text-muted small' }).text(key).appendTo(listItem);
-                $('<span/>', { class: 'fw-semibold' }).text(formatValue(value)).appendTo(listItem);
+                $('<span/>', { class: 'text-muted small me-md-3' }).text(key).appendTo(listItem);
+                const formattedValue = formatValue(value);
+                const valueClasses = ['fw-semibold', 'raw-data-value', 'text-break', 'flex-grow-1', 'text-start'];
+                if (formattedValue.includes('\n')) {
+                    valueClasses.push('font-monospace');
+                }
+                $('<span/>', { class: valueClasses.join(' ') }).text(formattedValue).appendTo(listItem);
 
                 additionalRawContainer.append(listItem);
                 hasAdditional = true;
@@ -2307,6 +2403,7 @@ function populateDetailModal(data) {
                 
                 if (dataTableNOK) {
                     dataTableNOK.clear().rows.add(response.data).draw();
+                    adjustDataTable(dataTableNOK);
                 }
             });
         }
