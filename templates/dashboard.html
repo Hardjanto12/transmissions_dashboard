@@ -2114,6 +2114,8 @@
                     return;
                 }
 
+                alert('Pastikan sedang tidak melakukan scanning kendaraan');
+
                 const confirmationMessage = `Send data for ID ${rowData.id_scan}?`;
                 if (!confirm(confirmationMessage)) {
                     return;
