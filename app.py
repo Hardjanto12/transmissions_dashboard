@@ -521,6 +521,30 @@ class LogParser:
 
         container_token_pattern = re.compile(r'^[A-Z0-9\-]+$')
 
+        def normalize_timestamp(value):
+            """Return timestamps in the standard '%Y-%m-%d %H:%M:%S' format."""
+            if not value:
+                return value
+            if isinstance(value, datetime):
+                return value.strftime('%Y-%m-%d %H:%M:%S')
+            if isinstance(value, str):
+                text = value.strip()
+                if not text:
+                    return text
+                candidate = text.replace('T', ' ').rstrip('Z').strip()
+                for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+                    try:
+                        dt_obj = datetime.strptime(candidate, fmt)
+                        return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        continue
+                try:
+                    dt_obj = datetime.fromisoformat(candidate)
+                    return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    return candidate
+            return value
+
         def sanitize_container_value(value):
             """Return a normalized container number or empty string if invalid."""
             if value is None:
@@ -597,7 +621,8 @@ class LogParser:
 
             raw = entry_obj.setdefault('raw_data', {})
             raw['resend_status'] = override.get('status')
-            raw['resend_timestamp'] = override.get('timestamp')
+            resend_timestamp = normalize_timestamp(override.get('timestamp'))
+            raw['resend_timestamp'] = resend_timestamp or override.get('timestamp')
             raw['resend_http_status'] = override.get('http_status')
             response_text = override.get('response_text') or ''
             raw['resend_response_text'] = response_text.replace('\\n', '\n')
@@ -607,7 +632,9 @@ class LogParser:
 
             if override.get('status') == 'SUCCESS':
                 entry_obj['status'] = 'OK'
-                if override.get('timestamp'):
+                if resend_timestamp:
+                    entry_obj['update_time'] = resend_timestamp
+                elif override.get('timestamp'):
                     entry_obj['update_time'] = override['timestamp']
                 entry_obj['error_description'] = ''
                 raw['status'] = 'OK'
@@ -1457,6 +1484,8 @@ def resend_payload():
         timestamp = datetime.utcnow()
         line_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
 
+        payload_timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
         payload = {
             'id_scan': entry_data.get('id_scan'),
             'status': status_value,
@@ -1464,7 +1493,7 @@ def resend_payload():
             'target_url': target_url_value,
             'response_text': response_text_value,
             'log_file': log_filename,
-            'timestamp': timestamp.isoformat(timespec='seconds') + 'Z'
+            'timestamp': payload_timestamp
         }
 
         try:
