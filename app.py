@@ -519,21 +519,43 @@ class LogParser:
         known_upload_metadata = {}
         resend_overrides = dict(global_overrides or {})
 
+        container_token_pattern = re.compile(r'^[A-Z0-9\-]+$')
+
+        def sanitize_container_value(value):
+            """Return a normalized container number or empty string if invalid."""
+            if value is None:
+                return ''
+            container_value = str(value).strip()
+            if not container_value:
+                return ''
+            if container_value.lower() == 'failed!':
+                return ''
+            container_value = container_value.upper()
+            if len(container_value) < 4:
+                return ''
+            if not any(ch.isdigit() for ch in container_value):
+                return ''
+            if not any(ch.isalpha() for ch in container_value):
+                return ''
+            if not container_token_pattern.match(container_value):
+                return ''
+            return container_value
+
         def remember_container(entry_id, container_value):
             """Persist sanitized container numbers for reuse across retries."""
-            if not entry_id or container_value is None:
+            if not entry_id:
                 return
-            container_value = str(container_value).strip()
-            if not container_value or container_value.lower() == 'failed!':
+            container_value = sanitize_container_value(container_value)
+            if not container_value:
                 return
             known_containers[entry_id] = container_value
 
         def sync_entry_container(entry_id, container_value):
             """Update existing entries once a container number is identified."""
-            if not entry_id or container_value is None:
+            if not entry_id:
                 return
-            container_value = str(container_value).strip()
-            if not container_value or container_value.lower() == 'failed!':
+            container_value = sanitize_container_value(container_value)
+            if not container_value:
                 return
             remember_container(entry_id, container_value)
             for existing_entry in reversed(data):
@@ -556,6 +578,12 @@ class LogParser:
                 if value is None:
                     continue
                 if isinstance(value, str) and value.strip() in ('', 'N/A'):
+                    continue
+                if key in ('container_no', 'CONTAINER_NO'):
+                    normalized = sanitize_container_value(value)
+                    if not normalized:
+                        continue
+                    stored[key] = normalized
                     continue
                 stored[key] = value
 
@@ -650,9 +678,10 @@ class LogParser:
                         pass
 
                 if container_match:
-                    container_value = container_match.group(1).strip()
-                    info['container_no'] = container_value
-                    remember_container(info['task_no'], container_value)
+                    container_value = sanitize_container_value(container_match.group(1))
+                    if container_value:
+                        info['container_no'] = container_value
+                        remember_container(info['task_no'], container_value)
 
                 if checkin_match:
                     update_time_value = checkin_match.group(1).strip()
@@ -753,11 +782,7 @@ class LogParser:
             scan_time = info.get('task_time') or log_timestamp or 'N/A'
             image_path = info.get('image_path', '')
             retry_count = info.get('retry_count', 0)
-            container_no = info.get('container_no')
-            if container_no:
-                container_no = str(container_no).strip()
-            else:
-                container_no = ''
+            container_no = sanitize_container_value(info.get('container_no'))
             scan_duration = info.get('scan_duration')
             overall_time = info.get('overall_time') or scan_duration
             time_difference = info.get('time_difference')
@@ -985,7 +1010,7 @@ class LogParser:
                                     response_data.get('resultData') != '-'):
                                 result_data = response_data['resultData']
 
-                                container_no = result_data.get('CONTAINER_NO', '')
+                                container_no = sanitize_container_value(result_data.get('CONTAINER_NO', ''))
                                 provisional_entry = None
                                 result_picno = result_data.get('PICNO')
                                 if result_picno:
@@ -1002,15 +1027,15 @@ class LogParser:
                                     xml_container = (provisional_entry.get('container_no') or
                                                      provisional_entry.get('raw_data', {}).get('container_no') or
                                                      provisional_entry.get('raw_data', {}).get('CONTAINER_NO'))
-                                clean_container = str(container_no).strip() if container_no else ''
-                                if ((not clean_container) or clean_container.lower() == 'failed!') and xml_container:
-                                    clean_container = str(xml_container).strip()
-                                if ((not clean_container) or clean_container.lower() == 'failed!') and result_picno:
+                                clean_container = container_no
+                                if not clean_container and xml_container:
+                                    clean_container = sanitize_container_value(xml_container)
+                                if not clean_container and result_picno:
                                     known_value = known_containers.get(result_picno)
                                     if known_value:
                                         clean_container = known_value
-                                if ((not clean_container) or clean_container.lower() == 'failed!') and upload_meta.get('container_no'):
-                                    clean_container = str(upload_meta['container_no']).strip()
+                                if not clean_container and upload_meta.get('container_no'):
+                                    clean_container = sanitize_container_value(upload_meta['container_no'])
                                 container_no = clean_container
                                 if container_no:
                                     result_data['CONTAINER_NO'] = container_no
@@ -1081,14 +1106,14 @@ class LogParser:
                                   response_data.get('resultData') == '-'):
 
                                 # Extract container number from response description if available
-                                container_no = "Failed!"
+                                container_no = ""
                                 desc = response_data.get('resultDesc', '')
                                 if 'Container' in desc:
                                     # Try to extract container number from description
                                     container_match = re.search(
                                         r'Container[^:]*:?\s*([A-Z0-9]+)', desc)
                                     if container_match:
-                                        container_no = container_match.group(1)
+                                        container_no = sanitize_container_value(container_match.group(1))
 
                                 provisional_entry = provisional_entries.get(response_id) if response_id else None
                                 upload_meta = known_upload_metadata.get(response_id, {}) if response_id else {}
@@ -1099,12 +1124,11 @@ class LogParser:
                                                      raw_provisional.get('container_no') or
                                                      raw_provisional.get('CONTAINER_NO'))
                                 if xml_container:
-                                    container_no = xml_container
-                                if (not container_no or container_no.lower() == 'failed!') and upload_meta.get('container_no'):
-                                    container_no = str(upload_meta['container_no']).strip()
+                                    container_no = sanitize_container_value(xml_container) or container_no
+                                if not container_no and upload_meta.get('container_no'):
+                                    container_no = sanitize_container_value(upload_meta['container_no'])
 
-                                container_no = str(container_no).strip() if container_no else ''
-                                if (not container_no or container_no.lower() == 'failed!') and response_id:
+                                if not container_no and response_id:
                                     known_value = known_containers.get(response_id)
                                     if known_value:
                                         container_no = known_value
@@ -1170,7 +1194,7 @@ class LogParser:
                                 if effective_update_time and effective_update_time != 'N/A':
                                     entry_raw_data.setdefault('update_time', effective_update_time)
 
-                                effective_container = container_no or known_containers.get(response_id, '')
+                                effective_container = sanitize_container_value(container_no) or known_containers.get(response_id, '')
                                 image_count_effective = entry_raw_data.get('image_count')
                                 if image_count_effective is None and provisional_entry:
                                     image_count_effective = (provisional_entry.get('image_count') or

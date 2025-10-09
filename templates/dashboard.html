@@ -1063,9 +1063,9 @@
                                         <th>No.</th>
                                         <th>ID Scan</th>
                                         <th>Nomor Container</th>
-                                        <th>Jam Scan</th>
-                                        <th>Scan Time</th>
                                         <th>Jam Update</th>
+                                        <th>Scan Time</th>
+                                        <th>Jam Scan</th>
                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
                                      </tr>
@@ -1856,6 +1856,9 @@
                 files.forEach(file => {
                     select.append(`<option value="${file}">${file}</option>`);
                 });
+                $('#log-files-count').text(files.length);
+            }).fail(function() {
+                $('#log-files-count').text('0');
             });
         }
 
@@ -1966,9 +1969,9 @@
                             },
                             { data: 'id_scan' },
                             { data: 'container_no' },
-                            { data: 'scan_time' },
-                            { data: 'scan_duration' },
                             { data: 'update_time' },
+                            { data: 'scan_duration' },
+                            { data: 'scan_time' },
                             { data: 'image_count' },
                             {
                                 data: 'status',
@@ -2042,9 +2045,9 @@
                             },
                             { data: 'id_scan' },
                             { data: 'container_no' },
-                            { data: 'scan_time' },
-                            { data: 'scan_duration' },
                             { data: 'update_time' },
+                            { data: 'scan_duration' },
+                            { data: 'scan_time' },
                             { data: 'image_count' },
                             {
                                 data: 'status',
@@ -3188,8 +3191,6 @@ function populateDetailModal(data) {
     </script>
 </body>
 </html>
-
-
 
 
 
