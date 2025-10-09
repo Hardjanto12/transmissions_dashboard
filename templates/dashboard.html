@@ -2093,6 +2093,18 @@
             });
         }
 
+        function refreshDataAfterResend() {
+            loadDataAll();
+            if (dataTable) {
+                loadData();
+            }
+            if (dataTableNOK) {
+                loadDataNOK();
+            }
+            loadStats();
+            loadRecentActivity();
+        }
+
         function attachResendHandlerAll() {
             if (!dataTableAll) {
                 return;
@@ -2150,6 +2162,10 @@
                             ? `\nResponse:\n${response.response_text}`
                             : '';
                         alert(successMessage + targetSegment + responseText);
+
+                        if (response && response.success) {
+                            refreshDataAfterResend();
+                        }
                     },
                     error: function(xhr) {
                         let message = 'Failed to resend data.';
@@ -3172,7 +3188,6 @@ function populateDetailModal(data) {
     </script>
 </body>
 </html>
-
 
 
 
