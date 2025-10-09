@@ -1,12 +1,15 @@
 ﻿# Transmission Dashboard
 
-Transmission Dashboard is a modern Flask-based monitoring console for Transmission log pipelines. The refreshed interface pairs a glassmorphism-inspired layout with live system indicators, FTP connectivity widgets, interactive tables, and export tools so that operations teams can inspect every scan with confidence.
+Transmission Dashboard is a modern Flask-based monitoring console for Transmission log pipelines. The refreshed interface pairs a glassmorphism-inspired layout with live system indicators, FTP connectivity widgets, interactive tables, resend tooling, and export options so that operations teams can inspect every scan with confidence.
 
 ## Highlights
 
 - Contemporary UI shell - responsive grid, gradient cards, animated status chips, and darkened sidebar for quick navigation.
-- Real-time monitoring - track total scans, success rate, uptime, recent activity, and FTP health in one place.
+- Real-time monitoring - track total scans, success rate, uptime, recent activity, log-file availability, and FTP health in one place.
 - Powerful filtering - dedicated OK/NOK log tables with search, status filters, and Excel export support.
+- Integrated resend workflow - trigger payload retransmission from any table row, log the outcome to the active transmission log, and refresh table/status data automatically.
+- Intelligent resend analysis - HTTP responses are parsed for semantic success/failure to avoid false positives when downstream systems reject a payload.
+- Defensive data parsing - container numbers are normalised across all log files so noisy values (single characters, placeholder flags) never surface in the UI.
 - Configurable settings - adjust log directories, refresh cadence, and FTP targets directly from the dashboard.
 - Production-ready server - Waitress runner with PyInstaller spec for a standalone backend when needed.
 - Desktop controller app - PyQt-powered tray application with an embedded Waitress server for start/stop control.
@@ -15,7 +18,7 @@ Transmission Dashboard is a modern Flask-based monitoring console for Transmissi
 
 | Path | Description |
 | --- | --- |
-| `app.py` | Flask application providing routes, APIs, Excel export, and FTP health monitoring. |
+| `app.py` | Flask application providing routes, APIs, resend orchestration, Excel export, and FTP health monitoring. |
 | `run.py` | Developer-friendly launcher that starts Flask's built-in server and opens a browser tab. |
 | `server_runner.py` | Waitress entry point used for production serving and for PyInstaller builds. |
 | `templates/` | Jinja templates including the redesigned `dashboard.html`. |
@@ -54,7 +57,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-The script prints helpful console output and automatically opens `http://localhost:5000` in your browser. Place Transmission log files into the `logs/` directory (or update the path from the **Settings** panel) and the dashboard will immediately begin parsing them.
+The script prints helpful console output and automatically opens `http://localhost:5000` in your browser. Place Transmission log files into the `logs/` directory (or update the path from the **Settings** panel) and the dashboard will immediately begin parsing them. Resend buttons become active once a resend target is configured under **Settings → Resend Server**.
 
 To serve the application via Waitress without launching a browser, run:
 
@@ -108,12 +111,16 @@ The controller executable bundles the GUI, Flask app, templates, assets, and def
 - The controller hosts the Waitress server in-process; the Stop button signals a graceful shutdown before closing the window.
 - All configuration changes made in the **Settings** screen are persisted to `settings.json`.
 - FTP connectivity checks run on the configured interval and display status inside the overview card.
+- The resend workflow writes a `[Dashboard-resend-handler]` entry into the most recent `Transmission.log`, then re-collects resend overrides across every log segment so merged rows reflect the latest status.
+- `container_no` values are sanitised while parsing; only alphanumeric container numbers with at least four characters and a mix of letters/digits are surfaced. Placeholder markers (e.g., `P` or `failed!`) remain hidden.
 - Use the **Export Excel** action in the OK table to download filtered Transmission records for offline analysis.
 - The embedded server uses the same Flask app and assets as development, so exports and templating behave identically.
 
 ## Troubleshooting
 
 - If the dashboard cannot find log files, verify the directory path on the Settings page and confirm filesystem permissions.
+- A resend that still returns a business-layer error (`resultCode: false`, failure keywords, etc.) is recorded as `FAILED`; inspect the **Response Text** shown after the resend for the reason.
+- If a container number seems missing, confirm that the upstream log contains a valid alphanumeric value—single-character placeholders are intentionally filtered to avoid polluting the tables.
 - When packaging with PyInstaller, disable aggressive antivirus scanning or whitelist the build folder if the executable is quarantined.
 - For verbose debugging during development, run `python app.py` to start Flask with console logging enabled.
 - If the desktop controller fails to start the server, ensure no other process is bound to port 5000 and review the activity feed for stack traces.
