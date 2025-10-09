@@ -481,17 +481,38 @@ class FTPStatusMonitor:
 class LogParser:
     def __init__(self, logs_dir="logs"):
         self.logs_dir = logs_dir
-        
+        self._file_cache = {}
+        self._overrides_state = {
+            'signature': None,
+            'data': {},
+            'version': 0
+        }
+        self._cache_lock = threading.Lock()
+
     def get_log_files(self):
         """Get all log files sorted by modification time (newest first)"""
         pattern = os.path.join(self.logs_dir, "Transmission.log*")
         log_files = glob.glob(pattern)
         return sorted(log_files, key=os.path.getmtime, reverse=True)
-    
-    def _collect_resend_overrides(self):
-        """Collect resend overrides from all log files."""
+
+    def _collect_resend_overrides(self, log_files=None):
+        """Collect resend overrides from log files with caching."""
+        candidate_files = list(log_files or self.get_log_files())
+        signature = {}
+
+        for candidate in candidate_files:
+            try:
+                signature[candidate] = os.path.getmtime(candidate)
+            except OSError:
+                continue
+
+        with self._cache_lock:
+            state = self._overrides_state
+            if state['signature'] == signature:
+                return dict(state['data']), state['version']
+
         overrides = {}
-        for candidate in self.get_log_files():
+        for candidate in candidate_files:
             try:
                 with open(candidate, 'r', encoding='utf-8') as override_handle:
                     for line in override_handle:
@@ -508,7 +529,16 @@ class LogParser:
                             continue
             except IOError:
                 continue
-        return overrides
+
+        with self._cache_lock:
+            previous_version = self._overrides_state['version']
+            self._overrides_state = {
+                'signature': signature,
+                'data': overrides,
+                'version': previous_version + 1
+            }
+
+        return dict(overrides), previous_version + 1
 
     def parse_log_file(self, file_path, global_overrides=None):
         """Parse a single log file and extract JSON data"""
@@ -1314,21 +1344,53 @@ class LogParser:
                 count += 1
         return count
     
-    def get_all_data(self, status_filter=None, search_term=None, 
+    def get_all_data(self, status_filter=None, search_term=None,
                      log_file=None):
         """Get all data from all log files with optional filtering"""
         all_data = []
-        
-        log_files = self.get_log_files()
-        global_resend_overrides = self._collect_resend_overrides()
-        
+
+        all_log_files = self.get_log_files()
+        global_resend_overrides, overrides_version = (
+            self._collect_resend_overrides(all_log_files))
+
+        # Remove cache entries for files that no longer exist
+        existing_paths = set(all_log_files)
+        with self._cache_lock:
+            cached_paths = list(self._file_cache.keys())
+            for cached_path in cached_paths:
+                if cached_path not in existing_paths:
+                    self._file_cache.pop(cached_path, None)
+
         # Filter by specific log file if specified
         if log_file:
-            log_files = [f for f in log_files 
-                        if os.path.basename(f) == log_file]
-        
+            log_files = [
+                f for f in all_log_files
+                if os.path.basename(f) == log_file
+            ]
+        else:
+            log_files = all_log_files
+
         for file_path in log_files:
-            file_data = self.parse_log_file(file_path, global_resend_overrides)
+            try:
+                file_mtime = os.path.getmtime(file_path)
+            except OSError:
+                continue
+
+            with self._cache_lock:
+                cache_entry = self._file_cache.get(file_path)
+
+            if (cache_entry and cache_entry['mtime'] == file_mtime and
+                    cache_entry['override_version'] == overrides_version):
+                file_data = cache_entry['data']
+            else:
+                file_data = self.parse_log_file(file_path, global_resend_overrides)
+                with self._cache_lock:
+                    self._file_cache[file_path] = {
+                        'mtime': file_mtime,
+                        'override_version': overrides_version,
+                        'data': file_data
+                    }
+
             all_data.extend(file_data)
         
         # Remove duplicates based on ID scan (keep the latest one)
