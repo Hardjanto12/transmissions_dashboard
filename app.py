@@ -399,14 +399,36 @@ class LogParser:
         log_files = glob.glob(pattern)
         return sorted(log_files, key=os.path.getmtime, reverse=True)
     
-    def parse_log_file(self, file_path):
+    def _collect_resend_overrides(self):
+        """Collect resend overrides from all log files."""
+        overrides = {}
+        for candidate in self.get_log_files():
+            try:
+                with open(candidate, 'r', encoding='utf-8') as override_handle:
+                    for line in override_handle:
+                        if ('Dashboard-resend-handler' not in line or
+                                'resend_result' not in line):
+                            continue
+                        try:
+                            _, json_blob = line.split('resend_result', 1)
+                            override_payload = json.loads(json_blob.strip())
+                            override_id = (override_payload or {}).get('id_scan')
+                            if override_id and override_id not in overrides:
+                                overrides[override_id] = override_payload
+                        except (ValueError, json.JSONDecodeError):
+                            continue
+            except IOError:
+                continue
+        return overrides
+
+    def parse_log_file(self, file_path, global_overrides=None):
         """Parse a single log file and extract JSON data"""
         data = []
         provisional_entries = {}
         completed_task_ids = set()
         known_containers = {}
         known_upload_metadata = {}
-        resend_overrides = {}
+        resend_overrides = dict(global_overrides or {})
 
         def remember_container(entry_id, container_value):
             """Persist sanitized container numbers for reuse across retries."""
@@ -1158,6 +1180,7 @@ class LogParser:
         all_data = []
         
         log_files = self.get_log_files()
+        global_resend_overrides = self._collect_resend_overrides()
         
         # Filter by specific log file if specified
         if log_file:
@@ -1165,7 +1188,7 @@ class LogParser:
                         if os.path.basename(f) == log_file]
         
         for file_path in log_files:
-            file_data = self.parse_log_file(file_path)
+            file_data = self.parse_log_file(file_path, global_resend_overrides)
             all_data.extend(file_data)
         
         # Remove duplicates based on ID scan (keep the latest one)
