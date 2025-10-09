@@ -1315,7 +1315,7 @@ def resend_payload():
         except Exception:
             logs_dir = 'logs'
 
-        log_filename = os.path.basename(log_file_hint or entry_data.get('file_name') or 'Transmission.log')
+        log_filename = 'Transmission.log'
         log_path = os.path.join(logs_dir, log_filename)
 
         timestamp = datetime.utcnow()
