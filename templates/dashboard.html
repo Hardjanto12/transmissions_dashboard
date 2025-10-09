@@ -126,6 +126,17 @@
             overflow-x: auto;
         }
 
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem 1.5rem;
+            align-items: start;
+        }
+
+        .checkbox-grid .form-check {
+            margin: 0;
+        }
+
         .table-modern {
             width: 100%;
         }
@@ -1414,54 +1425,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="ok-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="ok-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="ok-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="ok-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="ok-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="ok-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="ok-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="ok-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="ok-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="ok-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-time-diff" data-field="time_difference" checked>
-                                <label class="form-check-label" for="ok-export-time-diff">Selisih Waktu</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="ok-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="ok-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="ok-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="ok-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="ok-export-status">Status</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="ok-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check d-none">
+                            <input class="form-check-input" type="checkbox" id="ok-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="ok-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="ok-export-error">Please select at least one column to export.</div>
@@ -1486,50 +1481,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="all-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="all-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="all-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="all-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="all-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="all-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="all-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="all-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="all-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="all-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="all-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="all-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="all-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="all-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="all-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="all-export-status">Status</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="all-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="all-export-error">Please select at least one column to export.</div>
@@ -1615,54 +1598,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="nok-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="nok-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="nok-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="nok-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="nok-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="nok-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="nok-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="nok-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="nok-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="nok-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-time-diff" data-field="time_difference" checked>
-                                <label class="form-check-label" for="nok-export-time-diff">Selisih Waktu</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="nok-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="nok-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="nok-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="nok-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="nok-export-status">Status</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="nok-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="nok-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="nok-export-error">Please select at least one column to export.</div>
@@ -1720,6 +1687,27 @@
                 nokDetailModalElement.setAttribute('aria-hidden', 'true');
                 nokDetailModalElement.removeAttribute('aria-modal');
                 nokDetailModalInstance = null;
+            });
+        }
+
+        const okExportModalElement = document.getElementById('okExportModal');
+        if (okExportModalElement) {
+            okExportModalElement.addEventListener('hidden.bs.modal', () => {
+                okExportModalInstance = null;
+            });
+        }
+
+        const allExportModalElement = document.getElementById('allExportModal');
+        if (allExportModalElement) {
+            allExportModalElement.addEventListener('hidden.bs.modal', () => {
+                allExportModalInstance = null;
+            });
+        }
+
+        const nokExportModalElement = document.getElementById('nokExportModal');
+        if (nokExportModalElement) {
+            nokExportModalElement.addEventListener('hidden.bs.modal', () => {
+                nokExportModalInstance = null;
             });
         }
         let startTime = new Date();
@@ -2442,9 +2430,13 @@ function populateDetailModal(data) {
 
         // Export to Excel
         function exportToExcel() {
-            if (!okExportModalInstance) {
-                okExportModalInstance = new bootstrap.Modal(document.getElementById('okExportModal'));
+            const modalElement = document.getElementById('okExportModal');
+            if (!modalElement) {
+                console.error('OK export modal element not found in the DOM.');
+                return;
             }
+
+            okExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#ok-export-error').addClass('d-none');
 
@@ -2506,9 +2498,13 @@ function populateDetailModal(data) {
         }
 
         function openAllExportModal(button) {
-            if (!allExportModalInstance) {
-                allExportModalInstance = new bootstrap.Modal(document.getElementById('allExportModal'));
+            const modalElement = document.getElementById('allExportModal');
+            if (!modalElement) {
+                console.error('All export modal element not found in the DOM.');
+                return;
             }
+
+            allExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#all-export-error').addClass('d-none');
 
@@ -2573,9 +2569,13 @@ function populateDetailModal(data) {
         }
 
         function openNokExportModal(button) {
-            if (!nokExportModalInstance) {
-                nokExportModalInstance = new bootstrap.Modal(document.getElementById('nokExportModal'));
+            const modalElement = document.getElementById('nokExportModal');
+            if (!modalElement) {
+                console.error('NOK export modal element not found in the DOM.');
+                return;
             }
+
+            nokExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#nok-export-error').addClass('d-none');
 
