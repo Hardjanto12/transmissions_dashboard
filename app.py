@@ -157,6 +157,95 @@ def build_resend_url(server, endpoint):
     return f"{normalized_server}/{normalized_endpoint}"
 
 
+def interpret_resend_response_success(response_obj, raw_text):
+    """Determine whether a resend response represents a business success."""
+    if response_obj is not None and not getattr(response_obj, 'ok', False):
+        return False
+
+    if raw_text is None:
+        return False
+
+    text = str(raw_text).strip()
+    if not text:
+        return False
+
+    success_tokens = {'true', '1', 'yes', 'ok', 'success', 'berhasil', '200', 'completed', 'done'}
+    failure_tokens = {'false', '0', 'no', 'failed', 'fail', 'error', 'gagal', 'not ok', 'failure'}
+    success_substrings = {'success', 'berhasil', 'completed', 'done', 'ok'}
+    failure_substrings = {'fail', 'failed', 'error', 'gagal', 'unsuccess', 'not ok', 'not success'}
+
+    def classify_value(value):
+        if isinstance(value, bool):
+            return 'success' if value else 'failure'
+        if isinstance(value, (int, float)):
+            return 'success' if value else 'failure'
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in success_tokens:
+                return 'success'
+            if lowered in failure_tokens:
+                return 'failure'
+            if any(token in lowered for token in failure_substrings):
+                return 'failure'
+            if any(token in lowered for token in success_substrings) and not any(
+                token in lowered for token in failure_substrings
+            ):
+                return 'success'
+        return 'unknown'
+
+    def evaluate_json(obj):
+        success_found = False
+        failure_found = False
+        stack = [obj]
+
+        while stack:
+            current = stack.pop()
+            if isinstance(current, dict):
+                for key, value in current.items():
+                    key_lower = str(key).lower()
+
+                    if key_lower in ('resultcode', 'success', 'is_success', 'issuccess', 'successflag'):
+                        classification = classify_value(value)
+                    elif key_lower in ('status', 'result', 'response', 'state', 'message'):
+                        classification = classify_value(value)
+                    else:
+                        classification = 'unknown'
+
+                    if classification == 'success':
+                        success_found = True
+                    elif classification == 'failure':
+                        failure_found = True
+
+                    if isinstance(value, (dict, list)):
+                        stack.append(value)
+            elif isinstance(current, list):
+                stack.extend(current)
+
+        if failure_found and not success_found:
+            return False
+        if success_found and not failure_found:
+            return True
+        if success_found and failure_found:
+            return False
+        return False
+
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        normalized = text.lower()
+        if normalized in success_tokens:
+            return True
+        if any(token in normalized for token in failure_tokens.union(failure_substrings)):
+            return False
+        if any(token in normalized for token in success_substrings) and not any(
+            token in normalized for token in failure_substrings
+        ):
+            return True
+        return False
+
+    return evaluate_json(parsed)
+
+
 def build_initial_ftp_status_cache(targets):
     """Create an initial FTP status cache from configured targets."""
     statuses = []
@@ -1464,24 +1553,26 @@ def resend_payload():
         )
         return jsonify({'error': f'Failed to send data: {exc}'}), 500
 
-    response_text = response.text or ''
-    if len(response_text) > MAX_REMOTE_RESPONSE_PREVIEW:
-        response_text = response_text[:MAX_REMOTE_RESPONSE_PREVIEW] + '...'
+    full_response_text = response.text or ''
+    response_text_preview = full_response_text
+    if len(response_text_preview) > MAX_REMOTE_RESPONSE_PREVIEW:
+        response_text_preview = response_text_preview[:MAX_REMOTE_RESPONSE_PREVIEW] + '...'
 
-    outcome_status = 'SUCCESS' if response.ok else 'FAILED'
+    resend_success = interpret_resend_response_success(response, full_response_text)
+    outcome_status = 'SUCCESS' if resend_success else 'FAILED'
     log_resend_outcome(
         entry,
         log_file,
         outcome_status,
         response_obj=response,
-        response_text_value=response_text.replace('\n', '\\n'),
+        response_text_value=response_text_preview.replace('\n', '\\n'),
         target_url_value=target_url
     )
 
     return jsonify({
-        'success': response.ok,
+        'success': resend_success,
         'status_code': response.status_code,
-        'response_text': response_text,
+        'response_text': response_text_preview,
         'target_url': target_url
     })
 
