@@ -817,10 +817,10 @@
         <span id="activity-text">Processing...</span>
     </div>
     
-    <div class="status-indicator online" id="status-indicator">
+    <!-- <div class="status-indicator online" id="status-indicator">
         <i class="fas fa-circle me-1"></i>
         <span>Dashboard Online</span>
-    </div>
+    </div> -->
     
     <div class="notification" id="notification">
         <div class="d-flex align-items-center">
@@ -1679,6 +1679,14 @@
             adjustDataTable(dataTableNOK);
         }
 
+        function updateSequentialNumbering() {
+            const api = this.api();
+            const pageInfo = api.page.info();
+            api.column(0, { page: 'current' }).nodes().each((cell, index) => {
+                cell.textContent = pageInfo.start + index + 1;
+            });
+        }
+
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
             nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
@@ -1941,24 +1949,22 @@
                 currentData = response.data;
                 $('#table-loading').hide();
                 
-                if (!dataTable) {
-                    // Initialize DataTable with data
-                    dataTable = $('#data-table').DataTable({
-                        data: response.data,
-                        columns: [
-                            {
-                                data: null,
-                                orderable: false,
-                                searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
-                            },
-                            { data: 'id_scan' },
-                            { data: 'container_no' },
-                            { data: 'update_time' },
-                            { data: 'scan_duration' },
+                    if (!dataTable) {
+                        // Initialize DataTable with data
+                        dataTable = $('#data-table').DataTable({
+                            data: response.data,
+                            columns: [
+                                {
+                                    data: null,
+                                    defaultContent: '',
+                                    orderable: false,
+                                    searchable: false,
+                                    className: 'text-center'
+                                },
+                                { data: 'id_scan' },
+                                { data: 'container_no' },
+                                { data: 'update_time' },
+                                { data: 'scan_duration' },
                             { data: 'scan_time' },
                             { data: 'image_count' },
                             {
@@ -1972,6 +1978,7 @@
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2024,12 +2031,10 @@
                         columns: [
                             {
                                 data: null,
+                                defaultContent: '',
                                 orderable: false,
                                 searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
+                                className: 'text-center'
                             },
                             { data: 'id_scan' },
                             { data: 'container_no' },
@@ -2063,6 +2068,7 @@
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2185,12 +2191,10 @@
                         columns: [
                             {
                                 data: null,
+                                defaultContent: '',
                                 orderable: false,
                                 searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
+                                className: 'text-center'
                             },
                             { data: 'id_scan' },
                             {
@@ -2233,6 +2237,7 @@
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",

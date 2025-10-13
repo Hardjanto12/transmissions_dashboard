@@ -1,17 +1,17 @@
 {
-  "logs_directory": "X:\\Python\\transmissions_dashboard\\logs",
+  "logs_directory": "C:\\Users\\IPS2\\Downloads\\logss",
   "auto_refresh_interval": 30,
   "ftp_targets": [
     {
-      "host": "1.1.1.1",
-      "port": 80
+      "host": "10.226.52.31",
+      "port": 21
     },
     {
-      "host": "8.8.8.8",
-      "port": 80
+      "host": "10.226.52.32",
+      "port": 8040
     }
   ],
   "ftp_ping_interval": 60,
-  "resend_server": "http://localhost:8080",
-  "resend_endpoint": "/receive"
+  "resend_server": "http://10.226.52.32:8040",
+  "resend_endpoint": "/services/xRaySby/out"
 }
