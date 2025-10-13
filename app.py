@@ -137,11 +137,14 @@ def validate_ping_interval(value):
 
 
 CONTAINER_SEPARATOR_TOKEN_PATTERN = re.compile(r'[+\\]+')
-SINGLE_BACKSLASH_PATTERN = re.compile(r'(?<!\\)\\(?!\\)')
 CONTAINER_FIELD_TEXT_PATTERN = re.compile(
     r'(?P<prefix>(?:"|\')\s*container(?:_?no)?\s*(?:"|\')\s*:\s*(?:"|\'))'
     r'(?P<value>[^"\']*)'
     r'(?P<suffix>(?:"|\'))',
+    re.IGNORECASE
+)
+CONTAINER_XML_FIELD_PATTERN = re.compile(
+    r'(?P<prefix><\s*container(?:_?no)?\s*>)(?P<value>[^<]*)(?P<suffix></\s*container(?:_?no)?\s*>)',
     re.IGNORECASE
 )
 
@@ -158,13 +161,13 @@ def normalize_container_separator_value(value):
     if '+' not in stripped and '\\' not in stripped:
         return stripped
 
-    parts = [segment for segment in CONTAINER_SEPARATOR_TOKEN_PATTERN.split(stripped) if segment]
-    if len(parts) > 1:
-        normalized = '\\\\'.join(parts)
-    else:
-        normalized = stripped.replace('+', '\\\\')
+    segments = [segment for segment in CONTAINER_SEPARATOR_TOKEN_PATTERN.split(stripped) if segment]
+    if not segments:
+        return '\\' if stripped else stripped
 
-    normalized = SINGLE_BACKSLASH_PATTERN.sub('\\\\\\\\', normalized)
+    normalized = '\\'.join(segments)
+    if stripped[-1] in ('+', '\\') and not normalized.endswith('\\'):
+        normalized += '\\'
     return normalized
 
 
@@ -177,29 +180,52 @@ def normalize_containers_in_payload(payload):
                 normalize_containers_in_payload(value)
                 continue
 
-            if isinstance(value, str) and 'container' in lowered_key and 'no' in lowered_key:
-                cleaned = normalize_container_separator_value(value)
+            if isinstance(value, str):
+                if 'container' in lowered_key and 'no' in lowered_key:
+                    cleaned = normalize_container_separator_value(value)
+                else:
+                    cleaned = normalize_container_fields_in_text(value)
                 if cleaned != value:
                     payload[key] = cleaned
         return payload
 
     if isinstance(payload, list):
-        for item in payload:
-            normalize_containers_in_payload(item)
+        for index, item in enumerate(payload):
+            if isinstance(item, (dict, list)):
+                normalize_containers_in_payload(item)
+                continue
+            if isinstance(item, str):
+                cleaned = normalize_container_fields_in_text(item)
+                if cleaned != item:
+                    payload[index] = cleaned
 
     return payload
 
 
-def normalize_container_fields_in_text(payload_text):
+def normalize_container_fields_in_text(payload_text, *, escape_for_literal=False):
     """Replace container separators inside raw payload text representations."""
     if not isinstance(payload_text, str):
         return payload_text
 
-    def _replace(match):
+    def _replace_json(match):
         cleaned_value = normalize_container_separator_value(match.group('value'))
-        return f"{match.group('prefix')}{cleaned_value}{match.group('suffix')}"
+        if escape_for_literal:
+            encoded_value = cleaned_value.replace('\\', '\\\\')
+        else:
+            encoded_value = cleaned_value
+        return f"{match.group('prefix')}{encoded_value}{match.group('suffix')}"
 
-    return CONTAINER_FIELD_TEXT_PATTERN.sub(_replace, payload_text)
+    def _replace_xml(match):
+        cleaned_value = normalize_container_separator_value(match.group('value'))
+        if escape_for_literal:
+            encoded_value = cleaned_value.replace('\\', '\\\\')
+        else:
+            encoded_value = cleaned_value
+        return f"{match.group('prefix')}{encoded_value}{match.group('suffix')}"
+
+    updated_text = CONTAINER_FIELD_TEXT_PATTERN.sub(_replace_json, payload_text)
+    updated_text = CONTAINER_XML_FIELD_PATTERN.sub(_replace_xml, updated_text)
+    return updated_text
 
 
 def build_resend_url(server, endpoint):
@@ -798,9 +824,12 @@ class LogParser:
                 json_match = re.search(r'json_data is (.*)$', decoded_line, re.IGNORECASE)
                 if json_match:
                     json_raw = json_match.group(1).strip()
+                    json_raw = normalize_container_fields_in_text(json_raw, escape_for_literal=True)
                     info['json_payload_raw'] = json_raw
                     try:
-                        info['json_payload'] = ast.literal_eval(json_raw)
+                        parsed_payload = ast.literal_eval(json_raw)
+                        normalize_containers_in_payload(parsed_payload)
+                        info['json_payload'] = parsed_payload
                     except (ValueError, SyntaxError):
                         pass
 
@@ -1516,12 +1545,15 @@ class LogParser:
                             continue
 
                         raw_payload = json_match.group(1).strip()
+                        raw_payload = normalize_container_fields_in_text(raw_payload, escape_for_literal=True)
                         parsed_payload = None
                         try:
                             parsed_payload = ast.literal_eval(raw_payload)
+                            normalize_containers_in_payload(parsed_payload)
                         except (ValueError, SyntaxError):
                             try:
                                 parsed_payload = json.loads(raw_payload)
+                                normalize_containers_in_payload(parsed_payload)
                             except json.JSONDecodeError:
                                 parsed_payload = None
 
@@ -1689,7 +1721,7 @@ def resend_payload():
         normalize_containers_in_payload(json_payload)
         raw_data['json_payload'] = json_payload
         if isinstance(payload_raw, str) and payload_raw:
-            payload_raw = normalize_container_fields_in_text(payload_raw)
+            payload_raw = normalize_container_fields_in_text(payload_raw, escape_for_literal=True)
             raw_data['json_payload_raw'] = payload_raw
     elif payload_raw:
         if isinstance(payload_raw, (bytes, bytearray)):
@@ -1699,7 +1731,7 @@ def resend_payload():
                 payload_raw = payload_raw.decode('latin-1', errors='ignore')
         payload_raw = payload_raw.strip() if isinstance(payload_raw, str) else payload_raw
         if isinstance(payload_raw, str) and payload_raw:
-            payload_raw = normalize_container_fields_in_text(payload_raw)
+            payload_raw = normalize_container_fields_in_text(payload_raw, escape_for_literal=True)
             raw_data['json_payload_raw'] = payload_raw
         else:
             payload_raw = None
