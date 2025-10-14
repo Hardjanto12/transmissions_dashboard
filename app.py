@@ -632,6 +632,40 @@ class LogParser:
 
         return dict(overrides), previous_version + 1
 
+    def register_resend_override(self, id_scan, *, payload=None, payload_raw=None, log_file=None):
+        """Persist resend override details so cached data reflects the latest payload."""
+        if not id_scan:
+            return
+
+        payload_copy = copy.deepcopy(payload) if isinstance(payload, (dict, list)) else payload
+        payload_raw_text = payload_raw if isinstance(payload_raw, str) else None
+
+        with self._cache_lock:
+            state = self._overrides_state
+            current_override = copy.deepcopy(state['data'].get(id_scan) or {})
+
+            if payload_copy is not None:
+                current_override['json_payload'] = payload_copy
+            if payload_raw_text is not None:
+                current_override['json_payload_raw'] = payload_raw_text
+            if log_file:
+                current_override['log_file'] = log_file
+
+            state['data'][id_scan] = current_override
+            state['version'] += 1
+
+            for cache_entry in self._file_cache.values():
+                cache_entry['override_version'] = state['version']
+                for item in cache_entry['data']:
+                    if str(item.get('id_scan', '')).strip() == str(id_scan):
+                        raw = item.setdefault('raw_data', {})
+                        if payload_copy is not None:
+                            raw['json_payload'] = copy.deepcopy(payload_copy)
+                        if payload_raw_text is not None:
+                            raw['json_payload_raw'] = payload_raw_text
+                        if log_file:
+                            item['file_name'] = log_file
+
     def parse_log_file(self, file_path, global_overrides=None):
         """Parse a single log file and extract JSON data"""
         data = []
@@ -746,6 +780,12 @@ class LogParser:
                 return
 
             raw = entry_obj.setdefault('raw_data', {})
+            if override.get('json_payload') is not None:
+                raw['json_payload'] = copy.deepcopy(override['json_payload'])
+            if isinstance(override.get('json_payload_raw'), str) and override['json_payload_raw'].strip():
+                raw['json_payload_raw'] = override['json_payload_raw'].strip()
+            if override.get('log_file'):
+                entry_obj['file_name'] = override['log_file']
             raw['resend_status'] = override.get('status')
             resend_timestamp = normalize_timestamp(override.get('timestamp'))
             raw['resend_timestamp'] = resend_timestamp or override.get('timestamp')
@@ -1817,6 +1857,14 @@ def resend_payload():
         response_text_value=response_text_preview.replace('\n', '\\n'),
         target_url_value=target_url
     )
+
+    if override_applied and resend_success:
+        log_parser.register_resend_override(
+            id_scan,
+            payload=json_payload if isinstance(json_payload, (dict, list)) else None,
+            payload_raw=payload_raw if isinstance(payload_raw, str) else None,
+            log_file=log_file or entry.get('file_name')
+        )
 
     return jsonify({
         'success': resend_success,
