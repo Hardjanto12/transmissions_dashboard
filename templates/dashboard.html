@@ -1652,6 +1652,7 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let currentData = [];
         let dataTable = null;
@@ -1662,6 +1663,65 @@
         let allExportModalInstance = null;
         let nokExportModalInstance = null;
         let resendTargetConfigured = false;
+
+        const SWEETALERT_CLASSES = Object.freeze({
+            popup: 'rounded-4 shadow-lg',
+            confirmButton: 'btn btn-primary rounded-pill px-4',
+            cancelButton: 'btn btn-outline-secondary rounded-pill px-4'
+        });
+
+        function showAlert(message, icon = 'info', title = '') {
+            return Swal.fire({
+                title: title || undefined,
+                text: message,
+                icon,
+                confirmButtonText: 'OK',
+                buttonsStyling: false,
+                customClass: {
+                    popup: SWEETALERT_CLASSES.popup,
+                    confirmButton: SWEETALERT_CLASSES.confirmButton
+                },
+                didOpen: () => {
+                    const container = Swal.getHtmlContainer();
+                    if (container) {
+                        container.style.whiteSpace = 'pre-line';
+                    }
+                }
+            });
+        }
+
+        function showConfirm(message, options = {}) {
+            const {
+                title = '',
+                icon = 'warning',
+                confirmButtonText = 'Yes',
+                cancelButtonText = 'Cancel',
+                reverseButtons = true
+            } = options;
+
+            return Swal.fire({
+                title: title || undefined,
+                text: message,
+                icon,
+                showCancelButton: true,
+                focusCancel: true,
+                confirmButtonText,
+                cancelButtonText,
+                reverseButtons,
+                buttonsStyling: false,
+                customClass: {
+                    popup: SWEETALERT_CLASSES.popup,
+                    confirmButton: SWEETALERT_CLASSES.confirmButton,
+                    cancelButton: SWEETALERT_CLASSES.cancelButton
+                },
+                didOpen: () => {
+                    const container = Swal.getHtmlContainer();
+                    if (container) {
+                        container.style.whiteSpace = 'pre-line';
+                    }
+                }
+            }).then(result => result.isConfirmed);
+        }
 
         function adjustDataTable(tableInstance) {
             if (!tableInstance) {
@@ -2107,9 +2167,9 @@
                 return;
             }
 
-            $('#data-table-all tbody').off('click', '.btn-resend').on('click', '.btn-resend', function() {
+            $('#data-table-all tbody').off('click', '.btn-resend').on('click', '.btn-resend', async function() {
                 if (!resendTargetConfigured) {
-                    alert('Please configure the resend server and endpoint from the Settings page before resending data.');
+                    await showAlert('Please configure the resend server and endpoint from the Settings page before resending data.', 'warning');
                     return;
                 }
 
@@ -2123,10 +2183,15 @@
                     return;
                 }
 
-                alert('Pastikan sedang tidak melakukan scanning kendaraan');
+                await showAlert('Pastikan sedang tidak melakukan scanning kendaraan', 'info');
 
                 const confirmationMessage = `Send data for ID ${rowData.id_scan}?`;
-                if (!confirm(confirmationMessage)) {
+                const confirmed = await showConfirm(confirmationMessage, {
+                    confirmButtonText: 'Send',
+                    cancelButtonText: 'Cancel',
+                    icon: 'question'
+                });
+                if (!confirmed) {
                     return;
                 }
 
@@ -2145,7 +2210,7 @@
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(requestBody),
-                    success: function(response) {
+                    success: async function(response) {
                         const statusCode = response && response.status_code !== undefined
                             ? response.status_code
                             : 'unknown';
@@ -2158,18 +2223,19 @@
                         const responseText = response && response.response_text
                             ? `\nResponse:\n${response.response_text}`
                             : '';
-                        alert(successMessage + targetSegment + responseText);
+                        const alertIcon = response && response.success ? 'success' : 'warning';
+                        await showAlert(successMessage + targetSegment + responseText, alertIcon);
 
                         if (response && response.success) {
                             refreshDataAfterResend();
                         }
                     },
-                    error: function(xhr) {
+                    error: async function(xhr) {
                         let message = 'Failed to resend data.';
                         if (xhr.responseJSON && xhr.responseJSON.error) {
                             message += `\n${xhr.responseJSON.error}`;
                         }
-                        alert(message);
+                        await showAlert(message, 'error');
                     },
                     complete: function() {
                         button.html(originalHtml);
@@ -3005,7 +3071,7 @@ function populateDetailModal(data) {
             $('#settings-status').html(statusHtml);
         }
 
-        function saveSettings() {
+        async function saveSettings() {
             const logsDirectory = $('#logs-directory').val().trim();
             const autoRefresh = parseInt($('#auto-refresh').val(), 10);
             const resendServer = $('#resend-server').val().trim();
@@ -3026,22 +3092,22 @@ function populateDetailModal(data) {
             const ftpInterval = parseInt($('#ftp-interval').val(), 10);
 
             if (!logsDirectory) {
-                alert('Please enter a logs directory path');
+                await showAlert('Please enter a logs directory path', 'warning');
                 return;
             }
 
             if (isInvalidNumber(autoRefresh) || autoRefresh <= 0) {
-                alert('Please enter a valid auto refresh interval.');
+                await showAlert('Please enter a valid auto refresh interval.', 'warning');
                 return;
             }
 
             if (!resendServer && resendEndpoint && !endpointLooksLikeUrl) {
-                alert('Please configure the resend server or provide a full URL in the endpoint field.');
+                await showAlert('Please configure the resend server or provide a full URL in the endpoint field.', 'warning');
                 return;
             }
 
             if (isInvalidNumber(ftpInterval) || ftpInterval <= 0) {
-                alert('Please enter a valid FTP ping interval.');
+                await showAlert('Please enter a valid FTP ping interval.', 'warning');
                 return;
             }
 
@@ -3062,7 +3128,7 @@ function populateDetailModal(data) {
             });
 
             if (ftpValidationError) {
-                alert(ftpValidationError);
+                await showAlert(ftpValidationError, 'error');
                 return;
             }
 
@@ -3080,8 +3146,8 @@ function populateDetailModal(data) {
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(settings),
-                success: function() {
-                    alert('Settings saved successfully! The application will now use the updated configuration.');
+                success: async function() {
+                    await showAlert('Settings saved successfully! The application will now use the updated configuration.', 'success');
                     resendTargetConfigured = resendConfiguredNext;
                     if (dataTableAll) {
                         dataTableAll.rows().invalidate('data').draw(false);
@@ -3100,23 +3166,23 @@ function populateDetailModal(data) {
                     $('#ftp-status-updated').text('Awaiting check...');
                     loadFtpStatus();
                 },
-                error: function(xhr) {
+                error: async function(xhr) {
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings';
-                    alert('Error: ' + error);
+                    await showAlert('Error: ' + error, 'error');
                 }
             });
         }
 
-        function validateDirectory() {
+        async function validateDirectory() {
             const directory = $('#logs-directory').val().trim();
             
             if (!directory) {
-                alert('Please enter a directory path first');
+                await showAlert('Please enter a directory path first', 'warning');
                 return;
             }
             
             $.get('/api/validate-directory', { directory: directory })
-                .done(function(response) {
+                .done(async function(response) {
                     if (response.valid) {
                         alert(`âœ… Directory is valid!\n\nFound ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`);
                     } else {
