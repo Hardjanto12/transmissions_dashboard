@@ -141,6 +141,32 @@
         .table-modern {
             width: 100%;
         }
+        table.payload-detail-table th {
+            min-width: 180px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        table.payload-detail-table td {
+            font-size: 0.9rem;
+        }
+        table.payload-detail-table tr + tr {
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        table.payload-detail-table td > table.payload-detail-table {
+            margin-top: 0.5rem;
+        }
+        .payload-detail-table-wrapper {
+            max-height: 26rem;
+            overflow: auto;
+        }
+        .payload-detail-section + .payload-detail-section {
+            margin-top: 1.5rem;
+        }
+        .payload-detail-section h6 {
+            letter-spacing: 0.08em;
+        }
         .page-subtitle {
             color: var(--text-muted);
             font-size: 0.95rem;
@@ -862,6 +888,43 @@
                     <button type="button" class="btn btn-primary" id="payload-update-send">
                         <i class="fas fa-paper-plane me-1"></i> Send Update
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payload Detail Modal -->
+    <div class="modal fade" id="payloadDetailModal" tabindex="-1" aria-labelledby="payloadDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payloadDetailModalLabel">Payload Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <dl class="row mb-0 small">
+                                    <dt class="col-5 text-muted text-uppercase">ID Scan</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-id">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Log File</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-log-file">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Target URL</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-target">N/A</dd>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-uppercase small text-muted" for="payload-detail-content">Payload Data</label>
+                            <div id="payload-detail-content" class="border rounded-3 bg-light-subtle p-3" style="min-height: 12rem;">
+                                <span class="text-muted small">No payload available.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1700,6 +1763,7 @@
         let allExportModalInstance = null;
         let nokExportModalInstance = null;
         let payloadUpdateModalInstance = null;
+        let payloadDetailModalInstance = null;
         let currentUpdateContext = null;
         let resendTargetConfigured = false;
 
@@ -1816,6 +1880,248 @@
             };
         }
 
+        function renderPayloadAsTable(data, level = 0) {
+            if (data === null || data === undefined) {
+                return '<span class="text-muted">null</span>';
+            }
+            const dataType = typeof data;
+            if (dataType !== 'object') {
+                const safeValue = escapeHtml(String(data)).replace(/\n/g, '<br>');
+                return `<span class="text-break">${safeValue}</span>`;
+            }
+
+            const isArray = Array.isArray(data);
+            const keys = isArray ? data.map((_, index) => index) : Object.keys(data);
+            if (keys.length === 0) {
+                return `<span class="text-muted">${isArray ? '[empty]' : '{empty}'}</span>`;
+            }
+
+            const rows = keys.map((key) => {
+                const value = data[key];
+                const label = isArray ? `[${key}]` : key;
+                return `<tr>
+                            <th class="fw-semibold text-nowrap align-top">${escapeHtml(String(label))}</th>
+                            <td>${renderPayloadAsTable(value, level + 1)}</td>
+                        </tr>`;
+            }).join('');
+
+            const tableClass = level === 0
+                ? 'table table-sm table-striped align-top mb-0 payload-detail-table'
+                : 'table table-sm table-borderless align-top mb-0 payload-detail-table';
+
+            const tableHtml = `<table class="${tableClass}"><tbody>${rows}</tbody></table>`;
+            if (level === 0) {
+                return `<div class="table-responsive payload-detail-table-wrapper">${tableHtml}</div>`;
+            }
+            return tableHtml;
+        }
+
+        function parseXmlDocument(xmlText) {
+            if (typeof xmlText !== 'string' || !xmlText.trim()) {
+                return null;
+            }
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlText, 'application/xml');
+                if (doc.getElementsByTagName('parsererror').length > 0) {
+                    return null;
+                }
+                return doc;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getXmlText(doc, tagName) {
+            if (!doc || !tagName) {
+                return '';
+            }
+            const element = doc.getElementsByTagName(tagName)[0];
+            return element && element.textContent ? element.textContent.trim() : '';
+        }
+
+        function getFirstSiigByType(doc, typeValue) {
+            if (!doc) {
+                return null;
+            }
+            const nodes = Array.from(doc.getElementsByTagName('IDR_SIIG') || []);
+            return nodes.find(node => {
+                const typeNode = node.getElementsByTagName('TYPE')[0];
+                return typeNode && typeNode.textContent && typeNode.textContent.trim().toLowerCase() === typeValue.toLowerCase();
+            }) || null;
+        }
+
+        function buildKeyValueRows(pairs) {
+            return pairs
+                .filter(pair => pair && pair.value !== undefined && pair.value !== null && String(pair.value).trim() !== '')
+                .map(pair => {
+                    const safeValue = typeof pair.value === 'string'
+                        ? escapeHtml(pair.value).replace(/\n/g, '<br>')
+                        : escapeHtml(String(pair.value));
+                    return `<tr>
+                        <th class="fw-semibold text-nowrap align-top">${escapeHtml(pair.label)}</th>
+                        <td class="text-break">${safeValue}</td>
+                    </tr>`;
+                })
+                .join('');
+        }
+
+        function buildKeyValueSection(title, pairs) {
+            const rowsHtml = buildKeyValueRows(pairs);
+            if (!rowsHtml) {
+                return null;
+            }
+            return {
+                title,
+                content: `<table class="table table-sm align-top mb-0 payload-detail-table"><tbody>${rowsHtml}</tbody></table>`
+            };
+        }
+
+        function buildScanImageSection(scanImgs) {
+            if (!scanImgs || !scanImgs.length) {
+                return null;
+            }
+            const rows = scanImgs.map((img, index) => {
+                const type = getXmlText(img, 'TYPE') || `Entry ${index + 1}`;
+                const path = getXmlText(img, 'PATH');
+                const operateTime = getXmlText(img, 'OPERATETIME') || getXmlText(img, 'OPERATETIME'.toLowerCase());
+                return `
+                    <tr>
+                        <td>${escapeHtml(type)}</td>
+                        <td class="text-break">${escapeHtml(path || '')}</td>
+                        <td>${escapeHtml(operateTime || '')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (!rows) {
+                return null;
+            }
+
+            return {
+                title: 'Scan Images',
+                content: `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-top mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Path</th>
+                                    <th>Operation Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`
+            };
+        }
+
+        function renderPayloadDetailContent(parsedPayload, rawData, rawText) {
+            const sections = [];
+            const xmlDoc = parsedPayload && typeof parsedPayload.image_msg === 'string'
+                ? parseXmlDocument(parsedPayload.image_msg)
+                : null;
+
+            const containerNumberXml = getXmlText(xmlDoc, 'container_no');
+            const containerNumber = containerNumberXml
+                || (rawData && (rawData.container_no || rawData.CONTAINER_NO));
+            const picNo = getXmlText(xmlDoc, 'PICNO') || (rawData && rawData.PICNO);
+            const fycoPresent = getXmlText(xmlDoc, 'fyco_present') || (rawData && rawData.FYCO_PRESENT);
+            const taxNumber = getXmlText(xmlDoc, 'tax_number');
+            const priority = getXmlText(xmlDoc, 'priority');
+            const appointmentDate = getXmlText(xmlDoc, 'appointment_date');
+            const nameCompany = getXmlText(xmlDoc, 'name_company');
+            const checkInTime = getXmlText(xmlDoc, 'CHECKINTIME');
+            const vehicleSpeed = getXmlText(xmlDoc, 'VehicleSpeed');
+            const frequency = getXmlText(xmlDoc, 'Frequency');
+            const frequency1 = getXmlText(xmlDoc, 'Frequency1');
+            const gouDang = getXmlText(xmlDoc, 'GouDang');
+            const interpolation = getXmlText(xmlDoc, 'Interpolation');
+
+            const positionSiig = getFirstSiigByType(xmlDoc, 'position');
+            const scanImgSiig = getFirstSiigByType(xmlDoc, 'scanimg');
+
+            const positionOperationTime = positionSiig ? getXmlText(positionSiig, 'OPERATIONTIME') : '';
+
+            const containerSection = buildKeyValueSection('Container Details', [
+                { label: 'Container Number', value: containerNumber },
+                { label: 'PIC Number', value: picNo },
+                { label: 'FYCO Present', value: fycoPresent },
+                { label: 'Tax Number', value: taxNumber },
+                { label: 'Priority', value: priority },
+                { label: 'Appointment Date', value: appointmentDate },
+                { label: 'Company Name', value: nameCompany },
+                { label: 'FTP Path', value: parsedPayload && parsedPayload.ftp_path },
+                { label: 'Image Folder', value: rawData && rawData.IMAGEFOLDER }
+            ]);
+            if (containerSection) {
+                sections.push(containerSection);
+            }
+
+            const vehicleSection = buildKeyValueSection('Vehicle Details', [
+                { label: 'Vehicle Speed', value: vehicleSpeed },
+                { label: 'Frequency', value: frequency },
+                { label: 'Frequency (Alt)', value: frequency1 },
+                { label: 'Gou Dang', value: gouDang },
+                { label: 'Interpolation', value: interpolation }
+            ]);
+            if (vehicleSection) {
+                sections.push(vehicleSection);
+            }
+
+            const timingSection = buildKeyValueSection('Timing', [
+                { label: 'Check-in Time', value: checkInTime || (rawData && rawData.update_time) },
+                { label: 'Position Operation Time', value: positionOperationTime },
+                { label: 'Task Time', value: rawData && rawData.task_time },
+                { label: 'Scan Duration', value: rawData && rawData.scan_duration },
+                { label: 'Vehicle Enter Time', value: rawData && rawData.TIME_VEH_ENTER },
+                { label: 'Scan Start Time', value: rawData && rawData.TIME_SCANSTART },
+                { label: 'Scan Stop Time', value: rawData && rawData.TIME_SCAN_STOP }
+            ]);
+            if (timingSection) {
+                sections.push(timingSection);
+            }
+
+            if (scanImgSiig) {
+                const scanImgs = Array.from(scanImgSiig.getElementsByTagName('SCANIMG') || []);
+                const scanSection = buildScanImageSection(scanImgs);
+                if (scanSection) {
+                    sections.push(scanSection);
+                }
+            }
+
+            const additionalSection = buildKeyValueSection('Additional Payload Fields', parsedPayload ? Object.keys(parsedPayload)
+                .filter(key => key !== 'image_msg' && parsedPayload[key] !== null && parsedPayload[key] !== '')
+                .map(key => ({
+                    label: key.replace(/_/g, ' '),
+                    value: typeof parsedPayload[key] === 'object'
+                        ? JSON.stringify(parsedPayload[key], null, 2)
+                        : parsedPayload[key]
+                })) : []);
+            if (additionalSection) {
+                sections.push(additionalSection);
+            }
+
+            if (!sections.length) {
+                if (rawText) {
+                    const formatted = escapeHtml(rawText).replace(/\n/g, '<br>');
+                    return `<pre class="mb-0 font-monospace text-break" style="white-space: pre-wrap;">${formatted}</pre>`;
+                }
+                return '<span class="text-muted small">No payload available.</span>';
+            }
+
+            const columnsHtml = sections.map(section => `
+                <div class="col-12 col-md-6">
+                    <div class="payload-detail-section">
+                        <h6 class="text-uppercase text-muted small fw-semibold mb-3">${escapeHtml(section.title)}</h6>
+                        ${section.content}
+                    </div>
+                </div>
+            `).join('');
+
+            return `<div class="row g-4">${columnsHtml}</div>`;
+        }
+
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
             nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
@@ -1875,6 +2181,28 @@
         const payloadUpdateLogFileElement = document.getElementById('payload-update-log-file');
         const payloadUpdateTextarea = document.getElementById('payload-update-json');
         const payloadUpdateErrorElement = document.getElementById('payload-update-error');
+        const payloadDetailIdElement = document.getElementById('payload-detail-id');
+        const payloadDetailLogFileElement = document.getElementById('payload-detail-log-file');
+        const payloadDetailTargetElement = document.getElementById('payload-detail-target');
+        const payloadDetailContentElement = document.getElementById('payload-detail-content');
+        const payloadDetailModalElement = document.getElementById('payloadDetailModal');
+        if (payloadDetailModalElement) {
+            payloadDetailModalElement.addEventListener('hidden.bs.modal', () => {
+                payloadDetailModalInstance = null;
+                if (payloadDetailContentElement) {
+                    payloadDetailContentElement.innerHTML = '<span class="text-muted small">No payload available.</span>';
+                }
+                if (payloadDetailIdElement) {
+                    payloadDetailIdElement.textContent = 'N/A';
+                }
+                if (payloadDetailLogFileElement) {
+                    payloadDetailLogFileElement.textContent = 'N/A';
+                }
+                if (payloadDetailTargetElement) {
+                    payloadDetailTargetElement.textContent = 'N/A';
+                }
+            });
+        }
         let startTime = new Date();
         let lastUpdateTime = new Date();
         let ftpStatusTimer = null;
@@ -2222,10 +2550,14 @@
                                     const hasJsonPayload = rawData && rawData.json_payload !== undefined && rawData.json_payload !== null;
                                     const hasRawPayload = rawData && typeof rawData.json_payload_raw === 'string' && rawData.json_payload_raw.trim() !== '';
                                     const canUpdate = Boolean(hasJsonPayload || hasRawPayload);
+                                    const detailDisabledAttr = canUpdate ? '' : ' disabled';
                                     const updateDisabledAttr = (!resendTargetConfigured || !canUpdate) ? ' disabled' : '';
                                     const resendDisabledAttr = resendTargetConfigured ? '' : ' disabled';
                                     return '' +
                                         '<div class="d-flex gap-2 justify-content-center">' +
+                                            '<button type="button" class="btn btn-sm btn-outline-info btn-detail"' + detailDisabledAttr + '>' +
+                                                '<i class="fas fa-eye me-1"></i> Detail' +
+                                            '</button>' +
                                             '<button type="button" class="btn btn-sm btn-outline-primary btn-update"' + updateDisabledAttr + '>' +
                                                 '<i class="fas fa-edit me-1"></i> Update' +
                                             '</button>' +
@@ -2279,6 +2611,62 @@
             }
 
             const tbody = $('#data-table-all tbody');
+
+            tbody.off('click', '.btn-detail').on('click', '.btn-detail', async function() {
+                let tr = $(this).closest('tr');
+                if (tr.hasClass('child')) {
+                    tr = tr.prev();
+                }
+
+                const rowData = dataTableAll.row(tr).data();
+                if (!rowData) {
+                    return;
+                }
+
+                const payloadInfo = getPayloadTextForRow(rowData);
+                if (!payloadInfo.hasPayload) {
+                    await showAlert('No payload data is available for this entry.', 'warning');
+                    return;
+                }
+
+                if (!payloadDetailModalElement) {
+                    console.warn('payloadDetailModal element not found');
+                    return;
+                }
+
+                const rawData = payloadInfo.rawData || {};
+                let parsedPayload = null;
+                if (payloadInfo.text) {
+                    try {
+                        parsedPayload = JSON.parse(payloadInfo.text);
+                    } catch (error) {
+                        parsedPayload = null;
+                    }
+                }
+                const targetUrl = rawData.resend_target_url || rawData.post_url || rawData.target_url || 'N/A';
+
+                if (payloadDetailIdElement) {
+                    payloadDetailIdElement.textContent = rowData.id_scan || 'N/A';
+                }
+                if (payloadDetailLogFileElement) {
+                    payloadDetailLogFileElement.textContent = rowData.file_name || 'N/A';
+                }
+                if (payloadDetailTargetElement) {
+                    payloadDetailTargetElement.textContent = targetUrl || 'N/A';
+                }
+                if (payloadDetailContentElement) {
+                    if (parsedPayload && typeof parsedPayload === 'object') {
+                        payloadDetailContentElement.innerHTML = renderPayloadAsTable(parsedPayload);
+                    } else if (payloadInfo.text) {
+                        payloadDetailContentElement.innerHTML = `<pre class="mb-0 font-monospace text-break" style="white-space: pre-wrap;">${escapeHtml(payloadInfo.text)}</pre>`;
+                    } else {
+                        payloadDetailContentElement.innerHTML = '<span class="text-muted small">No payload available.</span>';
+                    }
+                }
+
+                payloadDetailModalInstance = bootstrap.Modal.getOrCreateInstance(payloadDetailModalElement);
+                payloadDetailModalInstance.show();
+            });
 
             tbody.off('click', '.btn-update').on('click', '.btn-update', async function() {
                 if (!resendTargetConfigured) {
@@ -2670,12 +3058,27 @@ function populateDetailModal(data) {
                 imagePathElement.text('N/A');
             }
 
-            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count', 'scan_duration', 'overall_time']);
+            const knownRawKeys = new Set([
+                'image_path',
+                'task_time',
+                'retry_count',
+                'scan_duration',
+                'overall_time',
+                'json_payload',
+                'json_payload_raw',
+                'JSON_PAYLOAD',
+                'JSON_PAYLOAD_RAW'
+            ]);
             const additionalRawContainer = $('#modal-additional-raw');
             additionalRawContainer.empty();
 
             let hasAdditional = false;
+            let jsonPayloadEntry = null;
             Object.entries(rawData).forEach(([key, value]) => {
+                if (key === 'json_payload' || key === 'JSON_PAYLOAD') {
+                    jsonPayloadEntry = { key, value };
+                    return;
+                }
                 if (knownRawKeys.has(key)) {
                     return;
                 }
@@ -2700,6 +3103,19 @@ function populateDetailModal(data) {
                 additionalRawContainer.append(
                     $('<li/>', { class: 'list-group-item text-muted' }).text('No additional raw data available.')
                 );
+            }
+
+            const jsonPayloadText = jsonPayloadEntry ? formatValue(jsonPayloadEntry.value) : null;
+            if (jsonPayloadText && jsonPayloadText !== 'N/A') {
+                const listItem = $('<li/>', {
+                    class: 'list-group-item'
+                });
+                $('<div/>', { class: 'fw-semibold text-muted small text-uppercase mb-2' }).text('json_payload').appendTo(listItem);
+                $('<pre/>', {
+                    class: 'font-monospace text-break mb-0',
+                    css: { whiteSpace: 'pre-wrap' }
+                }).text(jsonPayloadText).appendTo(listItem);
+                additionalRawContainer.append(listItem);
             }
         }
 
