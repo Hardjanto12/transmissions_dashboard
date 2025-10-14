@@ -167,6 +167,34 @@
         .payload-detail-section h6 {
             letter-spacing: 0.08em;
         }
+        .payload-image-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-top: 0.5rem;
+        }
+        .payload-image-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 140px;
+            flex: 0 0 auto;
+        }
+        .payload-image-preview {
+            max-width: 120px;
+            max-height: 90px;
+            border-radius: 16px;
+            box-shadow: 0 18px 42px -24px rgba(15, 23, 42, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            object-fit: contain;
+            background-color: rgba(15, 23, 42, 0.04);
+            padding: 0.35rem;
+        }
+        .payload-image-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 48px -26px rgba(15, 23, 42, 0.55);
+        }
         .page-subtitle {
             color: var(--text-muted);
             font-size: 0.95rem;
@@ -1966,40 +1994,196 @@
                 .join('');
         }
 
-        function buildKeyValueSection(title, pairs) {
+        function buildKeyValueSection(title, pairs, layout = 'half') {
             const rowsHtml = buildKeyValueRows(pairs);
             if (!rowsHtml) {
                 return null;
             }
             return {
                 title,
+                layout,
                 content: `<table class="table table-sm align-top mb-0 payload-detail-table"><tbody>${rowsHtml}</tbody></table>`
             };
         }
 
-        function buildScanImageSection(scanImgs) {
+        function isDisplayableImage(pathOrUrl) {
+            if (!pathOrUrl) {
+                return false;
+            }
+            const lower = String(pathOrUrl).toLowerCase();
+            return ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => lower.endsWith(ext));
+        }
+
+        function extractImageUrlsFromImgType(xmlDoc) {
+            if (!xmlDoc) {
+                return [];
+            }
+            const imgTypeText = getXmlText(xmlDoc, 'IMGTYPE');
+            if (!imgTypeText) {
+                return [];
+            }
+            const trimmed = imgTypeText.trim();
+            if (!trimmed) {
+                return [];
+            }
+
+            const urls = [];
+            const decoded = decodeHtmlEntities(trimmed);
+            const sourceText = decoded || trimmed;
+            const innerDoc = parseXmlDocument(sourceText);
+            if (innerDoc) {
+                const imgNodes = innerDoc.getElementsByTagName('img');
+                Array.from(imgNodes || []).forEach(node => {
+                    const value = node && node.textContent ? node.textContent.trim() : '';
+                    if (value) {
+                        urls.push(value);
+                    }
+                });
+            }
+
+            if (!urls.length) {
+                const regexMatches = sourceText.match(/https?:\/\/[^\s"']+/gi) || [];
+                regexMatches.forEach(match => {
+                    const clean = match.trim().replace(/[)>]+$/, '');
+                    if (clean) {
+                        urls.push(clean);
+                    }
+                });
+            }
+
+            return urls;
+        }
+
+        function getImageOrigin(imageUrls) {
+            if (!Array.isArray(imageUrls)) {
+                return null;
+            }
+            for (const url of imageUrls) {
+                if (!url) {
+                    continue;
+                }
+                try {
+                    const parsed = new URL(url, window.location.origin);
+                    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                        return parsed.origin;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+            return null;
+        }
+
+        function resolveImageUrl(path, imageUrls, fallbackOrigin) {
+            if (!path) {
+                return null;
+            }
+            let candidate = String(path).trim();
+            if (!candidate) {
+                return null;
+            }
+            candidate = candidate.replace(/\\/g, '/');
+            const lowerCandidate = candidate.toLowerCase();
+            if (lowerCandidate.startsWith('http://') || lowerCandidate.startsWith('https://')) {
+                return candidate;
+            }
+
+            const trimmedCandidate = candidate.replace(/^\/+/, '');
+            if (Array.isArray(imageUrls)) {
+                for (const url of imageUrls) {
+                    if (!url) {
+                        continue;
+                    }
+                    try {
+                        const parsed = new URL(url, window.location.origin);
+                        const pathName = (parsed.pathname || '').replace(/^\/+/, '').toLowerCase();
+                        if (pathName.endsWith(trimmedCandidate.toLowerCase())) {
+                            return parsed.href;
+                        }
+                    } catch (error) {
+                        const normalized = url.toLowerCase();
+                        if (normalized.endsWith(trimmedCandidate.toLowerCase())) {
+                            return url;
+                        }
+                    }
+                }
+            }
+
+            if (fallbackOrigin) {
+                return `${fallbackOrigin}/${trimmedCandidate}`;
+            }
+
+            return candidate.startsWith('/') ? candidate : `/${trimmedCandidate}`;
+        }
+
+        function decodeHtmlEntities(value) {
+            if (typeof value !== 'string' || !value) {
+                return value;
+            }
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = value;
+            return textarea.value;
+        }
+
+        function extractFileName(value) {
+            if (!value) {
+                return '';
+            }
+            try {
+                const parsed = new URL(value, window.location.origin);
+                if (parsed.pathname) {
+                    const segments = parsed.pathname.split('/').filter(Boolean);
+                    return segments.length ? segments[segments.length - 1].toLowerCase() : '';
+                }
+            } catch (error) {
+                const sanitized = String(value).replace(/\\/g, '/');
+                const segments = sanitized.split('/').filter(Boolean);
+                return segments.length ? segments[segments.length - 1].toLowerCase() : '';
+            }
+            return '';
+        }
+
+        function buildScanImageSection(scanImgs, imageUrls) {
             if (!scanImgs || !scanImgs.length) {
                 return null;
             }
+            const normalizedUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : [];
+            const origin = getImageOrigin(normalizedUrls);
+            let hasContent = false;
+            const thumbnails = [];
+
             const rows = scanImgs.map((img, index) => {
                 const type = getXmlText(img, 'TYPE') || `Entry ${index + 1}`;
                 const path = getXmlText(img, 'PATH');
                 const operateTime = getXmlText(img, 'OPERATETIME') || getXmlText(img, 'OPERATETIME'.toLowerCase());
+                const resolvedUrl = resolveImageUrl(path, normalizedUrls, origin);
+                const displayable = isDisplayableImage(resolvedUrl || path);
+                if (path || operateTime || resolvedUrl) {
+                    hasContent = true;
+                }
+                if (displayable && resolvedUrl) {
+                    thumbnails.push(resolvedUrl);
+                }
+                const pathCell = resolvedUrl
+                    ? `<a href="${escapeHtml(resolvedUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(path || resolvedUrl)}</a>`
+                    : escapeHtml(path || '');
                 return `
                     <tr>
                         <td>${escapeHtml(type)}</td>
-                        <td class="text-break">${escapeHtml(path || '')}</td>
+                        <td class="text-break">${pathCell}</td>
                         <td>${escapeHtml(operateTime || '')}</td>
                     </tr>
                 `;
             }).join('');
 
-            if (!rows) {
+            if (!rows || !hasContent) {
                 return null;
             }
 
             return {
                 title: 'Scan Images',
+                layout: 'full',
+                thumbnails,
                 content: `
                     <div class="table-responsive">
                         <table class="table table-sm table-striped align-top mb-0">
@@ -2016,11 +2200,37 @@
             };
         }
 
+        function buildImageGallerySection(imageUrls) {
+            if (!Array.isArray(imageUrls) || !imageUrls.length) {
+                return null;
+            }
+            const displayableUrls = imageUrls.filter(url => isDisplayableImage(url));
+            if (!displayableUrls.length) {
+                return null;
+            }
+
+            const galleryItems = displayableUrls.map(url => {
+                const safeUrl = escapeHtml(url);
+                return `
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="payload-image-link">
+                        <img src="${safeUrl}" alt="Payload image" class="img-fluid payload-image-preview">
+                    </a>
+                `;
+            }).join('');
+
+            return {
+                title: 'Image Gallery',
+                layout: 'full',
+                content: `<div class="payload-image-grid">${galleryItems}</div>`
+            };
+        }
+
         function renderPayloadDetailContent(parsedPayload, rawData, rawText) {
             const sections = [];
             const xmlDoc = parsedPayload && typeof parsedPayload.image_msg === 'string'
                 ? parseXmlDocument(parsedPayload.image_msg)
                 : null;
+            const imageUrls = xmlDoc ? extractImageUrlsFromImgType(xmlDoc) : [];
 
             const containerNumberXml = getXmlText(xmlDoc, 'container_no');
             const containerNumber = containerNumberXml
@@ -2082,14 +2292,6 @@
                 sections.push(timingSection);
             }
 
-            if (scanImgSiig) {
-                const scanImgs = Array.from(scanImgSiig.getElementsByTagName('SCANIMG') || []);
-                const scanSection = buildScanImageSection(scanImgs);
-                if (scanSection) {
-                    sections.push(scanSection);
-                }
-            }
-
             const additionalSection = buildKeyValueSection('Additional Payload Fields', parsedPayload ? Object.keys(parsedPayload)
                 .filter(key => key !== 'image_msg' && parsedPayload[key] !== null && parsedPayload[key] !== '')
                 .map(key => ({
@@ -2097,9 +2299,43 @@
                     value: typeof parsedPayload[key] === 'object'
                         ? JSON.stringify(parsedPayload[key], null, 2)
                         : parsedPayload[key]
-                })) : []);
+                })) : [], 'full');
             if (additionalSection) {
                 sections.push(additionalSection);
+            }
+
+            const gallerySources = [];
+
+            if (scanImgSiig) {
+                const scanImgs = Array.from(scanImgSiig.getElementsByTagName('SCANIMG') || []);
+                const scanSection = buildScanImageSection(scanImgs, imageUrls);
+                if (scanSection) {
+                    sections.push(scanSection);
+                    if (Array.isArray(scanSection.thumbnails)) {
+                        gallerySources.push(...scanSection.thumbnails);
+                    }
+                }
+
+                const scanFileNames = new Set(
+                    scanImgs
+                        .map(img => extractFileName(getXmlText(img, 'PATH')))
+                        .filter(Boolean)
+                );
+                const additionalUrls = imageUrls.filter(url => {
+                    const fileName = extractFileName(url);
+                    return fileName && !scanFileNames.has(fileName);
+                });
+                gallerySources.push(...additionalUrls);
+            } else {
+                gallerySources.push(...imageUrls);
+            }
+
+            const uniqueGallerySources = Array.from(new Set(gallerySources.filter(Boolean)));
+            if (uniqueGallerySources.length) {
+                const gallerySection = buildImageGallerySection(uniqueGallerySources);
+                if (gallerySection) {
+                    sections.push(gallerySection);
+                }
             }
 
             if (!sections.length) {
@@ -2111,7 +2347,7 @@
             }
 
             const columnsHtml = sections.map(section => `
-                <div class="col-12 col-md-6">
+                <div class="${section.layout === 'full' ? 'col-12' : 'col-12 col-md-6'}">
                     <div class="payload-detail-section">
                         <h6 class="text-uppercase text-muted small fw-semibold mb-3">${escapeHtml(section.title)}</h6>
                         ${section.content}
@@ -2656,7 +2892,8 @@
                 }
                 if (payloadDetailContentElement) {
                     if (parsedPayload && typeof parsedPayload === 'object') {
-                        payloadDetailContentElement.innerHTML = renderPayloadAsTable(parsedPayload);
+                        const detailHtml = renderPayloadDetailContent(parsedPayload, rawData, payloadInfo.text);
+                        payloadDetailContentElement.innerHTML = detailHtml || renderPayloadAsTable(parsedPayload);
                     } else if (payloadInfo.text) {
                         payloadDetailContentElement.innerHTML = `<pre class="mb-0 font-monospace text-break" style="white-space: pre-wrap;">${escapeHtml(payloadInfo.text)}</pre>`;
                     } else {
