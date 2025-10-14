@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sweetalert2.min.css') }}">
     <style>
         :root {
             --brand-50: #eef2ff;
@@ -126,8 +127,45 @@
             overflow-x: auto;
         }
 
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem 1.5rem;
+            align-items: start;
+        }
+
+        .checkbox-grid .form-check {
+            margin: 0;
+        }
+
         .table-modern {
             width: 100%;
+        }
+        table.payload-detail-table th {
+            min-width: 180px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        table.payload-detail-table td {
+            font-size: 0.9rem;
+        }
+        table.payload-detail-table tr + tr {
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        table.payload-detail-table td > table.payload-detail-table {
+            margin-top: 0.5rem;
+        }
+        .payload-detail-table-wrapper {
+            max-height: 26rem;
+            overflow: auto;
+        }
+        .payload-detail-section + .payload-detail-section {
+            margin-top: 1.5rem;
+        }
+        .payload-detail-section h6 {
+            letter-spacing: 0.08em;
         }
         .page-subtitle {
             color: var(--text-muted);
@@ -806,10 +844,10 @@
         <span id="activity-text">Processing...</span>
     </div>
     
-    <div class="status-indicator online" id="status-indicator">
+    <!-- <div class="status-indicator online" id="status-indicator">
         <i class="fas fa-circle me-1"></i>
         <span>Dashboard Online</span>
-    </div>
+    </div> -->
     
     <div class="notification" id="notification">
         <div class="d-flex align-items-center">
@@ -817,7 +855,80 @@
             <span id="notification-text">Welcome to Transmission Dashboard!</span>
         </div>
     </div>
+    <!-- Update Payload Modal -->
+    <div class="modal fade" id="payloadUpdateModal" tabindex="-1" aria-labelledby="payloadUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payloadUpdateModalLabel">Update Payload</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <dl class="row mb-0 small">
+                                    <dt class="col-5 text-muted text-uppercase">ID Scan</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-update-id">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Log File</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-update-log-file">N/A</dd>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="payload-update-json" class="form-label fw-semibold text-uppercase small text-muted">Payload JSON</label>
+                            <textarea class="form-control font-monospace" id="payload-update-json" rows="16" spellcheck="false" placeholder="{&#10;    &quot;example&quot;: true&#10;}"></textarea>
+                            <div class="form-text">Edit the JSON payload before sending the update to the server.</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none mt-3" id="payload-update-error"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="payload-update-send">
+                        <i class="fas fa-paper-plane me-1"></i> Send Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Payload Detail Modal -->
+    <div class="modal fade" id="payloadDetailModal" tabindex="-1" aria-labelledby="payloadDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payloadDetailModalLabel">Payload Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <dl class="row mb-0 small">
+                                    <dt class="col-5 text-muted text-uppercase">ID Scan</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-id">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Log File</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-log-file">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Target URL</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-detail-target">N/A</dd>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-uppercase small text-muted" for="payload-detail-content">Payload Data</label>
+                            <div id="payload-detail-content" class="border rounded-3 bg-light-subtle p-3" style="min-height: 12rem;">
+                                <span class="text-muted small">No payload available.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <div class="container-fluid">
@@ -1136,7 +1247,7 @@
                                         <th>Jam Update</th>
                                         <th>Jumlah Gambar</th>
                                         <th>Status</th>
-                                        <th>Resend</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1414,54 +1525,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="ok-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="ok-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="ok-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="ok-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="ok-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="ok-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="ok-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="ok-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="ok-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="ok-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-time-diff" data-field="time_difference" checked>
-                                <label class="form-check-label" for="ok-export-time-diff">Selisih Waktu</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="ok-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="ok-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="ok-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="ok-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ok-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="ok-export-status">Status</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="ok-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="ok-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check d-none">
+                            <input class="form-check-input" type="checkbox" id="ok-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="ok-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="ok-export-error">Please select at least one column to export.</div>
@@ -1486,50 +1581,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="all-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="all-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="all-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="all-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="all-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="all-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="all-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="all-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="all-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="all-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="all-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="all-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="all-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="all-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="all-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="all-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="all-export-status">Status</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="all-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="all-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="all-export-error">Please select at least one column to export.</div>
@@ -1615,54 +1698,38 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">Select the columns to include in the exported Excel file.</p>
-                    <div class="row g-2" id="nok-export-fields">
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-id-scan" data-field="id_scan" checked>
-                                <label class="form-check-label" for="nok-export-id-scan">ID Scan</label>
-                            </div>
+                    <div class="checkbox-grid" id="nok-export-fields">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-id-scan" data-field="id_scan" checked>
+                            <label class="form-check-label" for="nok-export-id-scan">ID Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-container" data-field="container_no" checked>
-                                <label class="form-check-label" for="nok-export-container">Nomor Container</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-container" data-field="container_no" checked>
+                            <label class="form-check-label" for="nok-export-container">Nomor Container</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-scan-time" data-field="scan_time" checked>
-                                <label class="form-check-label" for="nok-export-scan-time">Jam Scan</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-scan-time" data-field="scan_time" checked>
+                            <label class="form-check-label" for="nok-export-scan-time">Jam Scan</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-update-time" data-field="update_time" checked>
-                                <label class="form-check-label" for="nok-export-update-time">Jam Update</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-update-time" data-field="update_time" checked>
+                            <label class="form-check-label" for="nok-export-update-time">Jam Update</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-time-diff" data-field="time_difference" checked>
-                                <label class="form-check-label" for="nok-export-time-diff">Selisih Waktu</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-time-diff" data-field="time_difference" checked>
+                            <label class="form-check-label" for="nok-export-time-diff">Selisih Waktu</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-image-count" data-field="image_count" checked>
-                                <label class="form-check-label" for="nok-export-image-count">Jumlah Gambar</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-image-count" data-field="image_count" checked>
+                            <label class="form-check-label" for="nok-export-image-count">Jumlah Gambar</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-status" data-field="status" checked>
-                                <label class="form-check-label" for="nok-export-status">Status</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-status" data-field="status" checked>
+                            <label class="form-check-label" for="nok-export-status">Status</label>
                         </div>
-                        <div class="col-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="nok-export-error-desc" data-field="error_description">
-                                <label class="form-check-label" for="nok-export-error-desc">Deskripsi Error</label>
-                            </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="nok-export-error-desc" data-field="error_description">
+                            <label class="form-check-label" for="nok-export-error-desc">Deskripsi Error</label>
                         </div>
                     </div>
                     <div class="alert alert-danger d-none mt-3" id="nok-export-error">Please select at least one column to export.</div>
@@ -1685,6 +1752,7 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sweetalert2.min.js') }}"></script>
     <script>
         let currentData = [];
         let dataTable = null;
@@ -1694,7 +1762,69 @@
         let okExportModalInstance = null;
         let allExportModalInstance = null;
         let nokExportModalInstance = null;
+        let payloadUpdateModalInstance = null;
+        let payloadDetailModalInstance = null;
+        let currentUpdateContext = null;
         let resendTargetConfigured = false;
+
+        const SWEETALERT_CLASSES = Object.freeze({
+            popup: 'rounded-4 shadow-lg',
+            confirmButton: 'btn btn-primary rounded-pill px-4',
+            cancelButton: 'btn btn-outline-secondary rounded-pill px-4'
+        });
+
+        function showAlert(message, icon = 'info', title = '') {
+            return Swal.fire({
+                title: title || undefined,
+                text: message,
+                icon,
+                confirmButtonText: 'OK',
+                buttonsStyling: false,
+                customClass: {
+                    popup: SWEETALERT_CLASSES.popup,
+                    confirmButton: SWEETALERT_CLASSES.confirmButton
+                },
+                didOpen: () => {
+                    const container = Swal.getHtmlContainer();
+                    if (container) {
+                        container.style.whiteSpace = 'pre-line';
+                    }
+                }
+            });
+        }
+
+        function showConfirm(message, options = {}) {
+            const {
+                title = '',
+                icon = 'warning',
+                confirmButtonText = 'Yes',
+                cancelButtonText = 'Cancel',
+                reverseButtons = true
+            } = options;
+
+            return Swal.fire({
+                title: title || undefined,
+                text: message,
+                icon,
+                showCancelButton: true,
+                focusCancel: true,
+                confirmButtonText,
+                cancelButtonText,
+                reverseButtons,
+                buttonsStyling: false,
+                customClass: {
+                    popup: SWEETALERT_CLASSES.popup,
+                    confirmButton: SWEETALERT_CLASSES.confirmButton,
+                    cancelButton: SWEETALERT_CLASSES.cancelButton
+                },
+                didOpen: () => {
+                    const container = Swal.getHtmlContainer();
+                    if (container) {
+                        container.style.whiteSpace = 'pre-line';
+                    }
+                }
+            }).then(result => result.isConfirmed);
+        }
 
         function adjustDataTable(tableInstance) {
             if (!tableInstance) {
@@ -1712,6 +1842,286 @@
             adjustDataTable(dataTableNOK);
         }
 
+        function updateSequentialNumbering() {
+            const api = this.api();
+            const pageInfo = api.page.info();
+            api.column(0, { page: 'current' }).nodes().each((cell, index) => {
+                cell.textContent = pageInfo.start + index + 1;
+            });
+        }
+
+        function getPayloadTextForRow(rowData) {
+            const rawData = (rowData && rowData.raw_data && typeof rowData.raw_data === 'object' && !Array.isArray(rowData.raw_data))
+                ? rowData.raw_data
+                : {};
+            let payloadText = '';
+            if (rawData && rawData.json_payload !== undefined && rawData.json_payload !== null) {
+                const payloadValue = rawData.json_payload;
+                if (typeof payloadValue === 'string') {
+                    payloadText = payloadValue.trim();
+                } else if (typeof payloadValue === 'object') {
+                    try {
+                        payloadText = JSON.stringify(payloadValue, null, 2);
+                    } catch (error) {
+                        payloadText = String(payloadValue);
+                    }
+                }
+            }
+            if (!payloadText && typeof rawData.json_payload_raw === 'string') {
+                const trimmed = rawData.json_payload_raw.trim();
+                if (trimmed) {
+                    payloadText = trimmed;
+                }
+            }
+            return {
+                text: payloadText,
+                rawData,
+                hasPayload: Boolean(payloadText)
+            };
+        }
+
+        function renderPayloadAsTable(data, level = 0) {
+            if (data === null || data === undefined) {
+                return '<span class="text-muted">null</span>';
+            }
+            const dataType = typeof data;
+            if (dataType !== 'object') {
+                const safeValue = escapeHtml(String(data)).replace(/\n/g, '<br>');
+                return `<span class="text-break">${safeValue}</span>`;
+            }
+
+            const isArray = Array.isArray(data);
+            const keys = isArray ? data.map((_, index) => index) : Object.keys(data);
+            if (keys.length === 0) {
+                return `<span class="text-muted">${isArray ? '[empty]' : '{empty}'}</span>`;
+            }
+
+            const rows = keys.map((key) => {
+                const value = data[key];
+                const label = isArray ? `[${key}]` : key;
+                return `<tr>
+                            <th class="fw-semibold text-nowrap align-top">${escapeHtml(String(label))}</th>
+                            <td>${renderPayloadAsTable(value, level + 1)}</td>
+                        </tr>`;
+            }).join('');
+
+            const tableClass = level === 0
+                ? 'table table-sm table-striped align-top mb-0 payload-detail-table'
+                : 'table table-sm table-borderless align-top mb-0 payload-detail-table';
+
+            const tableHtml = `<table class="${tableClass}"><tbody>${rows}</tbody></table>`;
+            if (level === 0) {
+                return `<div class="table-responsive payload-detail-table-wrapper">${tableHtml}</div>`;
+            }
+            return tableHtml;
+        }
+
+        function parseXmlDocument(xmlText) {
+            if (typeof xmlText !== 'string' || !xmlText.trim()) {
+                return null;
+            }
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlText, 'application/xml');
+                if (doc.getElementsByTagName('parsererror').length > 0) {
+                    return null;
+                }
+                return doc;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function getXmlText(doc, tagName) {
+            if (!doc || !tagName) {
+                return '';
+            }
+            const element = doc.getElementsByTagName(tagName)[0];
+            return element && element.textContent ? element.textContent.trim() : '';
+        }
+
+        function getFirstSiigByType(doc, typeValue) {
+            if (!doc) {
+                return null;
+            }
+            const nodes = Array.from(doc.getElementsByTagName('IDR_SIIG') || []);
+            return nodes.find(node => {
+                const typeNode = node.getElementsByTagName('TYPE')[0];
+                return typeNode && typeNode.textContent && typeNode.textContent.trim().toLowerCase() === typeValue.toLowerCase();
+            }) || null;
+        }
+
+        function buildKeyValueRows(pairs) {
+            return pairs
+                .filter(pair => pair && pair.value !== undefined && pair.value !== null && String(pair.value).trim() !== '')
+                .map(pair => {
+                    const safeValue = typeof pair.value === 'string'
+                        ? escapeHtml(pair.value).replace(/\n/g, '<br>')
+                        : escapeHtml(String(pair.value));
+                    return `<tr>
+                        <th class="fw-semibold text-nowrap align-top">${escapeHtml(pair.label)}</th>
+                        <td class="text-break">${safeValue}</td>
+                    </tr>`;
+                })
+                .join('');
+        }
+
+        function buildKeyValueSection(title, pairs) {
+            const rowsHtml = buildKeyValueRows(pairs);
+            if (!rowsHtml) {
+                return null;
+            }
+            return {
+                title,
+                content: `<table class="table table-sm align-top mb-0 payload-detail-table"><tbody>${rowsHtml}</tbody></table>`
+            };
+        }
+
+        function buildScanImageSection(scanImgs) {
+            if (!scanImgs || !scanImgs.length) {
+                return null;
+            }
+            const rows = scanImgs.map((img, index) => {
+                const type = getXmlText(img, 'TYPE') || `Entry ${index + 1}`;
+                const path = getXmlText(img, 'PATH');
+                const operateTime = getXmlText(img, 'OPERATETIME') || getXmlText(img, 'OPERATETIME'.toLowerCase());
+                return `
+                    <tr>
+                        <td>${escapeHtml(type)}</td>
+                        <td class="text-break">${escapeHtml(path || '')}</td>
+                        <td>${escapeHtml(operateTime || '')}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (!rows) {
+                return null;
+            }
+
+            return {
+                title: 'Scan Images',
+                content: `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-top mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Path</th>
+                                    <th>Operation Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`
+            };
+        }
+
+        function renderPayloadDetailContent(parsedPayload, rawData, rawText) {
+            const sections = [];
+            const xmlDoc = parsedPayload && typeof parsedPayload.image_msg === 'string'
+                ? parseXmlDocument(parsedPayload.image_msg)
+                : null;
+
+            const containerNumberXml = getXmlText(xmlDoc, 'container_no');
+            const containerNumber = containerNumberXml
+                || (rawData && (rawData.container_no || rawData.CONTAINER_NO));
+            const picNo = getXmlText(xmlDoc, 'PICNO') || (rawData && rawData.PICNO);
+            const fycoPresent = getXmlText(xmlDoc, 'fyco_present') || (rawData && rawData.FYCO_PRESENT);
+            const taxNumber = getXmlText(xmlDoc, 'tax_number');
+            const priority = getXmlText(xmlDoc, 'priority');
+            const appointmentDate = getXmlText(xmlDoc, 'appointment_date');
+            const nameCompany = getXmlText(xmlDoc, 'name_company');
+            const checkInTime = getXmlText(xmlDoc, 'CHECKINTIME');
+            const vehicleSpeed = getXmlText(xmlDoc, 'VehicleSpeed');
+            const frequency = getXmlText(xmlDoc, 'Frequency');
+            const frequency1 = getXmlText(xmlDoc, 'Frequency1');
+            const gouDang = getXmlText(xmlDoc, 'GouDang');
+            const interpolation = getXmlText(xmlDoc, 'Interpolation');
+
+            const positionSiig = getFirstSiigByType(xmlDoc, 'position');
+            const scanImgSiig = getFirstSiigByType(xmlDoc, 'scanimg');
+
+            const positionOperationTime = positionSiig ? getXmlText(positionSiig, 'OPERATIONTIME') : '';
+
+            const containerSection = buildKeyValueSection('Container Details', [
+                { label: 'Container Number', value: containerNumber },
+                { label: 'PIC Number', value: picNo },
+                { label: 'FYCO Present', value: fycoPresent },
+                { label: 'Tax Number', value: taxNumber },
+                { label: 'Priority', value: priority },
+                { label: 'Appointment Date', value: appointmentDate },
+                { label: 'Company Name', value: nameCompany },
+                { label: 'FTP Path', value: parsedPayload && parsedPayload.ftp_path },
+                { label: 'Image Folder', value: rawData && rawData.IMAGEFOLDER }
+            ]);
+            if (containerSection) {
+                sections.push(containerSection);
+            }
+
+            const vehicleSection = buildKeyValueSection('Vehicle Details', [
+                { label: 'Vehicle Speed', value: vehicleSpeed },
+                { label: 'Frequency', value: frequency },
+                { label: 'Frequency (Alt)', value: frequency1 },
+                { label: 'Gou Dang', value: gouDang },
+                { label: 'Interpolation', value: interpolation }
+            ]);
+            if (vehicleSection) {
+                sections.push(vehicleSection);
+            }
+
+            const timingSection = buildKeyValueSection('Timing', [
+                { label: 'Check-in Time', value: checkInTime || (rawData && rawData.update_time) },
+                { label: 'Position Operation Time', value: positionOperationTime },
+                { label: 'Task Time', value: rawData && rawData.task_time },
+                { label: 'Scan Duration', value: rawData && rawData.scan_duration },
+                { label: 'Vehicle Enter Time', value: rawData && rawData.TIME_VEH_ENTER },
+                { label: 'Scan Start Time', value: rawData && rawData.TIME_SCANSTART },
+                { label: 'Scan Stop Time', value: rawData && rawData.TIME_SCAN_STOP }
+            ]);
+            if (timingSection) {
+                sections.push(timingSection);
+            }
+
+            if (scanImgSiig) {
+                const scanImgs = Array.from(scanImgSiig.getElementsByTagName('SCANIMG') || []);
+                const scanSection = buildScanImageSection(scanImgs);
+                if (scanSection) {
+                    sections.push(scanSection);
+                }
+            }
+
+            const additionalSection = buildKeyValueSection('Additional Payload Fields', parsedPayload ? Object.keys(parsedPayload)
+                .filter(key => key !== 'image_msg' && parsedPayload[key] !== null && parsedPayload[key] !== '')
+                .map(key => ({
+                    label: key.replace(/_/g, ' '),
+                    value: typeof parsedPayload[key] === 'object'
+                        ? JSON.stringify(parsedPayload[key], null, 2)
+                        : parsedPayload[key]
+                })) : []);
+            if (additionalSection) {
+                sections.push(additionalSection);
+            }
+
+            if (!sections.length) {
+                if (rawText) {
+                    const formatted = escapeHtml(rawText).replace(/\n/g, '<br>');
+                    return `<pre class="mb-0 font-monospace text-break" style="white-space: pre-wrap;">${formatted}</pre>`;
+                }
+                return '<span class="text-muted small">No payload available.</span>';
+            }
+
+            const columnsHtml = sections.map(section => `
+                <div class="col-12 col-md-6">
+                    <div class="payload-detail-section">
+                        <h6 class="text-uppercase text-muted small fw-semibold mb-3">${escapeHtml(section.title)}</h6>
+                        ${section.content}
+                    </div>
+                </div>
+            `).join('');
+
+            return `<div class="row g-4">${columnsHtml}</div>`;
+        }
+
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
             nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
@@ -1720,6 +2130,77 @@
                 nokDetailModalElement.setAttribute('aria-hidden', 'true');
                 nokDetailModalElement.removeAttribute('aria-modal');
                 nokDetailModalInstance = null;
+            });
+        }
+
+        const okExportModalElement = document.getElementById('okExportModal');
+        if (okExportModalElement) {
+            okExportModalElement.addEventListener('hidden.bs.modal', () => {
+                okExportModalInstance = null;
+            });
+        }
+
+        const allExportModalElement = document.getElementById('allExportModal');
+        if (allExportModalElement) {
+            allExportModalElement.addEventListener('hidden.bs.modal', () => {
+                allExportModalInstance = null;
+            });
+        }
+
+        const nokExportModalElement = document.getElementById('nokExportModal');
+        if (nokExportModalElement) {
+            nokExportModalElement.addEventListener('hidden.bs.modal', () => {
+                nokExportModalInstance = null;
+            });
+        }
+        const payloadUpdateModalElement = document.getElementById('payloadUpdateModal');
+        if (payloadUpdateModalElement) {
+            payloadUpdateModalElement.addEventListener('hidden.bs.modal', () => {
+                payloadUpdateModalInstance = null;
+                currentUpdateContext = null;
+                const textarea = document.getElementById('payload-update-json');
+                if (textarea) {
+                    textarea.value = '';
+                }
+                const errorAlert = document.getElementById('payload-update-error');
+                if (errorAlert) {
+                    errorAlert.classList.add('d-none');
+                    errorAlert.textContent = '';
+                }
+                const idLabel = document.getElementById('payload-update-id');
+                if (idLabel) {
+                    idLabel.textContent = 'N/A';
+                }
+                const logLabel = document.getElementById('payload-update-log-file');
+                if (logLabel) {
+                    logLabel.textContent = 'N/A';
+                }
+            });
+        }
+        const payloadUpdateIdElement = document.getElementById('payload-update-id');
+        const payloadUpdateLogFileElement = document.getElementById('payload-update-log-file');
+        const payloadUpdateTextarea = document.getElementById('payload-update-json');
+        const payloadUpdateErrorElement = document.getElementById('payload-update-error');
+        const payloadDetailIdElement = document.getElementById('payload-detail-id');
+        const payloadDetailLogFileElement = document.getElementById('payload-detail-log-file');
+        const payloadDetailTargetElement = document.getElementById('payload-detail-target');
+        const payloadDetailContentElement = document.getElementById('payload-detail-content');
+        const payloadDetailModalElement = document.getElementById('payloadDetailModal');
+        if (payloadDetailModalElement) {
+            payloadDetailModalElement.addEventListener('hidden.bs.modal', () => {
+                payloadDetailModalInstance = null;
+                if (payloadDetailContentElement) {
+                    payloadDetailContentElement.innerHTML = '<span class="text-muted small">No payload available.</span>';
+                }
+                if (payloadDetailIdElement) {
+                    payloadDetailIdElement.textContent = 'N/A';
+                }
+                if (payloadDetailLogFileElement) {
+                    payloadDetailLogFileElement.textContent = 'N/A';
+                }
+                if (payloadDetailTargetElement) {
+                    payloadDetailTargetElement.textContent = 'N/A';
+                }
             });
         }
         let startTime = new Date();
@@ -1736,6 +2217,7 @@
             loadCurrentSettings();
             updateQuickStats();
             showNotification('Dashboard loaded successfully!', 'success');
+            $('#payload-update-send').on('click', handlePayloadUpdateSubmit);
 
             // Initialize scroll to top button
             initScrollToTop();
@@ -1953,24 +2435,22 @@
                 currentData = response.data;
                 $('#table-loading').hide();
                 
-                if (!dataTable) {
-                    // Initialize DataTable with data
-                    dataTable = $('#data-table').DataTable({
-                        data: response.data,
-                        columns: [
-                            {
-                                data: null,
-                                orderable: false,
-                                searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
-                            },
-                            { data: 'id_scan' },
-                            { data: 'container_no' },
-                            { data: 'update_time' },
-                            { data: 'scan_duration' },
+                    if (!dataTable) {
+                        // Initialize DataTable with data
+                        dataTable = $('#data-table').DataTable({
+                            data: response.data,
+                            columns: [
+                                {
+                                    data: null,
+                                    defaultContent: '',
+                                    orderable: false,
+                                    searchable: false,
+                                    className: 'text-center'
+                                },
+                                { data: 'id_scan' },
+                                { data: 'container_no' },
+                                { data: 'update_time' },
+                                { data: 'scan_duration' },
                             { data: 'scan_time' },
                             { data: 'image_count' },
                             {
@@ -1984,6 +2464,7 @@
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2036,12 +2517,10 @@
                         columns: [
                             {
                                 data: null,
+                                defaultContent: '',
                                 orderable: false,
                                 searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
+                                className: 'text-center'
                             },
                             { data: 'id_scan' },
                             { data: 'container_no' },
@@ -2065,16 +2544,34 @@
                                     if (type !== 'display') {
                                         return '';
                                     }
-                                    const disabledAttr = resendTargetConfigured ? '' : ' disabled';
-                                    return '<button type="button" class="btn btn-sm btn-outline-success btn-resend"' + disabledAttr + '>' +
-                                           '<i class="fas fa-paper-plane me-1"></i> Resend' +
-                                           '</button>';
+                                    const rawData = (row && row.raw_data && typeof row.raw_data === 'object' && !Array.isArray(row.raw_data))
+                                        ? row.raw_data
+                                        : null;
+                                    const hasJsonPayload = rawData && rawData.json_payload !== undefined && rawData.json_payload !== null;
+                                    const hasRawPayload = rawData && typeof rawData.json_payload_raw === 'string' && rawData.json_payload_raw.trim() !== '';
+                                    const canUpdate = Boolean(hasJsonPayload || hasRawPayload);
+                                    const detailDisabledAttr = canUpdate ? '' : ' disabled';
+                                    const updateDisabledAttr = (!resendTargetConfigured || !canUpdate) ? ' disabled' : '';
+                                    const resendDisabledAttr = resendTargetConfigured ? '' : ' disabled';
+                                    return '' +
+                                        '<div class="d-flex gap-2 justify-content-center">' +
+                                            '<button type="button" class="btn btn-sm btn-outline-info btn-detail"' + detailDisabledAttr + '>' +
+                                                '<i class="fas fa-eye me-1"></i> Detail' +
+                                            '</button>' +
+                                            '<button type="button" class="btn btn-sm btn-outline-primary btn-update"' + updateDisabledAttr + '>' +
+                                                '<i class="fas fa-edit me-1"></i> Update' +
+                                            '</button>' +
+                                            '<button type="button" class="btn btn-sm btn-outline-success btn-resend"' + resendDisabledAttr + '>' +
+                                                '<i class="fas fa-paper-plane me-1"></i> Resend' +
+                                            '</button>' +
+                                        '</div>';
                                 }
                             }
                         ],
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2113,9 +2610,67 @@
                 return;
             }
 
-            $('#data-table-all tbody').off('click', '.btn-resend').on('click', '.btn-resend', function() {
+            const tbody = $('#data-table-all tbody');
+
+            tbody.off('click', '.btn-detail').on('click', '.btn-detail', async function() {
+                let tr = $(this).closest('tr');
+                if (tr.hasClass('child')) {
+                    tr = tr.prev();
+                }
+
+                const rowData = dataTableAll.row(tr).data();
+                if (!rowData) {
+                    return;
+                }
+
+                const payloadInfo = getPayloadTextForRow(rowData);
+                if (!payloadInfo.hasPayload) {
+                    await showAlert('No payload data is available for this entry.', 'warning');
+                    return;
+                }
+
+                if (!payloadDetailModalElement) {
+                    console.warn('payloadDetailModal element not found');
+                    return;
+                }
+
+                const rawData = payloadInfo.rawData || {};
+                let parsedPayload = null;
+                if (payloadInfo.text) {
+                    try {
+                        parsedPayload = JSON.parse(payloadInfo.text);
+                    } catch (error) {
+                        parsedPayload = null;
+                    }
+                }
+                const targetUrl = rawData.resend_target_url || rawData.post_url || rawData.target_url || 'N/A';
+
+                if (payloadDetailIdElement) {
+                    payloadDetailIdElement.textContent = rowData.id_scan || 'N/A';
+                }
+                if (payloadDetailLogFileElement) {
+                    payloadDetailLogFileElement.textContent = rowData.file_name || 'N/A';
+                }
+                if (payloadDetailTargetElement) {
+                    payloadDetailTargetElement.textContent = targetUrl || 'N/A';
+                }
+                if (payloadDetailContentElement) {
+                    if (parsedPayload && typeof parsedPayload === 'object') {
+                        payloadDetailContentElement.innerHTML = renderPayloadAsTable(parsedPayload);
+                    } else if (payloadInfo.text) {
+                        payloadDetailContentElement.innerHTML = `<pre class="mb-0 font-monospace text-break" style="white-space: pre-wrap;">${escapeHtml(payloadInfo.text)}</pre>`;
+                    } else {
+                        payloadDetailContentElement.innerHTML = '<span class="text-muted small">No payload available.</span>';
+                    }
+                }
+
+                payloadDetailModalInstance = bootstrap.Modal.getOrCreateInstance(payloadDetailModalElement);
+                payloadDetailModalInstance.show();
+            });
+
+            tbody.off('click', '.btn-update').on('click', '.btn-update', async function() {
                 if (!resendTargetConfigured) {
-                    alert('Please configure the resend server and endpoint from the Settings page before resending data.');
+                    await showAlert('Please configure the resend server and endpoint from the Settings page before resending data.', 'warning');
                     return;
                 }
 
@@ -2129,10 +2684,73 @@
                     return;
                 }
 
-                alert('Pastikan sedang tidak melakukan scanning kendaraan');
+                const payloadInfo = getPayloadTextForRow(rowData);
+                if (!payloadInfo.hasPayload) {
+                    await showAlert('No payload data is available for this entry.', 'warning');
+                    return;
+                }
+
+                if (!payloadUpdateModalElement) {
+                    console.warn('payloadUpdateModal element not found');
+                    return;
+                }
+
+                currentUpdateContext = {
+                    idScan: rowData.id_scan,
+                    logFile: rowData.file_name || null
+                };
+
+                if (payloadUpdateIdElement) {
+                    payloadUpdateIdElement.textContent = rowData.id_scan || 'N/A';
+                }
+                if (payloadUpdateLogFileElement) {
+                    payloadUpdateLogFileElement.textContent = rowData.file_name || 'N/A';
+                }
+                if (payloadUpdateTextarea) {
+                    payloadUpdateTextarea.value = payloadInfo.text;
+                }
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.classList.add('d-none');
+                    payloadUpdateErrorElement.textContent = '';
+                }
+
+                payloadUpdateModalInstance = bootstrap.Modal.getOrCreateInstance(payloadUpdateModalElement);
+                payloadUpdateModalInstance.show();
+
+                setTimeout(() => {
+                    if (payloadUpdateTextarea) {
+                        payloadUpdateTextarea.focus();
+                        const textLength = payloadUpdateTextarea.value.length;
+                        payloadUpdateTextarea.setSelectionRange(textLength, textLength);
+                    }
+                }, 150);
+            });
+
+            tbody.off('click', '.btn-resend').on('click', '.btn-resend', async function() {
+                if (!resendTargetConfigured) {
+                    await showAlert('Please configure the resend server and endpoint from the Settings page before resending data.', 'warning');
+                    return;
+                }
+
+                let tr = $(this).closest('tr');
+                if (tr.hasClass('child')) {
+                    tr = tr.prev();
+                }
+
+                const rowData = dataTableAll.row(tr).data();
+                if (!rowData) {
+                    return;
+                }
+
+                await showAlert('Pastikan sedang tidak melakukan scanning kendaraan', 'info');
 
                 const confirmationMessage = `Send data for ID ${rowData.id_scan}?`;
-                if (!confirm(confirmationMessage)) {
+                const confirmed = await showConfirm(confirmationMessage, {
+                    confirmButtonText: 'Send',
+                    cancelButtonText: 'Cancel',
+                    icon: 'question'
+                });
+                if (!confirmed) {
                     return;
                 }
 
@@ -2151,7 +2769,7 @@
                     method: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(requestBody),
-                    success: function(response) {
+                    success: async function(response) {
                         const statusCode = response && response.status_code !== undefined
                             ? response.status_code
                             : 'unknown';
@@ -2164,18 +2782,19 @@
                         const responseText = response && response.response_text
                             ? `\nResponse:\n${response.response_text}`
                             : '';
-                        alert(successMessage + targetSegment + responseText);
+                        const alertIcon = response && response.success ? 'success' : 'warning';
+                        await showAlert(successMessage + targetSegment + responseText, alertIcon);
 
                         if (response && response.success) {
                             refreshDataAfterResend();
                         }
                     },
-                    error: function(xhr) {
+                    error: async function(xhr) {
                         let message = 'Failed to resend data.';
                         if (xhr.responseJSON && xhr.responseJSON.error) {
                             message += `\n${xhr.responseJSON.error}`;
                         }
-                        alert(message);
+                        await showAlert(message, 'error');
                     },
                     complete: function() {
                         button.html(originalHtml);
@@ -2183,6 +2802,97 @@
                     }
                 });
             });
+        }
+
+        async function handlePayloadUpdateSubmit() {
+            if (!payloadUpdateTextarea) {
+                return;
+            }
+            const rawText = payloadUpdateTextarea.value.trim();
+            if (payloadUpdateErrorElement) {
+                payloadUpdateErrorElement.classList.add('d-none');
+                payloadUpdateErrorElement.textContent = '';
+            }
+
+            if (!currentUpdateContext) {
+                await showAlert('No entry is selected for update. Please choose a row from the table and try again.', 'warning');
+                return;
+            }
+
+            if (!rawText) {
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = 'Payload cannot be empty.';
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+                payloadUpdateTextarea.focus();
+                return;
+            }
+
+            let parsedPayload = null;
+            try {
+                parsedPayload = JSON.parse(rawText);
+            } catch (error) {
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = `Payload must be valid JSON: ${error.message}`;
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+                payloadUpdateTextarea.focus();
+                return;
+            }
+
+            const sendButton = $('#payload-update-send');
+            const originalHtml = sendButton.html();
+            sendButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...');
+
+            try {
+                const requestBody = {
+                    id_scan: currentUpdateContext.idScan,
+                    payload_override: parsedPayload,
+                    payload_override_raw: rawText
+                };
+                if (currentUpdateContext.logFile) {
+                    requestBody.log_file = currentUpdateContext.logFile;
+                }
+
+                const response = await $.ajax({
+                    url: '/api/resend',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestBody)
+                });
+
+                if (payloadUpdateModalInstance) {
+                    payloadUpdateModalInstance.hide();
+                }
+
+                const statusCode = response && response.status_code !== undefined
+                    ? response.status_code
+                    : 'unknown';
+                const responseText = response && response.response_text
+                    ? `\nResponse:\n${response.response_text}`
+                    : '';
+                const targetSegment = response && response.target_url
+                    ? `\nTarget: ${response.target_url}`
+                    : '';
+                const alertIcon = response && response.success ? 'success' : 'warning';
+                const baseMessage = response && response.success
+                    ? `Update succeeded (HTTP ${statusCode}).`
+                    : `Update completed with HTTP ${statusCode}.`;
+                await showAlert(baseMessage + targetSegment + responseText, alertIcon);
+
+                if (response && response.success) {
+                    refreshDataAfterResend();
+                }
+            } catch (error) {
+                const responseJSON = (error && error.responseJSON) || {};
+                const message = responseJSON.error || error.statusText || 'Failed to send updated payload.';
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = message;
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+            } finally {
+                sendButton.prop('disabled', false).html(originalHtml);
+            }
         }
 
         // Load data for NOK section
@@ -2197,12 +2907,10 @@
                         columns: [
                             {
                                 data: null,
+                                defaultContent: '',
                                 orderable: false,
                                 searchable: false,
-                                className: 'text-center',
-                                render: function(data, type, row, meta) {
-                                    return meta.row + meta.settings._iDisplayStart + 1;
-                                }
+                                className: 'text-center'
                             },
                             { data: 'id_scan' },
                             {
@@ -2245,6 +2953,7 @@
                         pageLength: 25,
                         autoWidth: false,
                         order: [[3, 'desc']],
+                        drawCallback: updateSequentialNumbering,
                         language: {
                             search: "Cari:",
                             lengthMenu: "Tampilkan _MENU_ entri",
@@ -2349,12 +3058,27 @@ function populateDetailModal(data) {
                 imagePathElement.text('N/A');
             }
 
-            const knownRawKeys = new Set(['image_path', 'task_time', 'retry_count', 'scan_duration', 'overall_time']);
+            const knownRawKeys = new Set([
+                'image_path',
+                'task_time',
+                'retry_count',
+                'scan_duration',
+                'overall_time',
+                'json_payload',
+                'json_payload_raw',
+                'JSON_PAYLOAD',
+                'JSON_PAYLOAD_RAW'
+            ]);
             const additionalRawContainer = $('#modal-additional-raw');
             additionalRawContainer.empty();
 
             let hasAdditional = false;
+            let jsonPayloadEntry = null;
             Object.entries(rawData).forEach(([key, value]) => {
+                if (key === 'json_payload' || key === 'JSON_PAYLOAD') {
+                    jsonPayloadEntry = { key, value };
+                    return;
+                }
                 if (knownRawKeys.has(key)) {
                     return;
                 }
@@ -2379,6 +3103,19 @@ function populateDetailModal(data) {
                 additionalRawContainer.append(
                     $('<li/>', { class: 'list-group-item text-muted' }).text('No additional raw data available.')
                 );
+            }
+
+            const jsonPayloadText = jsonPayloadEntry ? formatValue(jsonPayloadEntry.value) : null;
+            if (jsonPayloadText && jsonPayloadText !== 'N/A') {
+                const listItem = $('<li/>', {
+                    class: 'list-group-item'
+                });
+                $('<div/>', { class: 'fw-semibold text-muted small text-uppercase mb-2' }).text('json_payload').appendTo(listItem);
+                $('<pre/>', {
+                    class: 'font-monospace text-break mb-0',
+                    css: { whiteSpace: 'pre-wrap' }
+                }).text(jsonPayloadText).appendTo(listItem);
+                additionalRawContainer.append(listItem);
             }
         }
 
@@ -2442,9 +3179,13 @@ function populateDetailModal(data) {
 
         // Export to Excel
         function exportToExcel() {
-            if (!okExportModalInstance) {
-                okExportModalInstance = new bootstrap.Modal(document.getElementById('okExportModal'));
+            const modalElement = document.getElementById('okExportModal');
+            if (!modalElement) {
+                console.error('OK export modal element not found in the DOM.');
+                return;
             }
+
+            okExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#ok-export-error').addClass('d-none');
 
@@ -2506,9 +3247,13 @@ function populateDetailModal(data) {
         }
 
         function openAllExportModal(button) {
-            if (!allExportModalInstance) {
-                allExportModalInstance = new bootstrap.Modal(document.getElementById('allExportModal'));
+            const modalElement = document.getElementById('allExportModal');
+            if (!modalElement) {
+                console.error('All export modal element not found in the DOM.');
+                return;
             }
+
+            allExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#all-export-error').addClass('d-none');
 
@@ -2573,9 +3318,13 @@ function populateDetailModal(data) {
         }
 
         function openNokExportModal(button) {
-            if (!nokExportModalInstance) {
-                nokExportModalInstance = new bootstrap.Modal(document.getElementById('nokExportModal'));
+            const modalElement = document.getElementById('nokExportModal');
+            if (!modalElement) {
+                console.error('NOK export modal element not found in the DOM.');
+                return;
             }
+
+            nokExportModalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
 
             $('#nok-export-error').addClass('d-none');
 
@@ -3000,7 +3749,7 @@ function populateDetailModal(data) {
             $('#settings-status').html(statusHtml);
         }
 
-        function saveSettings() {
+        async function saveSettings() {
             const logsDirectory = $('#logs-directory').val().trim();
             const autoRefresh = parseInt($('#auto-refresh').val(), 10);
             const resendServer = $('#resend-server').val().trim();
@@ -3021,22 +3770,22 @@ function populateDetailModal(data) {
             const ftpInterval = parseInt($('#ftp-interval').val(), 10);
 
             if (!logsDirectory) {
-                alert('Please enter a logs directory path');
+                await showAlert('Please enter a logs directory path', 'warning');
                 return;
             }
 
             if (isInvalidNumber(autoRefresh) || autoRefresh <= 0) {
-                alert('Please enter a valid auto refresh interval.');
+                await showAlert('Please enter a valid auto refresh interval.', 'warning');
                 return;
             }
 
             if (!resendServer && resendEndpoint && !endpointLooksLikeUrl) {
-                alert('Please configure the resend server or provide a full URL in the endpoint field.');
+                await showAlert('Please configure the resend server or provide a full URL in the endpoint field.', 'warning');
                 return;
             }
 
             if (isInvalidNumber(ftpInterval) || ftpInterval <= 0) {
-                alert('Please enter a valid FTP ping interval.');
+                await showAlert('Please enter a valid FTP ping interval.', 'warning');
                 return;
             }
 
@@ -3057,7 +3806,7 @@ function populateDetailModal(data) {
             });
 
             if (ftpValidationError) {
-                alert(ftpValidationError);
+                await showAlert(ftpValidationError, 'error');
                 return;
             }
 
@@ -3075,8 +3824,8 @@ function populateDetailModal(data) {
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(settings),
-                success: function() {
-                    alert('Settings saved successfully! The application will now use the updated configuration.');
+                success: async function() {
+                    await showAlert('Settings saved successfully! The application will now use the updated configuration.', 'success');
                     resendTargetConfigured = resendConfiguredNext;
                     if (dataTableAll) {
                         dataTableAll.rows().invalidate('data').draw(false);
@@ -3095,31 +3844,35 @@ function populateDetailModal(data) {
                     $('#ftp-status-updated').text('Awaiting check...');
                     loadFtpStatus();
                 },
-                error: function(xhr) {
+                error: async function(xhr) {
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save settings';
-                    alert('Error: ' + error);
+                    await showAlert('Error: ' + error, 'error');
                 }
             });
         }
 
-        function validateDirectory() {
+        async function validateDirectory() {
             const directory = $('#logs-directory').val().trim();
             
             if (!directory) {
-                alert('Please enter a directory path first');
+                await showAlert('Please enter a directory path first', 'warning');
                 return;
             }
             
             $.get('/api/validate-directory', { directory: directory })
-                .done(function(response) {
+                .done(async function(response) {
                     if (response.valid) {
-                        alert(`âœ… Directory is valid!\n\nFound ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`);
+                        await showAlert(
+                            `Found ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`,
+                            'success',
+                            'Directory is valid'
+                        );
                     } else {
-                        alert(`âŒ Directory validation failed:\n${response.message}`);
+                        await showAlert(`Directory validation failed:\n${response.message}`, 'error', 'Validation failed');
                     }
                 })
-                .fail(function() {
-                    alert('âŒ Failed to validate directory. Please check the path and try again.');
+                .fail(async function() {
+                    await showAlert('Failed to validate directory. Please check the path and try again.', 'error', 'Validation error');
                 });
         }
 

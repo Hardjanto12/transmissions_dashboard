@@ -136,6 +136,98 @@ def validate_ping_interval(value):
     return interval
 
 
+CONTAINER_SEPARATOR_TOKEN_PATTERN = re.compile(r'[+\\]+')
+CONTAINER_FIELD_TEXT_PATTERN = re.compile(
+    r'(?P<prefix>(?:"|\')\s*container(?:_?no)?\s*(?:"|\')\s*:\s*(?:"|\'))'
+    r'(?P<value>[^"\']*)'
+    r'(?P<suffix>(?:"|\'))',
+    re.IGNORECASE
+)
+CONTAINER_XML_FIELD_PATTERN = re.compile(
+    r'(?P<prefix><\s*container(?:_?no)?\s*>)(?P<value>[^<]*)(?P<suffix></\s*container(?:_?no)?\s*>)',
+    re.IGNORECASE
+)
+
+
+def normalize_container_separator_value(value):
+    """Convert container separators to escaped backslashes suitable for resend."""
+    if not isinstance(value, str):
+        return value
+
+    stripped = value.strip()
+    if not stripped:
+        return value
+
+    if '+' not in stripped and '\\' not in stripped:
+        return stripped
+
+    segments = [segment for segment in CONTAINER_SEPARATOR_TOKEN_PATTERN.split(stripped) if segment]
+    if not segments:
+        return '\\' if stripped else stripped
+
+    normalized = '\\'.join(segments)
+    if stripped[-1] in ('+', '\\') and not normalized.endswith('\\'):
+        normalized += '\\'
+    return normalized
+
+
+def normalize_containers_in_payload(payload):
+    """Recursively normalize container separators within payload structures."""
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            lowered_key = str(key).lower()
+            if isinstance(value, (dict, list)):
+                normalize_containers_in_payload(value)
+                continue
+
+            if isinstance(value, str):
+                if 'container' in lowered_key and 'no' in lowered_key:
+                    cleaned = normalize_container_separator_value(value)
+                else:
+                    cleaned = normalize_container_fields_in_text(value)
+                if cleaned != value:
+                    payload[key] = cleaned
+        return payload
+
+    if isinstance(payload, list):
+        for index, item in enumerate(payload):
+            if isinstance(item, (dict, list)):
+                normalize_containers_in_payload(item)
+                continue
+            if isinstance(item, str):
+                cleaned = normalize_container_fields_in_text(item)
+                if cleaned != item:
+                    payload[index] = cleaned
+
+    return payload
+
+
+def normalize_container_fields_in_text(payload_text, *, escape_for_literal=False):
+    """Replace container separators inside raw payload text representations."""
+    if not isinstance(payload_text, str):
+        return payload_text
+
+    def _replace_json(match):
+        cleaned_value = normalize_container_separator_value(match.group('value'))
+        if escape_for_literal:
+            encoded_value = cleaned_value.replace('\\', '\\\\')
+        else:
+            encoded_value = cleaned_value
+        return f"{match.group('prefix')}{encoded_value}{match.group('suffix')}"
+
+    def _replace_xml(match):
+        cleaned_value = normalize_container_separator_value(match.group('value'))
+        if escape_for_literal:
+            encoded_value = cleaned_value.replace('\\', '\\\\')
+        else:
+            encoded_value = cleaned_value
+        return f"{match.group('prefix')}{encoded_value}{match.group('suffix')}"
+
+    updated_text = CONTAINER_FIELD_TEXT_PATTERN.sub(_replace_json, payload_text)
+    updated_text = CONTAINER_XML_FIELD_PATTERN.sub(_replace_xml, updated_text)
+    return updated_text
+
+
 def build_resend_url(server, endpoint):
     """Construct the resend URL from configured server and endpoint values."""
     server_value = (server or '').strip()
@@ -481,17 +573,38 @@ class FTPStatusMonitor:
 class LogParser:
     def __init__(self, logs_dir="logs"):
         self.logs_dir = logs_dir
-        
+        self._file_cache = {}
+        self._overrides_state = {
+            'signature': None,
+            'data': {},
+            'version': 0
+        }
+        self._cache_lock = threading.Lock()
+
     def get_log_files(self):
         """Get all log files sorted by modification time (newest first)"""
         pattern = os.path.join(self.logs_dir, "Transmission.log*")
         log_files = glob.glob(pattern)
         return sorted(log_files, key=os.path.getmtime, reverse=True)
-    
-    def _collect_resend_overrides(self):
-        """Collect resend overrides from all log files."""
+
+    def _collect_resend_overrides(self, log_files=None):
+        """Collect resend overrides from log files with caching."""
+        candidate_files = list(log_files or self.get_log_files())
+        signature = {}
+
+        for candidate in candidate_files:
+            try:
+                signature[candidate] = os.path.getmtime(candidate)
+            except OSError:
+                continue
+
+        with self._cache_lock:
+            state = self._overrides_state
+            if state['signature'] == signature:
+                return dict(state['data']), state['version']
+
         overrides = {}
-        for candidate in self.get_log_files():
+        for candidate in candidate_files:
             try:
                 with open(candidate, 'r', encoding='utf-8') as override_handle:
                     for line in override_handle:
@@ -508,7 +621,50 @@ class LogParser:
                             continue
             except IOError:
                 continue
-        return overrides
+
+        with self._cache_lock:
+            previous_version = self._overrides_state['version']
+            self._overrides_state = {
+                'signature': signature,
+                'data': overrides,
+                'version': previous_version + 1
+            }
+
+        return dict(overrides), previous_version + 1
+
+    def register_resend_override(self, id_scan, *, payload=None, payload_raw=None, log_file=None):
+        """Persist resend override details so cached data reflects the latest payload."""
+        if not id_scan:
+            return
+
+        payload_copy = copy.deepcopy(payload) if isinstance(payload, (dict, list)) else payload
+        payload_raw_text = payload_raw if isinstance(payload_raw, str) else None
+
+        with self._cache_lock:
+            state = self._overrides_state
+            current_override = copy.deepcopy(state['data'].get(id_scan) or {})
+
+            if payload_copy is not None:
+                current_override['json_payload'] = payload_copy
+            if payload_raw_text is not None:
+                current_override['json_payload_raw'] = payload_raw_text
+            if log_file:
+                current_override['log_file'] = log_file
+
+            state['data'][id_scan] = current_override
+            state['version'] += 1
+
+            for cache_entry in self._file_cache.values():
+                cache_entry['override_version'] = state['version']
+                for item in cache_entry['data']:
+                    if str(item.get('id_scan', '')).strip() == str(id_scan):
+                        raw = item.setdefault('raw_data', {})
+                        if payload_copy is not None:
+                            raw['json_payload'] = copy.deepcopy(payload_copy)
+                        if payload_raw_text is not None:
+                            raw['json_payload_raw'] = payload_raw_text
+                        if log_file:
+                            item['file_name'] = log_file
 
     def parse_log_file(self, file_path, global_overrides=None):
         """Parse a single log file and extract JSON data"""
@@ -519,7 +675,9 @@ class LogParser:
         known_upload_metadata = {}
         resend_overrides = dict(global_overrides or {})
 
-        container_token_pattern = re.compile(r'^[A-Z0-9\-]+$')
+        container_token_pattern = re.compile(r'^[A-Z0-9\-\+\\/]+$')
+        container_separator_pattern = re.compile(r'\s*([+\\/])\s*')
+        container_whitespace_pattern = re.compile(r'\s+')
 
         def normalize_timestamp(value):
             """Return timestamps in the standard '%Y-%m-%d %H:%M:%S' format."""
@@ -554,6 +712,8 @@ class LogParser:
                 return ''
             if container_value.lower() == 'failed!':
                 return ''
+            container_value = container_separator_pattern.sub(r'\1', container_value)
+            container_value = container_whitespace_pattern.sub('', container_value)
             container_value = container_value.upper()
             if len(container_value) < 4:
                 return ''
@@ -620,6 +780,12 @@ class LogParser:
                 return
 
             raw = entry_obj.setdefault('raw_data', {})
+            if override.get('json_payload') is not None:
+                raw['json_payload'] = copy.deepcopy(override['json_payload'])
+            if isinstance(override.get('json_payload_raw'), str) and override['json_payload_raw'].strip():
+                raw['json_payload_raw'] = override['json_payload_raw'].strip()
+            if override.get('log_file'):
+                entry_obj['file_name'] = override['log_file']
             raw['resend_status'] = override.get('status')
             resend_timestamp = normalize_timestamp(override.get('timestamp'))
             raw['resend_timestamp'] = resend_timestamp or override.get('timestamp')
@@ -698,9 +864,12 @@ class LogParser:
                 json_match = re.search(r'json_data is (.*)$', decoded_line, re.IGNORECASE)
                 if json_match:
                     json_raw = json_match.group(1).strip()
+                    json_raw = normalize_container_fields_in_text(json_raw, escape_for_literal=True)
                     info['json_payload_raw'] = json_raw
                     try:
-                        info['json_payload'] = ast.literal_eval(json_raw)
+                        parsed_payload = ast.literal_eval(json_raw)
+                        normalize_containers_in_payload(parsed_payload)
+                        info['json_payload'] = parsed_payload
                     except (ValueError, SyntaxError):
                         pass
 
@@ -1314,21 +1483,53 @@ class LogParser:
                 count += 1
         return count
     
-    def get_all_data(self, status_filter=None, search_term=None, 
+    def get_all_data(self, status_filter=None, search_term=None,
                      log_file=None):
         """Get all data from all log files with optional filtering"""
         all_data = []
-        
-        log_files = self.get_log_files()
-        global_resend_overrides = self._collect_resend_overrides()
-        
+
+        all_log_files = self.get_log_files()
+        global_resend_overrides, overrides_version = (
+            self._collect_resend_overrides(all_log_files))
+
+        # Remove cache entries for files that no longer exist
+        existing_paths = set(all_log_files)
+        with self._cache_lock:
+            cached_paths = list(self._file_cache.keys())
+            for cached_path in cached_paths:
+                if cached_path not in existing_paths:
+                    self._file_cache.pop(cached_path, None)
+
         # Filter by specific log file if specified
         if log_file:
-            log_files = [f for f in log_files 
-                        if os.path.basename(f) == log_file]
-        
+            log_files = [
+                f for f in all_log_files
+                if os.path.basename(f) == log_file
+            ]
+        else:
+            log_files = all_log_files
+
         for file_path in log_files:
-            file_data = self.parse_log_file(file_path, global_resend_overrides)
+            try:
+                file_mtime = os.path.getmtime(file_path)
+            except OSError:
+                continue
+
+            with self._cache_lock:
+                cache_entry = self._file_cache.get(file_path)
+
+            if (cache_entry and cache_entry['mtime'] == file_mtime and
+                    cache_entry['override_version'] == overrides_version):
+                file_data = cache_entry['data']
+            else:
+                file_data = self.parse_log_file(file_path, global_resend_overrides)
+                with self._cache_lock:
+                    self._file_cache[file_path] = {
+                        'mtime': file_mtime,
+                        'override_version': overrides_version,
+                        'data': file_data
+                    }
+
             all_data.extend(file_data)
         
         # Remove duplicates based on ID scan (keep the latest one)
@@ -1384,12 +1585,15 @@ class LogParser:
                             continue
 
                         raw_payload = json_match.group(1).strip()
+                        raw_payload = normalize_container_fields_in_text(raw_payload, escape_for_literal=True)
                         parsed_payload = None
                         try:
                             parsed_payload = ast.literal_eval(raw_payload)
+                            normalize_containers_in_payload(parsed_payload)
                         except (ValueError, SyntaxError):
                             try:
                                 parsed_payload = json.loads(raw_payload)
+                                normalize_containers_in_payload(parsed_payload)
                             except json.JSONDecodeError:
                                 parsed_payload = None
 
@@ -1438,6 +1642,8 @@ def resend_payload():
     request_payload = request.get_json(silent=True) or {}
     id_scan = str(request_payload.get('id_scan') or '').strip()
     log_file = request_payload.get('log_file')
+    payload_override = request_payload.get('payload_override')
+    payload_override_raw = request_payload.get('payload_override_raw')
 
     if not id_scan:
         return jsonify({'error': 'id_scan is required'}), 400
@@ -1528,6 +1734,31 @@ def resend_payload():
                     return None
         return None
 
+    override_applied = False
+
+    if isinstance(payload_override, str) and payload_override.strip():
+        payload_override = coerce_payload(payload_override)
+
+    if isinstance(payload_override, (dict, list)):
+        json_payload = payload_override
+        try:
+            payload_raw = json.dumps(payload_override, ensure_ascii=False)
+        except (TypeError, ValueError):
+            payload_raw = None
+        override_applied = True
+    elif isinstance(payload_override_raw, str) and payload_override_raw.strip():
+        payload_raw = payload_override_raw.strip()
+        candidate_override = coerce_payload(payload_raw)
+        if isinstance(candidate_override, (dict, list)):
+            json_payload = candidate_override
+        override_applied = True
+
+    if override_applied:
+        if isinstance(json_payload, (dict, list)):
+            raw_data['json_payload'] = json_payload
+        if isinstance(payload_raw, str):
+            raw_data['json_payload_raw'] = payload_raw
+
     if isinstance(json_payload, str):
         json_payload = coerce_payload(json_payload)
 
@@ -1554,7 +1785,11 @@ def resend_payload():
         json_payload = coerce_payload(payload_raw)
 
     if isinstance(json_payload, (dict, list)):
+        normalize_containers_in_payload(json_payload)
         raw_data['json_payload'] = json_payload
+        if isinstance(payload_raw, str) and payload_raw:
+            payload_raw = normalize_container_fields_in_text(payload_raw, escape_for_literal=True)
+            raw_data['json_payload_raw'] = payload_raw
     elif payload_raw:
         if isinstance(payload_raw, (bytes, bytearray)):
             try:
@@ -1563,6 +1798,7 @@ def resend_payload():
                 payload_raw = payload_raw.decode('latin-1', errors='ignore')
         payload_raw = payload_raw.strip() if isinstance(payload_raw, str) else payload_raw
         if isinstance(payload_raw, str) and payload_raw:
+            payload_raw = normalize_container_fields_in_text(payload_raw, escape_for_literal=True)
             raw_data['json_payload_raw'] = payload_raw
         else:
             payload_raw = None
@@ -1621,6 +1857,14 @@ def resend_payload():
         response_text_value=response_text_preview.replace('\n', '\\n'),
         target_url_value=target_url
     )
+
+    if override_applied and resend_success:
+        log_parser.register_resend_override(
+            id_scan,
+            payload=json_payload if isinstance(json_payload, (dict, list)) else None,
+            payload_raw=payload_raw if isinstance(payload_raw, str) else None,
+            log_file=log_file or entry.get('file_name')
+        )
 
     return jsonify({
         'success': resend_success,
