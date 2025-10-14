@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sweetalert2.min.css') }}">
     <style>
         :root {
             --brand-50: #eef2ff;
@@ -1652,7 +1653,7 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ url_for('static', filename='js/sweetalert2.min.js') }}"></script>
     <script>
         let currentData = [];
         let dataTable = null;
@@ -3184,13 +3185,17 @@ function populateDetailModal(data) {
             $.get('/api/validate-directory', { directory: directory })
                 .done(async function(response) {
                     if (response.valid) {
-                        alert(`âœ… Directory is valid!\n\nFound ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`);
+                        await showAlert(
+                            `Found ${response.log_files.length} log file(s):\n${response.log_files.join(', ')}`,
+                            'success',
+                            'Directory is valid'
+                        );
                     } else {
-                        alert(`âŒ Directory validation failed:\n${response.message}`);
+                        await showAlert(`Directory validation failed:\n${response.message}`, 'error', 'Validation failed');
                     }
                 })
-                .fail(function() {
-                    alert('âŒ Failed to validate directory. Please check the path and try again.');
+                .fail(async function() {
+                    await showAlert('Failed to validate directory. Please check the path and try again.', 'error', 'Validation error');
                 });
         }
 
