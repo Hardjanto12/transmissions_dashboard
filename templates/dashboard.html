@@ -829,7 +829,43 @@
             <span id="notification-text">Welcome to Transmission Dashboard!</span>
         </div>
     </div>
-
+    <!-- Update Payload Modal -->
+    <div class="modal fade" id="payloadUpdateModal" tabindex="-1" aria-labelledby="payloadUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="payloadUpdateModalLabel">Update Payload</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <dl class="row mb-0 small">
+                                    <dt class="col-5 text-muted text-uppercase">ID Scan</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-update-id">N/A</dd>
+                                    <dt class="col-5 text-muted text-uppercase mt-3">Log File</dt>
+                                    <dd class="col-7 fw-semibold text-break mb-0" id="payload-update-log-file">N/A</dd>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="payload-update-json" class="form-label fw-semibold text-uppercase small text-muted">Payload JSON</label>
+                            <textarea class="form-control font-monospace" id="payload-update-json" rows="16" spellcheck="false" placeholder="{&#10;    &quot;example&quot;: true&#10;}"></textarea>
+                            <div class="form-text">Edit the JSON payload before sending the update to the server.</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none mt-3" id="payload-update-error"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="payload-update-send">
+                        <i class="fas fa-paper-plane me-1"></i> Send Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <div class="container-fluid">
@@ -1663,6 +1699,8 @@
         let okExportModalInstance = null;
         let allExportModalInstance = null;
         let nokExportModalInstance = null;
+        let payloadUpdateModalInstance = null;
+        let currentUpdateContext = null;
         let resendTargetConfigured = false;
 
         const SWEETALERT_CLASSES = Object.freeze({
@@ -1748,6 +1786,36 @@
             });
         }
 
+        function getPayloadTextForRow(rowData) {
+            const rawData = (rowData && rowData.raw_data && typeof rowData.raw_data === 'object' && !Array.isArray(rowData.raw_data))
+                ? rowData.raw_data
+                : {};
+            let payloadText = '';
+            if (rawData && rawData.json_payload !== undefined && rawData.json_payload !== null) {
+                const payloadValue = rawData.json_payload;
+                if (typeof payloadValue === 'string') {
+                    payloadText = payloadValue.trim();
+                } else if (typeof payloadValue === 'object') {
+                    try {
+                        payloadText = JSON.stringify(payloadValue, null, 2);
+                    } catch (error) {
+                        payloadText = String(payloadValue);
+                    }
+                }
+            }
+            if (!payloadText && typeof rawData.json_payload_raw === 'string') {
+                const trimmed = rawData.json_payload_raw.trim();
+                if (trimmed) {
+                    payloadText = trimmed;
+                }
+            }
+            return {
+                text: payloadText,
+                rawData,
+                hasPayload: Boolean(payloadText)
+            };
+        }
+
         const nokDetailModalElement = document.getElementById('nokDetailModal');
         if (nokDetailModalElement) {
             nokDetailModalElement.addEventListener('hidden.bs.modal', () => {
@@ -1779,6 +1847,34 @@
                 nokExportModalInstance = null;
             });
         }
+        const payloadUpdateModalElement = document.getElementById('payloadUpdateModal');
+        if (payloadUpdateModalElement) {
+            payloadUpdateModalElement.addEventListener('hidden.bs.modal', () => {
+                payloadUpdateModalInstance = null;
+                currentUpdateContext = null;
+                const textarea = document.getElementById('payload-update-json');
+                if (textarea) {
+                    textarea.value = '';
+                }
+                const errorAlert = document.getElementById('payload-update-error');
+                if (errorAlert) {
+                    errorAlert.classList.add('d-none');
+                    errorAlert.textContent = '';
+                }
+                const idLabel = document.getElementById('payload-update-id');
+                if (idLabel) {
+                    idLabel.textContent = 'N/A';
+                }
+                const logLabel = document.getElementById('payload-update-log-file');
+                if (logLabel) {
+                    logLabel.textContent = 'N/A';
+                }
+            });
+        }
+        const payloadUpdateIdElement = document.getElementById('payload-update-id');
+        const payloadUpdateLogFileElement = document.getElementById('payload-update-log-file');
+        const payloadUpdateTextarea = document.getElementById('payload-update-json');
+        const payloadUpdateErrorElement = document.getElementById('payload-update-error');
         let startTime = new Date();
         let lastUpdateTime = new Date();
         let ftpStatusTimer = null;
@@ -1793,6 +1889,7 @@
             loadCurrentSettings();
             updateQuickStats();
             showNotification('Dashboard loaded successfully!', 'success');
+            $('#payload-update-send').on('click', handlePayloadUpdateSubmit);
 
             // Initialize scroll to top button
             initScrollToTop();
@@ -2119,10 +2216,23 @@
                                     if (type !== 'display') {
                                         return '';
                                     }
-                                    const disabledAttr = resendTargetConfigured ? '' : ' disabled';
-                                    return '<button type="button" class="btn btn-sm btn-outline-success btn-resend"' + disabledAttr + '>' +
-                                           '<i class="fas fa-paper-plane me-1"></i> Resend' +
-                                           '</button>';
+                                    const rawData = (row && row.raw_data && typeof row.raw_data === 'object' && !Array.isArray(row.raw_data))
+                                        ? row.raw_data
+                                        : null;
+                                    const hasJsonPayload = rawData && rawData.json_payload !== undefined && rawData.json_payload !== null;
+                                    const hasRawPayload = rawData && typeof rawData.json_payload_raw === 'string' && rawData.json_payload_raw.trim() !== '';
+                                    const canUpdate = Boolean(hasJsonPayload || hasRawPayload);
+                                    const updateDisabledAttr = (!resendTargetConfigured || !canUpdate) ? ' disabled' : '';
+                                    const resendDisabledAttr = resendTargetConfigured ? '' : ' disabled';
+                                    return '' +
+                                        '<div class="d-flex gap-2 justify-content-center">' +
+                                            '<button type="button" class="btn btn-sm btn-outline-primary btn-update"' + updateDisabledAttr + '>' +
+                                                '<i class="fas fa-edit me-1"></i> Update' +
+                                            '</button>' +
+                                            '<button type="button" class="btn btn-sm btn-outline-success btn-resend"' + resendDisabledAttr + '>' +
+                                                '<i class="fas fa-paper-plane me-1"></i> Resend' +
+                                            '</button>' +
+                                        '</div>';
                                 }
                             }
                         ],
@@ -2168,7 +2278,67 @@
                 return;
             }
 
-            $('#data-table-all tbody').off('click', '.btn-resend').on('click', '.btn-resend', async function() {
+            const tbody = $('#data-table-all tbody');
+
+            tbody.off('click', '.btn-update').on('click', '.btn-update', async function() {
+                if (!resendTargetConfigured) {
+                    await showAlert('Please configure the resend server and endpoint from the Settings page before resending data.', 'warning');
+                    return;
+                }
+
+                let tr = $(this).closest('tr');
+                if (tr.hasClass('child')) {
+                    tr = tr.prev();
+                }
+
+                const rowData = dataTableAll.row(tr).data();
+                if (!rowData) {
+                    return;
+                }
+
+                const payloadInfo = getPayloadTextForRow(rowData);
+                if (!payloadInfo.hasPayload) {
+                    await showAlert('No payload data is available for this entry.', 'warning');
+                    return;
+                }
+
+                if (!payloadUpdateModalElement) {
+                    console.warn('payloadUpdateModal element not found');
+                    return;
+                }
+
+                currentUpdateContext = {
+                    idScan: rowData.id_scan,
+                    logFile: rowData.file_name || null
+                };
+
+                if (payloadUpdateIdElement) {
+                    payloadUpdateIdElement.textContent = rowData.id_scan || 'N/A';
+                }
+                if (payloadUpdateLogFileElement) {
+                    payloadUpdateLogFileElement.textContent = rowData.file_name || 'N/A';
+                }
+                if (payloadUpdateTextarea) {
+                    payloadUpdateTextarea.value = payloadInfo.text;
+                }
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.classList.add('d-none');
+                    payloadUpdateErrorElement.textContent = '';
+                }
+
+                payloadUpdateModalInstance = bootstrap.Modal.getOrCreateInstance(payloadUpdateModalElement);
+                payloadUpdateModalInstance.show();
+
+                setTimeout(() => {
+                    if (payloadUpdateTextarea) {
+                        payloadUpdateTextarea.focus();
+                        const textLength = payloadUpdateTextarea.value.length;
+                        payloadUpdateTextarea.setSelectionRange(textLength, textLength);
+                    }
+                }, 150);
+            });
+
+            tbody.off('click', '.btn-resend').on('click', '.btn-resend', async function() {
                 if (!resendTargetConfigured) {
                     await showAlert('Please configure the resend server and endpoint from the Settings page before resending data.', 'warning');
                     return;
@@ -2244,6 +2414,97 @@
                     }
                 });
             });
+        }
+
+        async function handlePayloadUpdateSubmit() {
+            if (!payloadUpdateTextarea) {
+                return;
+            }
+            const rawText = payloadUpdateTextarea.value.trim();
+            if (payloadUpdateErrorElement) {
+                payloadUpdateErrorElement.classList.add('d-none');
+                payloadUpdateErrorElement.textContent = '';
+            }
+
+            if (!currentUpdateContext) {
+                await showAlert('No entry is selected for update. Please choose a row from the table and try again.', 'warning');
+                return;
+            }
+
+            if (!rawText) {
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = 'Payload cannot be empty.';
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+                payloadUpdateTextarea.focus();
+                return;
+            }
+
+            let parsedPayload = null;
+            try {
+                parsedPayload = JSON.parse(rawText);
+            } catch (error) {
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = `Payload must be valid JSON: ${error.message}`;
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+                payloadUpdateTextarea.focus();
+                return;
+            }
+
+            const sendButton = $('#payload-update-send');
+            const originalHtml = sendButton.html();
+            sendButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...');
+
+            try {
+                const requestBody = {
+                    id_scan: currentUpdateContext.idScan,
+                    payload_override: parsedPayload,
+                    payload_override_raw: rawText
+                };
+                if (currentUpdateContext.logFile) {
+                    requestBody.log_file = currentUpdateContext.logFile;
+                }
+
+                const response = await $.ajax({
+                    url: '/api/resend',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestBody)
+                });
+
+                if (payloadUpdateModalInstance) {
+                    payloadUpdateModalInstance.hide();
+                }
+
+                const statusCode = response && response.status_code !== undefined
+                    ? response.status_code
+                    : 'unknown';
+                const responseText = response && response.response_text
+                    ? `\nResponse:\n${response.response_text}`
+                    : '';
+                const targetSegment = response && response.target_url
+                    ? `\nTarget: ${response.target_url}`
+                    : '';
+                const alertIcon = response && response.success ? 'success' : 'warning';
+                const baseMessage = response && response.success
+                    ? `Update succeeded (HTTP ${statusCode}).`
+                    : `Update completed with HTTP ${statusCode}.`;
+                await showAlert(baseMessage + targetSegment + responseText, alertIcon);
+
+                if (response && response.success) {
+                    refreshDataAfterResend();
+                }
+            } catch (error) {
+                const responseJSON = (error && error.responseJSON) || {};
+                const message = responseJSON.error || error.statusText || 'Failed to send updated payload.';
+                if (payloadUpdateErrorElement) {
+                    payloadUpdateErrorElement.textContent = message;
+                    payloadUpdateErrorElement.classList.remove('d-none');
+                }
+            } finally {
+                sendButton.prop('disabled', false).html(originalHtml);
+            }
         }
 
         // Load data for NOK section

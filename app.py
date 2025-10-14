@@ -1602,6 +1602,8 @@ def resend_payload():
     request_payload = request.get_json(silent=True) or {}
     id_scan = str(request_payload.get('id_scan') or '').strip()
     log_file = request_payload.get('log_file')
+    payload_override = request_payload.get('payload_override')
+    payload_override_raw = request_payload.get('payload_override_raw')
 
     if not id_scan:
         return jsonify({'error': 'id_scan is required'}), 400
@@ -1691,6 +1693,31 @@ def resend_payload():
                 except (ValueError, SyntaxError):
                     return None
         return None
+
+    override_applied = False
+
+    if isinstance(payload_override, str) and payload_override.strip():
+        payload_override = coerce_payload(payload_override)
+
+    if isinstance(payload_override, (dict, list)):
+        json_payload = payload_override
+        try:
+            payload_raw = json.dumps(payload_override, ensure_ascii=False)
+        except (TypeError, ValueError):
+            payload_raw = None
+        override_applied = True
+    elif isinstance(payload_override_raw, str) and payload_override_raw.strip():
+        payload_raw = payload_override_raw.strip()
+        candidate_override = coerce_payload(payload_raw)
+        if isinstance(candidate_override, (dict, list)):
+            json_payload = candidate_override
+        override_applied = True
+
+    if override_applied:
+        if isinstance(json_payload, (dict, list)):
+            raw_data['json_payload'] = json_payload
+        if isinstance(payload_raw, str):
+            raw_data['json_payload_raw'] = payload_raw
 
     if isinstance(json_payload, str):
         json_payload = coerce_payload(json_payload)
