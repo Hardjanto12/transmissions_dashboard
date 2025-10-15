@@ -2474,6 +2474,98 @@
             return $('<div>').text(value).html();
         }
 
+        function sanitizeContainerText(value) {
+            if (value === undefined || value === null) {
+                return '';
+            }
+            const text = String(value).trim();
+            if (!text) {
+                return '';
+            }
+            return text.replace(/\\+$/g, '').toUpperCase();
+        }
+
+        function extractContainerFromPayload(payload) {
+            if (!payload) {
+                return '';
+            }
+
+            if (typeof payload === 'string') {
+                const xmlMatch = payload.match(/<\s*container(?:_?no)?\s*>([^<]+)<\s*\/\s*container(?:_?no)?\s*>/i);
+                if (xmlMatch && xmlMatch[1]) {
+                    return sanitizeContainerText(xmlMatch[1]);
+                }
+
+                const jsonMatch = payload.match(/"container(?:_?no)?"\s*:\s*"([^"]+)"/i);
+                if (jsonMatch && jsonMatch[1]) {
+                    return sanitizeContainerText(jsonMatch[1]);
+                }
+
+                const trimmed = payload.trim();
+                if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+                    (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        const nested = extractContainerFromPayload(parsed);
+                        if (nested) {
+                            return nested;
+                        }
+                    } catch (error) {
+                        // Ignore invalid JSON
+                    }
+                }
+
+                if (/\\u[0-9a-f]{4}/i.test(payload)) {
+                    try {
+                        const decoded = payload.replace(/\\u([0-9a-f]{4})/gi, (_, hex) =>
+                            String.fromCharCode(parseInt(hex, 16))
+                        );
+                        const nestedDecoded = extractContainerFromPayload(decoded);
+                        if (nestedDecoded) {
+                            return nestedDecoded;
+                        }
+                    } catch (error) {
+                        // Ignore decode issues
+                    }
+                }
+
+                return '';
+            }
+
+            if (Array.isArray(payload)) {
+                for (const item of payload) {
+                    const nested = extractContainerFromPayload(item);
+                    if (nested) {
+                        return nested;
+                    }
+                }
+                return '';
+            }
+
+            if (typeof payload === 'object') {
+                for (const [key, value] of Object.entries(payload)) {
+                    if (typeof key === 'string') {
+                        const lowered = key.toLowerCase();
+                        if (lowered.includes('container') && lowered.includes('no')) {
+                            if (typeof value === 'string' || typeof value === 'number') {
+                                const candidate = sanitizeContainerText(value);
+                                if (candidate) {
+                                    return candidate;
+                                }
+                            }
+                        }
+                    }
+
+                    const nested = extractContainerFromPayload(value);
+                    if (nested) {
+                        return nested;
+                    }
+                }
+            }
+
+            return '';
+        }
+
         function isInvalidNumber(value) {
             if (typeof Number.isNaN === 'function') {
                 return Number.isNaN(value);
@@ -2934,7 +3026,8 @@
 
                 currentUpdateContext = {
                     idScan: rowData.id_scan,
-                    logFile: rowData.file_name || null
+                    logFile: rowData.file_name || null,
+                    container: rowData.container_no || ''
                 };
 
                 if (payloadUpdateIdElement) {
@@ -3007,23 +3100,55 @@
                     contentType: 'application/json',
                     data: JSON.stringify(requestBody),
                     success: async function(response) {
-                        const statusCode = response && response.status_code !== undefined
-                            ? response.status_code
-                            : 'unknown';
-                        const successMessage = response && response.success
-                            ? `Resend succeeded (HTTP ${statusCode}).`
-                            : `Resend completed with HTTP ${statusCode}.`;
-                        const targetSegment = response && response.target_url
-                            ? `\nTarget: ${response.target_url}`
-                            : '';
-                        const responseText = response && response.response_text
-                            ? `\nResponse:\n${response.response_text}`
-                            : '';
-                        const alertIcon = response && response.success ? 'success' : 'warning';
-                        await showAlert(successMessage + targetSegment + responseText, alertIcon);
+                        const isSuccess = response && response.success;
 
-                        if (response && response.success) {
+                        if (isSuccess) {
+                            const rawData = rowData.raw_data || {};
+                            const payloadSources = [
+                                response && response.response_text,
+                                rawData.json_payload,
+                                rawData.json_payload_raw,
+                                rawData.resend_response_text,
+                                rowData.container_no,
+                                rawData.container_no,
+                                rawData.CONTAINER_NO
+                            ];
+
+                            let containerCandidate = '';
+                            for (const source of payloadSources) {
+                                if (!source) {
+                                    continue;
+                                }
+                                const extracted = extractContainerFromPayload(source);
+                                if (extracted) {
+                                    containerCandidate = extracted;
+                                    break;
+                                }
+                                if (typeof source === 'string') {
+                                    const sanitized = sanitizeContainerText(source);
+                                    if (sanitized) {
+                                        containerCandidate = sanitized;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            const containerDisplay = containerCandidate || '-';
+                            const message = `ID Scan: ${rowData.id_scan}\nContainer No: ${containerDisplay}`;
+                            await showAlert(message, 'success');
                             refreshDataAfterResend();
+                        } else {
+                            const statusCode = response && response.status_code !== undefined
+                                ? response.status_code
+                                : 'unknown';
+                            const targetSegment = response && response.target_url
+                                ? `\nTarget: ${response.target_url}`
+                                : '';
+                            const responseText = response && response.response_text
+                                ? `\nResponse:\n${response.response_text}`
+                                : '';
+                            const fallbackMessage = `Resend completed with HTTP ${statusCode}.`;
+                            await showAlert(fallbackMessage + targetSegment + responseText, 'warning');
                         }
                     },
                     error: async function(xhr) {
@@ -3102,23 +3227,25 @@
                     payloadUpdateModalInstance.hide();
                 }
 
-                const statusCode = response && response.status_code !== undefined
-                    ? response.status_code
-                    : 'unknown';
-                const responseText = response && response.response_text
-                    ? `\nResponse:\n${response.response_text}`
-                    : '';
-                const targetSegment = response && response.target_url
-                    ? `\nTarget: ${response.target_url}`
-                    : '';
-                const alertIcon = response && response.success ? 'success' : 'warning';
-                const baseMessage = response && response.success
-                    ? `Update succeeded (HTTP ${statusCode}).`
-                    : `Update completed with HTTP ${statusCode}.`;
-                await showAlert(baseMessage + targetSegment + responseText, alertIcon);
-
                 if (response && response.success) {
+                    const payloadContainer = extractContainerFromPayload(parsedPayload);
+                    const fallbackContainer = sanitizeContainerText(payloadContainer || currentUpdateContext.container);
+                    const containerDisplay = fallbackContainer || '-';
+                    const message = `Scan ID: ${currentUpdateContext.idScan}\nContainer No: ${containerDisplay}`;
+                    await showAlert(message, 'success');
                     refreshDataAfterResend();
+                } else {
+                    const statusCode = response && response.status_code !== undefined
+                        ? response.status_code
+                        : 'unknown';
+                    const responseText = response && response.response_text
+                        ? `\nResponse:\n${response.response_text}`
+                        : '';
+                    const targetSegment = response && response.target_url
+                        ? `\nTarget: ${response.target_url}`
+                        : '';
+                    const baseMessage = `Update completed with HTTP ${statusCode}.`;
+                    await showAlert(baseMessage + targetSegment + responseText, 'warning');
                 }
             } catch (error) {
                 const responseJSON = (error && error.responseJSON) || {};

@@ -13,5 +13,5 @@
   ],
   "ftp_ping_interval": 60,
   "resend_server": "http://10.226.52.32:8040",
-  "resend_endpoint": "/services/xRaySby/out"
+  "resend_endpoint": "/services/xRaySby/in"
 }

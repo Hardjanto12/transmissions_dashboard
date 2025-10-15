@@ -147,6 +147,9 @@ CONTAINER_XML_FIELD_PATTERN = re.compile(
     r'(?P<prefix><\s*container(?:_?no)?\s*>)(?P<value>[^<]*)(?P<suffix></\s*container(?:_?no)?\s*>)',
     re.IGNORECASE
 )
+CONTAINER_SEPARATOR_SPACING_PATTERN = re.compile(r'\s*([+\\/])\s*')
+CONTAINER_WHITESPACE_ONLY_PATTERN = re.compile(r'\s+')
+CONTAINER_ALLOWED_CHARS_PATTERN = re.compile(r'^[A-Z0-9\-\+\\/]+$')
 
 
 def normalize_container_separator_value(value):
@@ -226,6 +229,114 @@ def normalize_container_fields_in_text(payload_text, *, escape_for_literal=False
     updated_text = CONTAINER_FIELD_TEXT_PATTERN.sub(_replace_json, payload_text)
     updated_text = CONTAINER_XML_FIELD_PATTERN.sub(_replace_xml, updated_text)
     return updated_text
+
+
+def sanitize_container_number(value):
+    """Return a normalized container number or empty string if the value is invalid."""
+    if value is None:
+        return ''
+    container_value = str(value).strip()
+    if not container_value:
+        return ''
+    if container_value.lower() == 'failed!':
+        return ''
+
+    container_value = CONTAINER_SEPARATOR_SPACING_PATTERN.sub(r'\1', container_value)
+    container_value = CONTAINER_WHITESPACE_ONLY_PATTERN.sub('', container_value)
+    container_value = container_value.upper()
+
+    if len(container_value) < 7 or len(container_value) > 20:
+        return ''
+    if len(container_value) >= 4 and not container_value[:4].isalpha():
+        return ''
+    digit_count = sum(1 for ch in container_value if ch.isdigit())
+    if digit_count < 6:
+        return ''
+    if not CONTAINER_ALLOWED_CHARS_PATTERN.match(container_value):
+        return ''
+
+    return container_value
+
+
+def coerce_payload_structure(value):
+    """Best-effort conversion of raw payload text into Python structures."""
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            try:
+                return ast.literal_eval(stripped)
+            except (ValueError, SyntaxError):
+                return None
+    return None
+
+
+def extract_container_from_structure(data):
+    """Attempt to locate a container number within nested payload structures."""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            key_text = str(key).lower()
+            if 'container' in key_text and 'no' in key_text:
+                candidate = sanitize_container_number(value)
+                if candidate:
+                    return candidate
+            if 'ftp_path' in key_text:
+                continue
+            nested_candidate = extract_container_from_structure(value)
+            if nested_candidate:
+                return nested_candidate
+        return ''
+
+    if isinstance(data, list):
+        for item in data:
+            nested_candidate = extract_container_from_structure(item)
+            if nested_candidate:
+                return nested_candidate
+        return ''
+
+    if isinstance(data, str):
+        stripped = data.strip()
+        if not stripped:
+            return ''
+
+        variants = []
+        lower_text = stripped.lower()
+        if '\\u' in lower_text:
+            try:
+                unescaped = stripped.encode('utf-8').decode('unicode_escape')
+            except UnicodeDecodeError:
+                unescaped = stripped
+            if unescaped and unescaped not in variants:
+                variants.append(unescaped)
+        variants.append(stripped)
+
+        for text in variants:
+            skip_token_scan = '\\u' in text.lower()
+
+            structured = coerce_payload_structure(text)
+            if isinstance(structured, (dict, list)):
+                nested_candidate = extract_container_from_structure(structured)
+                if nested_candidate:
+                    return nested_candidate
+
+            xml_match = CONTAINER_XML_FIELD_PATTERN.search(text)
+            if xml_match:
+                candidate = sanitize_container_number(xml_match.group('value'))
+                if candidate:
+                    return candidate
+
+            json_match = CONTAINER_FIELD_TEXT_PATTERN.search(text)
+            if json_match:
+                candidate = sanitize_container_number(json_match.group('value'))
+                if candidate:
+                    return candidate
+
+    return ''
 
 
 def build_resend_url(server, endpoint):
@@ -639,6 +750,12 @@ class LogParser:
 
         payload_copy = copy.deepcopy(payload) if isinstance(payload, (dict, list)) else payload
         payload_raw_text = payload_raw if isinstance(payload_raw, str) else None
+        container_override = ''
+
+        if isinstance(payload_copy, (dict, list)):
+            container_override = extract_container_from_structure(payload_copy) or container_override
+        if isinstance(payload_raw_text, str) and not container_override:
+            container_override = extract_container_from_structure(payload_raw_text) or container_override
 
         with self._cache_lock:
             state = self._overrides_state
@@ -650,6 +767,8 @@ class LogParser:
                 current_override['json_payload_raw'] = payload_raw_text
             if log_file:
                 current_override['log_file'] = log_file
+            if container_override:
+                current_override['container_no'] = container_override
 
             state['data'][id_scan] = current_override
             state['version'] += 1
@@ -665,6 +784,10 @@ class LogParser:
                             raw['json_payload_raw'] = payload_raw_text
                         if log_file:
                             item['file_name'] = log_file
+                        if container_override:
+                            item['container_no'] = container_override
+                            raw['container_no'] = container_override
+                            raw['CONTAINER_NO'] = container_override
 
     def parse_log_file(self, file_path, global_overrides=None):
         """Parse a single log file and extract JSON data"""
@@ -715,11 +838,12 @@ class LogParser:
             container_value = container_separator_pattern.sub(r'\1', container_value)
             container_value = container_whitespace_pattern.sub('', container_value)
             container_value = container_value.upper()
-            if len(container_value) < 4:
+            if len(container_value) < 7 or len(container_value) > 20:
                 return ''
-            if not any(ch.isdigit() for ch in container_value):
+            if len(container_value) >= 4 and not container_value[:4].isalpha():
                 return ''
-            if not any(ch.isalpha() for ch in container_value):
+            digit_count = sum(1 for ch in container_value if ch.isdigit())
+            if digit_count < 6:
                 return ''
             if not container_token_pattern.match(container_value):
                 return ''
@@ -795,6 +919,30 @@ class LogParser:
             if override.get('target_url'):
                 raw.setdefault('post_url', override.get('target_url'))
                 raw['resend_target_url'] = override.get('target_url')
+
+            container_from_override = ''
+            for candidate in (
+                override.get('container_no'),
+                override.get('json_payload'),
+                override.get('json_payload_raw'),
+                override.get('response_text'),
+                raw.get('json_payload'),
+                raw.get('json_payload_raw'),
+                raw.get('resend_response_text')
+            ):
+                if not candidate:
+                    continue
+                container_from_override = extract_container_from_structure(candidate)
+                if container_from_override:
+                    break
+
+            sanitized_container = sanitize_container_value(container_from_override)
+            if sanitized_container:
+                entry_obj['container_no'] = sanitized_container
+                raw['container_no'] = sanitized_container
+                raw['CONTAINER_NO'] = sanitized_container
+                remember_container(entry_obj.get('id_scan'), sanitized_container)
+                sync_entry_container(entry_obj.get('id_scan'), sanitized_container)
 
             if override.get('status') == 'SUCCESS':
                 entry_obj['status'] = 'OK'
@@ -1531,14 +1679,67 @@ class LogParser:
                     }
 
             all_data.extend(file_data)
+
+        for entry in all_data:
+            raw = entry.get('raw_data') or {}
+            sanitized_existing = sanitize_container_number(entry.get('container_no'))
+            effective_container = sanitized_existing
+
+            if not effective_container:
+                for candidate in (
+                    raw.get('container_no'),
+                    raw.get('CONTAINER_NO'),
+                    raw.get('json_payload'),
+                    raw.get('json_payload_raw'),
+                    raw.get('payload'),
+                    raw.get('payload_raw'),
+                    raw.get('resend_response_text'),
+                    raw.get('response_text'),
+                    entry.get('error_description'),
+                ):
+                    if not candidate:
+                        continue
+                    detected = extract_container_from_structure(candidate)
+                    if detected:
+                        effective_container = sanitize_container_number(detected)
+                        if effective_container:
+                            break
+
+            if effective_container:
+                entry['container_no'] = effective_container
+                raw['container_no'] = effective_container
+                raw['CONTAINER_NO'] = effective_container
         
+        def parse_timestamp_value(value):
+            if value is None:
+                return datetime.min
+            text = str(value).strip()
+            if not text or text == 'N/A':
+                return datetime.min
+            candidate = text.replace('T', ' ').rstrip('Z')
+            for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+                try:
+                    return datetime.strptime(candidate, fmt)
+                except ValueError:
+                    continue
+            try:
+                return datetime.fromisoformat(candidate)
+            except ValueError:
+                return datetime.min
+
+        def entry_sort_key(entry):
+            primary = parse_timestamp_value(entry.get('update_time'))
+            secondary = parse_timestamp_value(entry.get('log_timestamp'))
+            tertiary = parse_timestamp_value(entry.get('scan_time'))
+            return (primary, secondary, tertiary)
+
         # Remove duplicates based on ID scan (keep the latest one)
         seen_ids = set()
         unique_data = []
-        
-        # Sort by scan time first to ensure we keep the latest entry
-        all_data.sort(key=lambda x: x['scan_time'], reverse=True)
-        
+
+        # Sort by most recent timestamps to ensure the latest data is kept
+        all_data.sort(key=entry_sort_key, reverse=True)
+
         for entry in all_data:
             if entry['id_scan'] and entry['id_scan'] not in seen_ids:
                 seen_ids.add(entry['id_scan'])
@@ -1673,6 +1874,24 @@ def resend_payload():
          if str(item.get('id_scan', '')).strip() == id_scan),
         None
     )
+
+    if entry is None and log_file:
+        try:
+            entries = log_parser.get_all_data()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.exception("Failed to load fallback log data for resend request: %s", exc)
+            return jsonify({'error': 'Failed to load log data'}), 500
+
+        entry = next(
+            (item for item in entries
+             if str(item.get('id_scan', '')).strip() == id_scan),
+            None
+        )
+
+    if entry is not None:
+        entry_file_name = entry.get('file_name')
+        if entry_file_name:
+            log_file = entry_file_name
 
     if not entry:
         return jsonify({'error': f'ID scan {id_scan} was not found'}), 404
