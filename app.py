@@ -241,21 +241,44 @@ def sanitize_container_number(value):
     if container_value.lower() == 'failed!':
         return ''
 
-    container_value = CONTAINER_SEPARATOR_SPACING_PATTERN.sub(r'\1', container_value)
-    container_value = CONTAINER_WHITESPACE_ONLY_PATTERN.sub('', container_value)
-    container_value = container_value.upper()
+    compact_value = CONTAINER_SEPARATOR_SPACING_PATTERN.sub(r'\1', container_value)
+    compact_value = CONTAINER_WHITESPACE_ONLY_PATTERN.sub('', compact_value)
+    compact_value = compact_value.upper().rstrip('\\+')
 
-    if len(container_value) < 7 or len(container_value) > 20:
-        return ''
-    if len(container_value) >= 4 and not container_value[:4].isalpha():
-        return ''
-    digit_count = sum(1 for ch in container_value if ch.isdigit())
-    if digit_count < 6:
-        return ''
-    if not CONTAINER_ALLOWED_CHARS_PATTERN.match(container_value):
+    segments = [
+        segment for segment in CONTAINER_SEPARATOR_TOKEN_PATTERN.split(compact_value)
+        if segment and segment != '\\'
+    ]
+
+    def _sanitize_segment(segment_text):
+        segment_compact = CONTAINER_WHITESPACE_ONLY_PATTERN.sub('', segment_text or '').upper()
+        if not segment_compact:
+            return ''
+        if len(segment_compact) < 7 or len(segment_compact) > 17:
+            return ''
+        if not segment_compact[:4].isalpha():
+            return ''
+        digit_count = sum(1 for ch in segment_compact if ch.isdigit())
+        if digit_count < 6:
+            return ''
+        if not CONTAINER_ALLOWED_CHARS_PATTERN.match(segment_compact):
+            return ''
+        return segment_compact
+
+    if not segments:
         return ''
 
-    return container_value
+    if len(segments) == 1:
+        return _sanitize_segment(segments[0])
+
+    sanitized_segments = []
+    for segment in segments:
+        sanitized = _sanitize_segment(segment)
+        if not sanitized:
+            return ''
+        sanitized_segments.append(sanitized)
+
+    return '\\'.join(sanitized_segments)
 
 
 def coerce_payload_structure(value):
@@ -798,10 +821,6 @@ class LogParser:
         known_upload_metadata = {}
         resend_overrides = dict(global_overrides or {})
 
-        container_token_pattern = re.compile(r'^[A-Z0-9\-\+\\/]+$')
-        container_separator_pattern = re.compile(r'\s*([+\\/])\s*')
-        container_whitespace_pattern = re.compile(r'\s+')
-
         def normalize_timestamp(value):
             """Return timestamps in the standard '%Y-%m-%d %H:%M:%S' format."""
             if not value:
@@ -828,26 +847,7 @@ class LogParser:
 
         def sanitize_container_value(value):
             """Return a normalized container number or empty string if invalid."""
-            if value is None:
-                return ''
-            container_value = str(value).strip()
-            if not container_value:
-                return ''
-            if container_value.lower() == 'failed!':
-                return ''
-            container_value = container_separator_pattern.sub(r'\1', container_value)
-            container_value = container_whitespace_pattern.sub('', container_value)
-            container_value = container_value.upper()
-            if len(container_value) < 7 or len(container_value) > 20:
-                return ''
-            if len(container_value) >= 4 and not container_value[:4].isalpha():
-                return ''
-            digit_count = sum(1 for ch in container_value if ch.isdigit())
-            if digit_count < 6:
-                return ''
-            if not container_token_pattern.match(container_value):
-                return ''
-            return container_value
+            return sanitize_container_number(value) or ''
 
         def remember_container(entry_id, container_value):
             """Persist sanitized container numbers for reuse across retries."""
